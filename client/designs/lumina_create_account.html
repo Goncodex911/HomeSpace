@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina | Create Your Atelier Account</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeeeea",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "on-background": "#1a1c1a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-surface": "#1a1c1a",
+                        "surface-container-highest": "#e3e3df",
+                        "outline": "#747878",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#e0c29f",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#faf9f5",
+                        "inverse-surface": "#2f312e",
+                        "error-container": "#ffdad6",
+                        "surface": "#faf9f5",
+                        "inverse-on-surface": "#f1f1ed",
+                        "secondary-container": "#fdddb9",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-fixed": "#281803",
+                        "background": "#faf9f5",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "outline-variant": "#c4c7c7",
+                        "surface-container-high": "#e8e8e4",
+                        "inverse-primary": "#c8c6c5",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "on-tertiary-container": "#838480",
+                        "on-primary-fixed-variant": "#474646",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "on-secondary-container": "#786044",
+                        "on-primary-container": "#858383",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e3e3de",
+                        "secondary-fixed": "#fdddb9",
+                        "secondary": "#715a3e",
+                        "surface-container-low": "#f4f4f0",
+                        "tertiary": "#000000",
+                        "surface-dim": "#dadad6",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1c1b1b",
+                        "on-surface-variant": "#444748",
+                        "surface-variant": "#e3e3df",
+                        "on-secondary-fixed-variant": "#584329",
+                        "tertiary-container": "#1a1c19"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "unit": "8px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "display-lg": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.01em", "fontWeight": "300" }],
+                        "display-lg": ["64px", { "lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass-header {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .input-underline {
+            border: none;
+            border-bottom: 1px solid #E5E5E1;
+            background: transparent;
+            border-radius: 0;
+            padding-left: 0;
+            padding-right: 0;
+        }
+        .input-underline:focus {
+            outline: none;
+            box-shadow: none;
+            border-color: #000000;
+        }
+        body {
+            background-color: #faf9f5;
+        }
+    </style>
+</head>
+<body class="font-body-md text-on-surface">
+<!-- Top Navigation (Shell suppressed for transaction, but branding remains) -->
+<header class="fixed top-0 w-full glass-header border-b border-outline-variant/30 h-20 px-margin-mobile md:px-margin-desktop flex items-center justify-between z-50">
+<div class="font-headline-md text-headline-md tracking-tighter font-light text-primary">
+            Lumina
+        </div>
+<div class="hidden md:block">
+<a class="font-label-caps text-label-caps tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors" href="#">
+                Back to Gallery
+            </a>
+</div>
+</header>
+<main class="min-h-screen pt-20 flex flex-col md:flex-row">
+<!-- Left Panel: Sign Up Form -->
+<section class="w-full md:w-1/2 flex items-center justify-center p-margin-mobile md:p-margin-desktop bg-surface-container-lowest">
+<div class="max-w-md w-full py-12 md:py-0">
+<div class="mb-12">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Create Your Atelier Account</h1>
+<p class="font-body-md text-on-surface-variant">Join our curated community of designers and architects.</p>
+</div>
+<form class="space-y-8" onsubmit="return false;">
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="full_name">Full Name</label>
+<input class="w-full input-underline py-3 text-body-lg font-body-lg placeholder:text-outline-variant" id="full_name" name="full_name" placeholder="E.g. Julian Vossen" type="text"/>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="email">Email Address</label>
+<input class="w-full input-underline py-3 text-body-lg font-body-lg placeholder:text-outline-variant" id="email" name="email" placeholder="julian@atelier.com" type="email"/>
+</div>
+<div class="space-y-1">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase" for="password">Password</label>
+<div class="relative">
+<input class="w-full input-underline py-3 text-body-lg font-body-lg placeholder:text-outline-variant" id="password" name="password" placeholder="••••••••" type="password"/>
+<button class="absolute right-0 top-3 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined text-[20px]">visibility</span>
+</button>
+</div>
+</div>
+<div class="flex items-start gap-4 pt-4">
+<div class="flex h-6 items-center">
+<input class="h-4 w-4 rounded-none border-outline-variant text-primary focus:ring-0 focus:ring-offset-0 transition-all cursor-pointer" id="subscribe" name="subscribe" type="checkbox"/>
+</div>
+<div class="text-sm leading-6">
+<label class="font-body-md text-on-surface-variant cursor-pointer" for="subscribe">
+                                Subscribe to Architectural Journals and seasonal curated collection releases.
+                            </label>
+</div>
+</div>
+<div class="pt-6">
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-widest py-5 px-8 transition-all duration-300 hover:bg-secondary active:scale-[0.98]" type="submit">
+                            Create Account
+                        </button>
+</div>
+</form>
+<div class="mt-12 text-center">
+<p class="font-body-md text-on-surface-variant">
+                        Already have an account? 
+                        <a class="text-primary font-semibold border-b border-transparent hover:border-primary pb-0.5 transition-all" href="#">Sign In</a>
+</p>
+</div>
+</div>
+</section>
+<!-- Right Panel: Architectural Visual -->
+<section class="hidden md:block w-1/2 relative overflow-hidden bg-surface-container">
+<div class="absolute inset-0 bg-black/5 z-10"></div>
+<img alt="Minimalist Architectural Detail" class="w-full h-full object-cover transform transition-transform duration-[2000ms] hover:scale-105" data-alt="A cinematic architectural shot of a sleek, black minimalist floor lamp standing in a brightly lit, high-ceilinged room with warm neutral walls. The lighting is soft and diffused, highlighting the elegant geometric lines of the lamp's structure. The aesthetic is sophisticated and high-end, featuring a muted color palette of cream, charcoal, and warm wood tones. This image captures the essence of luxury interior design and craftsmanship." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDrfAUd9aHoll5_gbogUbTux1oG0TBdOFiHxxuHrnIIjZ89R3hCy7pVCdAcLUY7tBSL-YBaP7cMdQjY9R0sKeuNwWZzkAlEhgFNNxk_QGPCg-9HDs23AINVYaIciGl3DeJRtvj6dJhlt6dAAq0sEvWIiSfoA4BH4vill1_ihN6sucMCF0HVdTmMrsZHnsjnWI-Xe9lggsdw-b4NnC0v6TaIYvWRlPXLdU9k-eQcrfpMuaWvCOU2e0V5edNUi-q6vbbQqnVZlo1H0l5"/>
+<!-- Atmospheric Layer -->
+<div class="absolute bottom-margin-desktop left-margin-desktop z-20 max-w-sm">
+<p class="font-label-caps text-label-caps text-white/60 tracking-[0.2em] mb-4">CURATED SPACES</p>
+<h2 class="font-display-lg text-headline-lg text-white leading-tight font-light">The harmony of form and shadow.</h2>
+</div>
+<!-- Glass Detail Over Image -->
+<div class="absolute top-margin-desktop right-margin-desktop z-20 p-8 glass-header border border-white/10 rounded-none shadow-2xl hidden lg:block max-w-[280px]">
+<span class="material-symbols-outlined text-primary mb-4" data-weight="fill">architecture</span>
+<p class="font-body-md text-on-surface-variant italic">"Architecture is the learned game, correct and magnificent, of forms assembled in the light."</p>
+<div class="mt-4 h-px w-12 bg-primary"></div>
+</div>
+</section>
+</main>
+<!-- Simple Footer for Transactional Screen -->
+<footer class="bg-surface dark:bg-surface-container py-unit-gutter px-margin-mobile md:px-margin-desktop border-t border-outline-variant/20">
+<div class="flex flex-col md:flex-row justify-between items-center gap-4">
+<span class="font-label-caps text-label-caps text-on-surface-variant">© 2024 Lumina Marketplace. All rights reserved.</span>
+<div class="flex gap-8">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Contact</a>
+</div>
+</div>
+</footer>
+<script>
+        // Micro-interactions
+        document.querySelectorAll('input').forEach(input => {
+            input.addEventListener('focus', () => {
+                input.previousElementSibling.style.color = '#000000';
+            });
+            input.addEventListener('blur', () => {
+                input.previousElementSibling.style.color = '#444748';
+            });
+        });
+
+        // Simple button animation
+        const btn = document.querySelector('button[type="submit"]');
+        btn.addEventListener('mousedown', () => {
+            btn.style.opacity = '0.8';
+        });
+        btn.addEventListener('mouseup', () => {
+            btn.style.opacity = '1';
+        });
+    </script>
+</body></html>
