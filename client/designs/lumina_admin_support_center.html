@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina Admin | Support Center</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&amp;family=Montserrat:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1c1b1b",
+                        "secondary-fixed-dim": "#e0c19f",
+                        "on-secondary-container": "#765f42",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "surface": "#faf9f5",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary": "#000000",
+                        "surface-bright": "#faf9f5",
+                        "outline-variant": "#c4c7c7",
+                        "on-surface": "#1a1c1a",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "surface-container-low": "#f4f4f0",
+                        "secondary-fixed": "#fdddba",
+                        "primary-fixed": "#e5e2e1",
+                        "tertiary-fixed": "#e3e3de",
+                        "inverse-on-surface": "#f1f1ed",
+                        "background": "#faf9f5",
+                        "surface-container": "#eeeeea",
+                        "surface-container-highest": "#e3e3df",
+                        "surface-container-high": "#e8e8e4",
+                        "on-tertiary-container": "#838480",
+                        "surface-variant": "#e3e3df",
+                        "success-green": "#166534",
+                        "error-red": "#BA1A1A",
+                        "on-secondary-fixed": "#281803",
+                        "on-surface-variant": "#444748",
+                        "surface-cream": "#FAF9F5",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "secondary-container": "#fadab7",
+                        "surface-tint": "#5f5e5e",
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "tertiary-container": "#1a1c19",
+                        "inverse-primary": "#c8c6c5",
+                        "surface-dim": "#dadad6",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "outline": "#747878",
+                        "on-secondary-fixed-variant": "#584329",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#000000",
+                        "secondary": "#715a3e",
+                        "inverse-surface": "#2f312e",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "chart-tick": ["Inter"],
+                        "headline-md": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "chart-tick": ["10px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e3e3df;
+            border-radius: 2px;
+        }
+        .ticket-row:hover .ticket-actions {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="w-full sticky top-0 z-40 bg-surface/80 dark:bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 dark:border-outline/20 flex justify-between items-center px-margin-desktop py-4 w-full">
+<div class="flex items-center gap-8">
+<h1 class="font-Montserrat text-headline-md tracking-wider text-primary dark:text-on-primary">ATELIER ADMIN</h1>
+<div class="hidden md:flex relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container rounded-full border-none text-body-md w-64 focus:ring-1 focus:ring-primary transition-all" placeholder="Search tickets or users..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-2 px-3 py-1 bg-success-green/10 rounded-full">
+<span class="w-2 h-2 rounded-full bg-success-green animate-pulse"></span>
+<span class="font-label-caps text-success-green text-[10px]">LIVE SUPPORT ACTIVE</span>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-colors" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined cursor-pointer hover:text-secondary transition-colors" data-icon="settings">settings</span>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden border border-outline-variant/50">
+<img alt="Administrator Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCRPpE8rdBn4oNKStIwH_O4Cpx5CJxqkI2GOqhwbubkKsIw1Ze_IjKbcrRBEzqLPjojh06hcK5nybgwsYAjxvz8T5HFUuf4mBMfwWLZ27xBygc-cirUH94upxaIwNops1Q5HRBVj_ABeLJunVrHCY7ZxFlpVJOO0PO99vGLgceoX6UiIKTnYXsCk4LHT8n3iJuwSWw-rRPYmFe0oenq99KlyvlqtMb_XCCxwJISIQmrSyS26Yd_aTGwF8HSQrEcqwYRbOWvVS87VvAE"/>
+</div>
+</div>
+</div>
+</header>
+<div class="flex h-[calc(100vh-73px)]">
+<!-- Sidebar Navigation -->
+<aside class="h-full w-64 flex flex-col bg-surface dark:bg-inverse-surface border-r border-outline-variant/30 dark:border-outline/20 py-8">
+<div class="px-6 mb-8">
+<h2 class="font-Montserrat font-medium text-primary dark:text-on-primary text-label-caps opacity-50 uppercase tracking-widest">Core Systems</h2>
+<p class="text-[10px] text-on-surface-variant mt-1">v2.4.0 Stable</p>
+</div>
+<nav class="flex-1 flex flex-col">
+<!-- User Management active because we are in support/customer center -->
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+<span class="font-Inter text-label-caps">Analytics</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="storefront">storefront</span>
+<span class="font-Inter text-label-caps">Vendors</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+<span class="font-Inter text-label-caps">Inventory</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="shopping_cart">shopping_cart</span>
+<span class="font-Inter text-label-caps">Orders</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-primary dark:text-on-primary border-r-2 border-primary dark:border-on-primary bg-surface-container-high dark:bg-tertiary-container transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="group">group</span>
+<span class="font-Inter text-label-caps font-semibold">User Management</span>
+</a>
+<a class="flex items-center gap-4 px-6 py-4 text-on-surface-variant hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="speed">speed</span>
+<span class="font-Inter text-label-caps">System Health</span>
+</a>
+</nav>
+<div class="px-6 pt-8 border-t border-outline-variant/20">
+<a class="flex items-center gap-4 py-3 text-on-surface-variant hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+<span class="font-Inter text-label-caps">Support</span>
+</a>
+<a class="flex items-center gap-4 py-3 text-on-surface-variant hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+<span class="font-Inter text-label-caps">Log Out</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="flex-1 overflow-hidden flex flex-col bg-surface-cream">
+<!-- Page Header & Filters -->
+<section class="px-margin-desktop py-8 border-b border-outline-variant/20 bg-surface-container-lowest/50 backdrop-blur-md">
+<div class="flex justify-between items-end mb-8">
+<div>
+<h2 class="font-display-lg text-display-lg text-primary mb-1">Customer Support Center</h2>
+<p class="text-on-surface-variant font-body-md">Managing 142 active tickets across all service levels.</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-3 font-label-caps flex items-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined text-[18px]" data-icon="add">add</span>
+                        CREATE NEW TICKET
+                    </button>
+</div>
+<!-- Filter Row -->
+<div class="flex items-center gap-4 overflow-x-auto pb-2 custom-scrollbar">
+<div class="flex items-center gap-2 bg-surface-container px-4 py-2 rounded-full cursor-pointer hover:bg-surface-container-high transition-colors border border-outline-variant/30">
+<span class="material-symbols-outlined text-[18px]" data-icon="filter_list">filter_list</span>
+<span class="font-label-caps">All Issue Types</span>
+<span class="material-symbols-outlined text-[16px]" data-icon="expand_more">expand_more</span>
+</div>
+<div class="h-4 w-[1px] bg-outline-variant mx-2"></div>
+<button class="px-4 py-1 rounded-full border border-primary bg-primary text-on-primary font-label-caps text-[11px]">All</button>
+<button class="px-4 py-1 rounded-full border border-outline-variant text-on-surface-variant font-label-caps text-[11px] hover:border-primary hover:text-primary transition-all">Order Dispute</button>
+<button class="px-4 py-1 rounded-full border border-outline-variant text-on-surface-variant font-label-caps text-[11px] hover:border-primary hover:text-primary transition-all">Vendor Complaint</button>
+<button class="px-4 py-1 rounded-full border border-outline-variant text-on-surface-variant font-label-caps text-[11px] hover:border-primary hover:text-primary transition-all">Technical</button>
+</div>
+</section>
+<!-- Grid Layout for Ticket Queue & Quick View -->
+<section class="flex-1 overflow-hidden grid grid-cols-12">
+<!-- Ticket List (Queue) -->
+<div class="col-span-8 border-r border-outline-variant/20 overflow-y-auto custom-scrollbar px-margin-desktop py-6">
+<div class="flex items-center justify-between mb-4 px-2">
+<span class="font-label-caps text-on-surface-variant uppercase tracking-tighter">Queue Overview</span>
+<div class="flex gap-4">
+<span class="text-[10px] font-label-caps text-success-green flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-success-green"></span> 82 Resolved</span>
+<span class="text-[10px] font-label-caps text-error-red flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-error-red"></span> 12 Urgent</span>
+</div>
+</div>
+<div class="space-y-4">
+<!-- Ticket Item 1 -->
+<div class="ticket-row bg-surface-container-lowest p-6 border-b border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer group">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-[11px] text-error-red px-2 py-0.5 bg-error-container/20 rounded">URGENT</span>
+<h3 class="font-headline-md text-[16px] text-primary">Payment failure for Order #82910</h3>
+</div>
+<span class="text-chart-tick text-on-surface-variant">2 mins ago</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+</div>
+<span class="text-body-md text-on-surface-variant">Julian S.</span>
+</div>
+<span class="text-body-md text-outline italic">Technical Issue</span>
+</div>
+<div class="ticket-actions opacity-0 flex items-center gap-3 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="visibility">visibility</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="assignment_turned_in">assignment_turned_in</span>
+</div>
+</div>
+</div>
+<!-- Ticket Item 2 -->
+<div class="ticket-row bg-surface-container-lowest p-6 border-b border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-[11px] text-secondary px-2 py-0.5 bg-secondary-container/20 rounded">IN PROGRESS</span>
+<h3 class="font-headline-md text-[16px] text-primary">Vendor Dispute: Late delivery from Maison Labs</h3>
+</div>
+<span class="text-chart-tick text-on-surface-variant">14 mins ago</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+</div>
+<span class="text-body-md text-on-surface-variant">Elena Vance</span>
+</div>
+<span class="text-body-md text-outline italic">Vendor Complaint</span>
+</div>
+<div class="ticket-actions opacity-0 flex items-center gap-3 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="visibility">visibility</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="assignment_turned_in">assignment_turned_in</span>
+</div>
+</div>
+</div>
+<!-- Ticket Item 3 -->
+<div class="ticket-row bg-surface-container-lowest p-6 border-b border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-[11px] text-primary px-2 py-0.5 bg-surface-container-high rounded">OPEN</span>
+<h3 class="font-headline-md text-[16px] text-primary">Incorrect billing address on monthly statement</h3>
+</div>
+<span class="text-chart-tick text-on-surface-variant">45 mins ago</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+</div>
+<span class="text-body-md text-on-surface-variant">Mark T.</span>
+</div>
+<span class="text-body-md text-outline italic">Order Dispute</span>
+</div>
+<div class="ticket-actions opacity-0 flex items-center gap-3 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="visibility">visibility</span>
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="assignment_turned_in">assignment_turned_in</span>
+</div>
+</div>
+</div>
+<!-- Ticket Item 4 -->
+<div class="ticket-row bg-surface-container-lowest p-6 border-b border-outline-variant/30 hover:border-primary/40 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-3">
+<div class="flex items-center gap-3">
+<span class="font-label-caps text-[11px] text-success-green px-2 py-0.5 bg-success-green/10 rounded">RESOLVED</span>
+<h3 class="font-headline-md text-[16px] text-primary opacity-50 line-through">API documentation access request</h3>
+</div>
+<span class="text-chart-tick text-on-surface-variant">2 hrs ago</span>
+</div>
+<div class="flex justify-between items-center">
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-surface-container-high flex items-center justify-center opacity-50">
+<span class="material-symbols-outlined text-[14px]" data-icon="person">person</span>
+</div>
+<span class="text-body-md text-on-surface-variant opacity-50">Sarah Jenkins</span>
+</div>
+<span class="text-body-md text-outline italic opacity-50">Technical Issue</span>
+</div>
+<div class="ticket-actions opacity-0 flex items-center gap-3 transition-opacity">
+<span class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors" data-icon="history">history</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Quick View Panel -->
+<div class="col-span-4 bg-surface-container-low/30 overflow-y-auto custom-scrollbar p-8">
+<div class="sticky top-0">
+<div class="flex items-center justify-between mb-8">
+<span class="font-label-caps text-on-surface-variant">TICKET DETAILS</span>
+<span class="material-symbols-outlined cursor-pointer hover:rotate-90 transition-transform" data-icon="close">close</span>
+</div>
+<div class="mb-8">
+<div class="aspect-video w-full rounded-lg mb-6 relative overflow-hidden group">
+<img alt="Ticket Reference Data" class="w-full h-full object-cover" data-alt="A clean, professional data visualization dashboard displayed on a high-resolution sleek tablet screen. The image features architectural minimalism with soft, cinematic lighting and a white-on-white aesthetic. Charts are elegant and restrained using a monochrome palette with thin lines and subtle highlights. The environment is a blurred modern office setting with glass and concrete textures." src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_V_O7nH6Hva2oCgj0ebgzWYtgVPbqLS703yeF0_hz1-9nk7r8lG8ME4op7oXuzo0petW-XwI_2a0xIM8b4lOEJoZW1_nUDFZ1HadXdNg_KXDLafEpldq4fc2oGWcqYwx_U49MjbkCzM0ZSqklUqBSN8OWRHWjfBVLiNq8tp8SJTRJPJ84lc-WvjKAZoacXPrfxLkHil51wZJoJTHQIto1KLIqFnsbSGg70rzJqClxcHsBEZ8pE0KBlPqpKIGLu4wB6W1Mq08UHsMI"/>
+<div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<span class="text-on-primary font-label-caps bg-primary/80 px-4 py-2 rounded">EXPAND ATTACHMENT</span>
+</div>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">TK-82910: Payment Failure</h3>
+<div class="flex gap-2 mb-6">
+<span class="font-label-caps text-[10px] bg-error-red text-on-error px-2 py-0.5 rounded">PRIORITY: HIGH</span>
+<span class="font-label-caps text-[10px] bg-surface-container-highest text-on-surface-variant px-2 py-0.5 rounded">ID: 89021-X</span>
+</div>
+<p class="text-body-md text-on-surface-variant leading-relaxed mb-6">
+                                Customer reports that the payment gateway returns a "Error 502" consistently during checkout on mobile devices. User is using a secondary credit line. Urgent resolution required to secure the current high-value transaction.
+                            </p>
+<div class="space-y-4 pt-6 border-t border-outline-variant/30">
+<div>
+<label class="block font-label-caps text-[10px] text-on-surface-variant mb-2">ASSIGNED AGENT</label>
+<div class="relative">
+<select class="w-full appearance-none bg-surface-container-lowest border border-outline-variant/50 px-4 py-3 font-body-md text-primary focus:ring-1 focus:ring-primary outline-none cursor-pointer">
+<option>Marcus Aurelius (Lead)</option>
+<option>Seneca White (Support)</option>
+<option>Hadrian Black (Tech)</option>
+<option unassigned="">-- Unassigned --</option>
+</select>
+<span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" data-icon="unfold_more">unfold_more</span>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<button class="w-full py-3 border border-primary text-primary font-label-caps hover:bg-primary hover:text-on-primary transition-all">
+                                        ESCALATE
+                                    </button>
+<button class="w-full py-3 bg-primary text-on-primary font-label-caps hover:opacity-90 transition-all">
+                                        REPLY
+                                    </button>
+</div>
+</div>
+</div>
+<!-- Activity Log -->
+<div class="space-y-4">
+<span class="font-label-caps text-[10px] text-on-surface-variant block mb-4">ACTIVITY LOG</span>
+<div class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant mt-2"></div>
+<div>
+<p class="text-[12px] text-primary"><span class="font-semibold">Marcus A.</span> assigned the ticket to Tech Ops</p>
+<span class="text-[10px] text-outline">10:42 AM</span>
+</div>
+</div>
+<div class="flex gap-3">
+<div class="w-1.5 h-1.5 rounded-full bg-outline-variant mt-2"></div>
+<div>
+<p class="text-[12px] text-primary"><span class="font-semibold">System</span> generated high-priority alert</p>
+<span class="text-[10px] text-outline">10:35 AM</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+</div>
+<!-- Micro-interaction Script -->
+<script>
+        document.querySelectorAll('.ticket-row').forEach(row => {
+            row.addEventListener('click', function() {
+                // Remove active styling from all
+                document.querySelectorAll('.ticket-row').forEach(r => r.classList.remove('bg-surface-container-high', 'border-primary'));
+                // Add to current
+                this.classList.add('bg-surface-container-high', 'border-primary');
+                
+                // Simulate loading details
+                const detailPanel = document.querySelector('.col-span-4');
+                detailPanel.style.opacity = '0.5';
+                setTimeout(() => {
+                    detailPanel.style.opacity = '1';
+                }, 200);
+            });
+        });
+
+        // Simple animation for the live indicator
+        const indicator = document.querySelector('.animate-pulse');
+        let growing = true;
+        setInterval(() => {
+            if (growing) {
+                indicator.style.opacity = '0.4';
+            } else {
+                indicator.style.opacity = '1';
+            }
+            growing = !growing;
+        }, 1000);
+    </script>
+</body></html>
