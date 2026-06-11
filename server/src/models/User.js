@@ -26,6 +26,55 @@ const userSchema = new mongoose.Schema(
       enum: ['customer', 'store', 'admin'],
       default: 'customer',
     },
+    vendorStatus: {
+      type: String,
+      enum: ['none', 'pending', 'approved', 'rejected'],
+      default: 'none',
+    },
+    companyName: {
+      type: String,
+      default: '',
+    },
+    businessType: {
+      type: String,
+      default: '',
+    },
+    taxId: {
+      type: String,
+      default: '',
+    },
+    yearsInIndustry: {
+      type: Number,
+      default: 0,
+    },
+    philosophy: {
+      type: String,
+      default: '',
+    },
+    phone: {
+      type: String,
+      default: '',
+    },
+    occupation: {
+      type: String,
+      default: '',
+    },
+    streetAddress: {
+      type: String,
+      default: '',
+    },
+    city: {
+      type: String,
+      default: '',
+    },
+    state: {
+      type: String,
+      default: '',
+    },
+    zipCode: {
+      type: String,
+      default: '',
+    },
     otp: {
       type: String,
     },

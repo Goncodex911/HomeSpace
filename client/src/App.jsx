@@ -7,6 +7,9 @@ import VerifyOtp from './pages/VerifyOtp';
 import ResetPassword from './pages/ResetPassword';
 import Dashboard from './pages/Dashboard';
 import Home from './pages/Home';
+import Settings from './pages/Settings';
+import VendorRegister from './pages/VendorRegister';
+import AdminDashboard from './pages/AdminDashboard';
 
 // Role-based Private Route Wrapper
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
@@ -25,6 +28,9 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
   }
 
   if (allowedRoles.length && (!user || !allowedRoles.includes(user.role))) {
+    if (user && user.vendorStatus === 'pending') {
+      return <Navigate to="/vendor-register" replace />;
+    }
     return <Navigate to="/" replace />;
   }
 
@@ -33,7 +39,7 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
 
 // Public Route (Only accessible if NOT logged in)
 const PublicRoute = ({ children }) => {
-  const { token, loading } = useContext(AuthContext);
+  const { token, user, loading } = useContext(AuthContext);
 
   if (loading) {
     return (
@@ -43,7 +49,21 @@ const PublicRoute = ({ children }) => {
     );
   }
 
-  return !token ? children : <Navigate to="/" replace />;
+  if (token) {
+    const localUserStr = localStorage.getItem('user');
+    let currentUser = user;
+    if (!currentUser && localUserStr) {
+      try {
+        currentUser = JSON.parse(localUserStr);
+      } catch (e) {}
+    }
+    if (currentUser && currentUser.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -97,6 +117,29 @@ function App() {
               </PrivateRoute>
             }
           />
+
+          {/* Protected Admin Dashboard Console */}
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute allowedRoles={['admin']}>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Protected Account Settings Page */}
+          <Route
+            path="/settings"
+            element={
+              <PrivateRoute>
+                <Settings />
+              </PrivateRoute>
+            }
+          />
+
+          {/* Vendor Registration Page */}
+          <Route path="/vendor-register" element={<VendorRegister />} />
 
           {/* Fallback Redirection */}
           <Route path="*" element={<Navigate to="/" replace />} />

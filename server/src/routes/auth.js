@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
+import { protect } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -123,6 +124,12 @@ router.post('/verify-otp', async (req, res) => {
         email: user.email,
         isVerified: user.isVerified,
         role: user.role,
+        vendorStatus: user.vendorStatus,
+        companyName: user.companyName,
+        businessType: user.businessType,
+        taxId: user.taxId,
+        yearsInIndustry: user.yearsInIndustry,
+        philosophy: user.philosophy,
       },
     });
   } catch (error) {
@@ -253,6 +260,12 @@ router.post('/login', async (req, res) => {
         email: user.email,
         isVerified: user.isVerified,
         role: user.role,
+        vendorStatus: user.vendorStatus,
+        companyName: user.companyName,
+        businessType: user.businessType,
+        taxId: user.taxId,
+        yearsInIndustry: user.yearsInIndustry,
+        philosophy: user.philosophy,
       },
     });
   } catch (error) {
@@ -341,6 +354,261 @@ router.post('/reset-password', async (req, res) => {
     await user.save();
 
     res.status(200).json({ message: 'Password has been reset successfully. Please log in.' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   GET /api/auth/profile
+// @desc    Get user profile
+router.get('/profile', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password');
+    res.status(200).json({ user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/auth/profile
+// @desc    Update user profile
+router.put('/profile', protect, async (req, res) => {
+  try {
+    const { fullName, email, phone, occupation, streetAddress, city, state, zipCode } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+      const emailExists = await User.findOne({ email: email.toLowerCase() });
+      if (emailExists) {
+        return res.status(400).json({ message: 'Email is already in use by another user' });
+      }
+      user.email = email;
+    }
+
+    if (fullName) user.fullName = fullName;
+    user.phone = phone !== undefined ? phone : user.phone;
+    user.occupation = occupation !== undefined ? occupation : user.occupation;
+    user.streetAddress = streetAddress !== undefined ? streetAddress : user.streetAddress;
+    user.city = city !== undefined ? city : user.city;
+    user.state = state !== undefined ? state : user.state;
+    user.zipCode = zipCode !== undefined ? zipCode : user.zipCode;
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        occupation: user.occupation,
+        streetAddress: user.streetAddress,
+        city: user.city,
+        state: user.state,
+        zipCode: user.zipCode,
+        isVerified: user.isVerified,
+        role: user.role,
+        vendorStatus: user.vendorStatus,
+        companyName: user.companyName,
+        businessType: user.businessType,
+        taxId: user.taxId,
+        yearsInIndustry: user.yearsInIndustry,
+        philosophy: user.philosophy,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   POST /api/auth/apply-vendor
+// @desc    Submit application to become a vendor
+// @access  Private
+router.post('/apply-vendor', protect, async (req, res) => {
+  try {
+    const { companyName, businessType, taxId, yearsInIndustry, philosophy, fullName, phone } = req.body;
+
+    if (!companyName || !businessType || !taxId || !yearsInIndustry || !philosophy) {
+      return res.status(400).json({ message: 'Please enter all business details' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update optional contact info if submitted
+    if (fullName) user.fullName = fullName;
+    if (phone) user.phone = phone;
+
+    // Update business info
+    user.companyName = companyName;
+    user.businessType = businessType;
+    user.taxId = taxId;
+    user.yearsInIndustry = yearsInIndustry;
+    user.philosophy = philosophy;
+    user.vendorStatus = 'pending';
+
+    await user.save();
+
+    res.status(200).json({
+      message: 'Vendor application submitted successfully. Pending admin approval.',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        phone: user.phone,
+        isVerified: user.isVerified,
+        role: user.role,
+        vendorStatus: user.vendorStatus,
+        companyName: user.companyName,
+        businessType: user.businessType,
+        taxId: user.taxId,
+        yearsInIndustry: user.yearsInIndustry,
+        philosophy: user.philosophy,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   GET /api/auth/admin/vendor-applications
+// @desc    Get all vendor applications (Admin only)
+// @access  Private
+router.get('/admin/vendor-applications', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const applications = await User.find({ vendorStatus: { $ne: 'none' } }).select('-password');
+    res.status(200).json({ data: applications, applications });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/auth/admin/approve-vendor/:id
+// @desc    Approve a vendor application (Admin only)
+// @access  Private
+router.put('/admin/approve-vendor/:id', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.vendorStatus !== 'pending') {
+      return res.status(400).json({ message: `Cannot approve user in '${user.vendorStatus}' status` });
+    }
+
+    user.vendorStatus = 'approved';
+    user.role = 'store';
+    await user.save();
+
+    // Send congratulatory email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Lumina Atelier - Vendor Application Approved!',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e5e1; background-color: #faf9f5; color: #1a1c1a;">
+            <h2 style="font-family: 'Montserrat', sans-serif; font-weight: 300; text-align: center; color: #000000;">LUMINA ATELIER</h2>
+            <hr style="border: 0; border-top: 1px solid #c4c7c7; margin-bottom: 20px;" />
+            <p>Dear ${user.fullName},</p>
+            <p>We are thrilled to inform you that your vendor application for <strong>Lumina Atelier</strong> has been approved!</p>
+            <p>Your account has been upgraded to a Curator Partner. You can now access your Store Manager panel to manage your furniture pieces and showcase your craftsmanship.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="http://localhost:5173/store" style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 14px; letter-spacing: 2px;">ACCESS STORE MANAGER</a>
+            </div>
+            <p style="font-size: 12px; color: #747878;">Welcome to our exclusive inner circle. We look forward to curating your finest work.</p>
+            <hr style="border: 0; border-top: 1px solid #e5e5e1; margin-top: 20px;" />
+            <p style="font-size: 10px; text-align: center; color: #747878;">&copy; 2024 Lumina Marketplace. All rights reserved.</p>
+          </div>
+        `
+      });
+    } catch (mailError) {
+      console.error('Failed to send approval email:', mailError.message);
+    }
+
+    res.status(200).json({
+      message: 'User vendor application approved and role upgraded to store successfully.',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        vendorStatus: user.vendorStatus,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/auth/admin/reject-vendor/:id
+// @desc    Reject a vendor application (Admin only)
+// @access  Private
+router.put('/admin/reject-vendor/:id', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.vendorStatus !== 'pending') {
+      return res.status(400).json({ message: `Cannot reject user in '${user.vendorStatus}' status` });
+    }
+
+    user.vendorStatus = 'rejected';
+    await user.save();
+
+    // Send rejection email
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: 'Lumina Atelier - Application Update',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e5e5e1; background-color: #faf9f5; color: #1a1c1a;">
+            <h2 style="font-family: 'Montserrat', sans-serif; font-weight: 300; text-align: center; color: #000000;">LUMINA ATELIER</h2>
+            <hr style="border: 0; border-top: 1px solid #c4c7c7; margin-bottom: 20px;" />
+            <p>Dear ${user.fullName},</p>
+            <p>Thank you for your interest in joining Lumina Atelier as a Curator. We have carefully reviewed your application and brand philosophy.</p>
+            <p>Unfortunately, we are unable to accept your application at this time as it does not fully align with our current seasonal design direction.</p>
+            <p>We appreciate the time you took to share your work with us. You are welcome to re-apply in the future as our curated collections expand.</p>
+            <hr style="border: 0; border-top: 1px solid #e5e5e1; margin-top: 20px;" />
+            <p style="font-size: 10px; text-align: center; color: #747878;">&copy; 2024 Lumina Marketplace. All rights reserved.</p>
+          </div>
+        `
+      });
+    } catch (mailError) {
+      console.error('Failed to send rejection email:', mailError.message);
+    }
+
+    res.status(200).json({
+      message: 'User vendor application rejected successfully.',
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        vendorStatus: user.vendorStatus,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

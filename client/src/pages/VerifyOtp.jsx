@@ -93,7 +93,7 @@ const VerifyOtp = () => {
       await verifyOtp(email, otpCode);
       setMessage('Account verified successfully. Welcome to Lumina!');
       setTimeout(() => {
-        navigate('/');
+        navigate(location.state?.redirectTo || '/');
       }, 1500);
     } catch (err) {
       setError(err.message || 'OTP verification failed');

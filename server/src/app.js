@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import itemRoutes from './routes/items.js';
 import authRoutes from './routes/auth.js';
-import { protect } from './middleware/auth.js';
+import { protect } from './middlewares/auth.js';
 
 const app = express();
 app.use(cors());

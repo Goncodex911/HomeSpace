@@ -18,8 +18,12 @@ const SignIn = () => {
     setLoading(true);
 
     try {
-      await login(email, password);
-      navigate('/');
+      const res = await login(email, password);
+      if (res.user && res.user.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       // Check if account is unverified (handled by custom code/response)
       if (err.message.includes('not verified') || err.message.includes('unverified') || err.unverified) {

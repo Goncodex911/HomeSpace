@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect } from 'react';
-import api from '../services/api';
+import api from '../api/api';
 
 export const AuthContext = createContext();
 
@@ -9,18 +9,29 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // If we have a token but no user, we can retrieve/verify user from a simple profile check or just parse jwt.
-    // For simplicity, we can load user from localStorage if we saved it there
-    const storedUser = localStorage.getItem('user');
-    if (storedUser && token) {
-      setUser(JSON.parse(storedUser));
-    } else {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      setToken(null);
-      setUser(null);
-    }
-    setLoading(false);
+    const fetchUserProfile = async () => {
+      if (token) {
+        try {
+          const res = await api('/auth/profile');
+          if (res.user) {
+            localStorage.setItem('user', JSON.stringify(res.user));
+            setUser(res.user);
+          }
+        } catch (err) {
+          console.error('Failed to fetch user profile:', err);
+          // If token is invalid or expired, clear it
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setToken(null);
+          setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      setLoading(false);
+    };
+
+    fetchUserProfile();
   }, [token]);
 
   const register = async (fullName, email, password) => {
@@ -86,6 +97,30 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
+  const updateProfile = async (profileData) => {
+    const res = await api('/auth/profile', {
+      method: 'PUT',
+      body: profileData,
+    });
+    if (res.user) {
+      localStorage.setItem('user', JSON.stringify(res.user));
+      setUser(res.user);
+    }
+    return res;
+  };
+
+  const applyVendor = async (vendorData) => {
+    const res = await api('/auth/apply-vendor', {
+      method: 'POST',
+      body: vendorData,
+    });
+    if (res.user) {
+      localStorage.setItem('user', JSON.stringify(res.user));
+      setUser(res.user);
+    }
+    return res;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -99,6 +134,8 @@ export const AuthProvider = ({ children }) => {
         forgotPassword,
         resetPassword,
         logout,
+        updateProfile,
+        applyVendor,
       }}
     >
       {children}

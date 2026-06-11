@@ -1,7 +1,7 @@
 import express from 'express';
 import Item from '../models/Item.js';
-import { protect } from '../middleware/auth.js';
-import { authorize } from '../middleware/roleAuth.js';
+import { protect } from '../middlewares/auth.js';
+import { authorize } from '../middlewares/roleAuth.js';
 
 const router = express.Router();
 
