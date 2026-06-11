@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Store Registration Approval System | Atelier Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "surface-container-lowest": "#ffffff",
+                        "on-secondary-fixed-variant": "#584329",
+                        "tertiary-container": "#1a1c19",
+                        "inverse-on-surface": "#f1f1ed",
+                        "on-secondary-container": "#765f42",
+                        "background": "#faf9f5",
+                        "inverse-primary": "#c8c6c5",
+                        "surface-cream": "#FAF9F5",
+                        "on-tertiary-container": "#838480",
+                        "error-red": "#BA1A1A",
+                        "tertiary-fixed": "#e3e3de",
+                        "surface-dim": "#dadad6",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "primary-fixed": "#e5e2e1",
+                        "on-error-container": "#93000a",
+                        "tertiary": "#000000",
+                        "surface-variant": "#e3e3df",
+                        "secondary": "#715a3e",
+                        "on-primary-fixed-variant": "#474646",
+                        "primary-container": "#1c1b1b",
+                        "error-container": "#ffdad6",
+                        "secondary-container": "#fadab7",
+                        "error": "#ba1a1a",
+                        "surface-container-high": "#e8e8e4",
+                        "inverse-surface": "#2f312e",
+                        "on-secondary": "#ffffff",
+                        "outline": "#747878",
+                        "secondary-fixed-dim": "#e0c19f",
+                        "on-surface": "#1a1c1a",
+                        "secondary-fixed": "#fdddba",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "surface-container": "#eeeeea",
+                        "on-primary-container": "#858383",
+                        "primary": "#000000",
+                        "outline-variant": "#c4c7c7",
+                        "surface-container-low": "#f4f4f0",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "on-primary": "#ffffff",
+                        "success-green": "#166534",
+                        "on-secondary-fixed": "#281803",
+                        "surface-bright": "#faf9f5",
+                        "surface-tint": "#5f5e5e",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "on-surface-variant": "#444748",
+                        "on-background": "#1a1c1a",
+                        "on-error": "#ffffff",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface": "#faf9f5",
+                        "surface-container-highest": "#e3e3df"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "unit": "8px",
+                        "margin-mobile": "20px",
+                        "margin-desktop": "64px",
+                        "gutter": "24px",
+                        "container-max": "1440px"
+                    },
+                    "fontFamily": {
+                        "chart-tick": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "headline-md": ["Montserrat"]
+                    },
+                    "fontSize": {
+                        "chart-tick": ["10px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-panel {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #c4c7c7;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="bg-surface-cream font-body-md text-on-surface">
+<!-- SideNavBar (Execution from JSON) -->
+<aside class="w-64 h-screen fixed left-0 top-0 bg-surface-cream border-r border-outline-variant/30 flex flex-col py-margin-desktop z-50">
+<div class="px-6 mb-12">
+<h1 class="font-display-lg text-display-lg font-normal text-primary tracking-tighter">Atelier Admin</h1>
+<p class="font-label-caps text-label-caps text-on-surface-variant mt-1">Enterprise Suite</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">analytics</span>
+<span class="font-label-caps text-label-caps">Analytics</span>
+</a>
+<a class="flex items-center px-6 py-3 text-primary border-r-2 border-primary font-semibold hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-3">storefront</span>
+<span class="font-label-caps text-label-caps">Vendors</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">group</span>
+<span class="font-label-caps text-label-caps">Users</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">inventory_2</span>
+<span class="font-label-caps text-label-caps">Products</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">shopping_cart</span>
+<span class="font-label-caps text-label-caps">Orders</span>
+</a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">payments</span>
+<span class="font-label-caps text-label-caps">Financials</span>
+</a>
+<div class="mt-auto pt-8">
+<a class="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low" href="#">
+<span class="material-symbols-outlined mr-3">settings</span>
+<span class="font-label-caps text-label-caps">Settings</span>
+</a>
+</div>
+</nav>
+</aside>
+<!-- TopNavBar (Execution from JSON) -->
+<header class="fixed top-0 right-0 w-[calc(100%-256px)] h-16 bg-glass-bg border-b border-outline-variant/30 backdrop-blur-md z-40 flex justify-between items-center px-gutter max-w-container-max ml-auto">
+<div class="flex items-center flex-1">
+<div class="relative w-full max-w-md">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-1 focus:ring-outline text-body-md font-body-md" placeholder="Search applications..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<div class="flex space-x-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">apps</span></button>
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">help</span></button>
+</div>
+<div class="h-8 w-px bg-outline-variant/30"></div>
+<div class="flex items-center space-x-3">
+<div class="text-right hidden sm:block">
+<p class="font-label-caps text-label-caps text-primary leading-none">Admin User</p>
+<p class="text-[10px] text-on-surface-variant">Super Admin</p>
+</div>
+<img alt="Administrator Profile" class="w-8 h-8 rounded-full border border-outline-variant" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHZ8wJXVTHoyhIs8znunaiBu_OQBusEr3N3zsgqwx1daCKXWqNQh7_Gt4Lb6ksW6aZ_QX7JdZawurc0VUmyBjuwaiiVAV2LcWLcmTDPRfOAvyJoE_HNONZOsfQ6h0zSPFpm05CKGsSDPeCBXXne--oYJjmPg5VC4NtiDVVuVdJNrybdLtb6u4t_s4AcNTQnx3VN8KCY6oNcJy-vMxN_8uoec87hZucdvwanT7xzrf5rkCXjQEKTpKDwsCO1XgTk_FXfJnGC2djECz3"/>
+</div>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-64 pt-16 min-h-screen">
+<div class="max-w-[1440px] mx-auto p-margin-desktop grid grid-cols-12 gap-gutter">
+<!-- Page Header -->
+<div class="col-span-12 mb-4">
+<nav class="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
+<span>Vendors</span>
+<span>/</span>
+<span class="text-primary">Registration Approvals</span>
+</nav>
+<h2 class="font-headline-md text-headline-md text-primary">Store Registration Approvals</h2>
+</div>
+<!-- Left: Filterable List (Bento-style list) -->
+<section class="col-span-12 lg:col-span-4 space-y-4 h-[calc(100vh-220px)] overflow-y-auto pr-2">
+<div class="flex items-center justify-between sticky top-0 bg-surface-cream z-10 py-2">
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase">4 Pending Applications</span>
+<button class="text-primary hover:underline font-label-caps text-[10px]">Filter</button>
+</div>
+<!-- Active Card -->
+<div class="bg-surface-container-lowest border-l-4 border-primary p-6 shadow-sm cursor-pointer transition-all hover:bg-white">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-[16px] text-primary">Lumina Artisan Goods</h3>
+<span class="font-label-caps text-[10px] px-2 py-1 bg-secondary-container text-on-secondary-container rounded">Under Review</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4">Owner: Sarah Jenkins</p>
+<div class="flex justify-between items-center text-[11px] text-on-surface-variant font-label-caps">
+<span>Submitted 2h ago</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- List Item 2 -->
+<div class="bg-surface-container-low/50 border border-outline-variant/20 p-6 cursor-pointer transition-all hover:bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-[16px] text-primary">The Nordic Collective</h3>
+<span class="font-label-caps text-[10px] px-2 py-1 bg-surface-container-highest text-on-surface-variant rounded">Pending</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4">Owner: Erik Sørensen</p>
+<div class="flex justify-between items-center text-[11px] text-on-surface-variant font-label-caps">
+<span>Submitted 5h ago</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- List Item 3 -->
+<div class="bg-surface-container-low/50 border border-outline-variant/20 p-6 cursor-pointer transition-all hover:bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-[16px] text-primary">Aura Ceramics</h3>
+<span class="font-label-caps text-[10px] px-2 py-1 bg-surface-container-highest text-on-surface-variant rounded">Pending</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4">Owner: Elena Rodriguez</p>
+<div class="flex justify-between items-center text-[11px] text-on-surface-variant font-label-caps">
+<span>Submitted 1d ago</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+<!-- List Item 4 -->
+<div class="bg-surface-container-low/50 border border-outline-variant/20 p-6 cursor-pointer transition-all hover:bg-surface-container-lowest">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline-md text-[16px] text-primary">Vellum Stationery</h3>
+<span class="font-label-caps text-[10px] px-2 py-1 bg-surface-container-highest text-on-surface-variant rounded">Pending</span>
+</div>
+<p class="text-on-surface-variant text-body-md mb-4">Owner: Marcus Wright</p>
+<div class="flex justify-between items-center text-[11px] text-on-surface-variant font-label-caps">
+<span>Submitted 2d ago</span>
+<span class="material-symbols-outlined text-[16px]">chevron_right</span>
+</div>
+</div>
+</section>
+<!-- Right: Detailed Review Pane -->
+<section class="col-span-12 lg:col-span-8 space-y-gutter">
+<!-- Review Card -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-8 flex flex-col space-y-8">
+<!-- Review Header & Workflow -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-8 border-b border-outline-variant/20">
+<div>
+<h2 class="font-headline-md text-headline-md text-primary mb-1">Lumina Artisan Goods</h2>
+<p class="text-on-surface-variant font-body-md">Reference: APP-2023-8942</p>
+</div>
+<!-- Workflow Timeline -->
+<div class="flex items-center space-x-2">
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10"></div>
+<span class="font-label-caps text-[9px] mt-2 text-primary">Pending</span>
+</div>
+<div class="w-12 h-[1px] bg-primary"></div>
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-primary ring-4 ring-primary/10"></div>
+<span class="font-label-caps text-[9px] mt-2 text-primary">Review</span>
+</div>
+<div class="w-12 h-[1px] bg-outline-variant"></div>
+<div class="flex flex-col items-center">
+<div class="w-2 h-2 rounded-full bg-outline-variant"></div>
+<span class="font-label-caps text-[9px] mt-2 text-on-surface-variant">Approval</span>
+</div>
+</div>
+</div>
+<!-- Details Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="space-y-6">
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-1">Store Name</label>
+<p class="font-body-lg text-body-lg text-primary">Lumina Artisan Goods</p>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-1">Owner</label>
+<p class="font-body-lg text-body-lg text-primary">Sarah Jenkins</p>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-1">Tax ID / VAT</label>
+<p class="font-body-lg text-body-lg text-primary tracking-widest">US-88-2930491-X</p>
+</div>
+<div>
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase block mb-1">Contact Info</label>
+<div class="space-y-1">
+<p class="font-body-md text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2">mail</span>
+                                        s.jenkins@lumina-artisans.co
+                                    </p>
+<p class="font-body-md text-on-surface flex items-center">
+<span class="material-symbols-outlined text-[18px] mr-2">phone</span>
+                                        +1 (555) 092-8831
+                                    </p>
+</div>
+</div>
+</div>
+<!-- License Preview -->
+<div class="space-y-4">
+<label class="font-label-caps text-label-caps text-on-surface-variant uppercase block">Business License</label>
+<div class="relative group aspect-[4/3] bg-surface-container overflow-hidden border border-outline-variant/30">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="A high-resolution document preview of a formal business license with gold seals and official typography. The background is a crisp white texture, resting on a minimalist stone-colored surface with architectural lighting that creates sharp, elegant shadows. The visual style is premium and institutional, utilizing high-key lighting to emphasize cleanliness and bureaucratic precision." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_q4LVs_ogtzYdO7bt3Dmc1okicriML45tGJ3VpSSdq3bv8KraTE3BRgYGxZWourJHW1V4tgGIDyanxA4wjezwcn1Ilv5_OCv72Y2gR8LMkGQ7Apv7P0KRENYLoxfueoPM7OZkYMtD6EzFKyey3MaRgZBqdQu6kjjExntb780of6F6r5p3N82BNhwT6jtwh3ZaSnGLjm_-_0-bUxlHzSTLYt4xXwrKmQ8vnXbw2vTUo7MfxS2vZvNEiIRL3fYLw_XBl-WT2Z0tsxD_"/>
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white text-primary px-4 py-2 font-label-caps text-label-caps flex items-center shadow-lg">
+<span class="material-symbols-outlined mr-2">zoom_in</span>
+                                        View Fullscreen
+                                    </button>
+</div>
+</div>
+<p class="text-[11px] text-on-surface-variant italic">Document verified via automated OCR sweep (98% confidence).</p>
+</div>
+</div>
+<!-- Action Bar -->
+<div class="pt-8 border-t border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div class="flex flex-wrap gap-3">
+<button class="px-6 py-3 border border-error-red text-error-red font-label-caps text-label-caps hover:bg-error-container/20 transition-colors uppercase" onclick="document.getElementById('reject-modal').classList.toggle('hidden')">
+                                Reject Store
+                            </button>
+<button class="px-6 py-3 border border-primary text-primary font-label-caps text-label-caps hover:bg-surface-container-low transition-colors uppercase">
+                                Request More Info
+                            </button>
+</div>
+<button class="px-10 py-3 bg-primary text-on-primary font-label-caps text-label-caps shadow-xl hover:opacity-90 transition-opacity uppercase tracking-widest">
+                            Approve Store
+                        </button>
+</div>
+</div>
+<!-- Recent Activity/Notes (Minimalist Card) -->
+<div class="bg-surface-container-low border border-outline-variant/20 p-8">
+<h4 class="font-label-caps text-label-caps text-on-surface-variant uppercase mb-6">Reviewer Activity Log</h4>
+<div class="space-y-6">
+<div class="flex items-start space-x-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">person</span>
+</div>
+<div>
+<p class="text-body-md"><span class="font-bold">System Admin</span> updated status to <span class="text-secondary font-semibold">Under Review</span></p>
+<p class="text-[11px] text-on-surface-variant mt-1">Today, 09:12 AM</p>
+</div>
+</div>
+<div class="flex items-start space-x-4">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest flex items-center justify-center text-on-surface-variant">
+<span class="material-symbols-outlined text-[18px]">security</span>
+</div>
+<div>
+<p class="text-body-md"><span class="font-bold">Automated Guard</span> verified Tax ID matches EIN database records.</p>
+<p class="text-[11px] text-on-surface-variant mt-1">Today, 08:45 AM</p>
+</div>
+</div>
+</div>
+<div class="mt-8">
+<textarea class="w-full bg-surface-cream border-outline-variant/30 p-4 text-body-md focus:ring-1 focus:ring-primary h-24" placeholder="Add internal reviewer note..."></textarea>
+<div class="mt-2 flex justify-end">
+<button class="font-label-caps text-label-caps text-primary hover:underline">Post Note</button>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Reject Reason Modal (Overlay/Sticky Glassmorphism) -->
+<div class="hidden fixed inset-0 z-[60] flex items-center justify-center p-6 bg-primary/10 backdrop-blur-sm" id="reject-modal">
+<div class="bg-white max-w-md w-full p-8 shadow-2xl border border-outline-variant/50 animate-in fade-in zoom-in duration-200">
+<div class="flex justify-between items-center mb-6">
+<h3 class="font-headline-md text-headline-md text-primary">Rejection Reason</h3>
+<button class="text-on-surface-variant hover:text-primary" onclick="document.getElementById('reject-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<p class="text-body-md text-on-surface-variant mb-6">The owner will receive an automated email with this explanation.</p>
+<div class="space-y-4">
+<div class="flex items-center space-x-2">
+<input class="text-primary focus:ring-primary" id="r1" name="reason" type="radio"/>
+<label class="text-body-md" for="r1">Incomplete documentation</label>
+</div>
+<div class="flex items-center space-x-2">
+<input class="text-primary focus:ring-primary" id="r2" name="reason" type="radio"/>
+<label class="text-body-md" for="r2">Business type not supported</label>
+</div>
+<div class="flex items-center space-x-2">
+<input class="text-primary focus:ring-primary" id="r3" name="reason" type="radio"/>
+<label class="text-body-md" for="r3">High-risk flag / Verification failure</label>
+</div>
+<div class="mt-4">
+<label class="font-label-caps text-[10px] text-on-surface-variant uppercase mb-1 block">Custom Message (Optional)</label>
+<textarea class="w-full border-outline-variant/30 bg-surface-cream p-3 text-body-md focus:ring-primary h-24" placeholder="Enter detailed reason..."></textarea>
+</div>
+</div>
+<div class="mt-8 flex space-x-3">
+<button class="flex-1 py-3 border border-outline-variant text-on-surface-variant font-label-caps text-label-caps uppercase" onclick="document.getElementById('reject-modal').classList.add('hidden')">Cancel</button>
+<button class="flex-1 py-3 bg-error-red text-white font-label-caps text-label-caps uppercase">Confirm Rejection</button>
+</div>
+</div>
+</div>
+<script>
+        // Simple micro-interaction for list item selection
+        document.querySelectorAll('section.col-span-12.lg\\:col-span-4 > div.cursor-pointer').forEach(item => {
+            item.addEventListener('click', () => {
+                // Remove active states
+                document.querySelectorAll('section.col-span-12.lg\\:col-span-4 > div').forEach(el => {
+                    el.classList.remove('border-l-4', 'border-primary', 'bg-surface-container-lowest', 'shadow-sm');
+                    el.classList.add('bg-surface-container-low/50', 'border', 'border-outline-variant/20');
+                });
+                
+                // Add active state to clicked
+                item.classList.add('border-l-4', 'border-primary', 'bg-surface-container-lowest', 'shadow-sm');
+                item.classList.remove('bg-surface-container-low/50', 'border', 'border-outline-variant/20');
+            });
+        });
+    </script>
+</body></html>
