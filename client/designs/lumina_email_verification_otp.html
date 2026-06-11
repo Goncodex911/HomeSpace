@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Verify Email | Lumina</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Montserrat:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-container-highest": "#e3e3df",
+                    "error": "#ba1a1a",
+                    "on-tertiary-container": "#838480",
+                    "on-secondary-fixed": "#281803",
+                    "secondary-fixed-dim": "#e0c29f",
+                    "on-primary-container": "#858383",
+                    "surface-dim": "#dadad6",
+                    "surface-container-low": "#f4f4f0",
+                    "tertiary-fixed": "#e3e3de",
+                    "secondary": "#715a3e",
+                    "on-tertiary-fixed": "#1a1c19",
+                    "surface-bright": "#faf9f5",
+                    "surface-container-high": "#e8e8e4",
+                    "secondary-fixed": "#fdddb9",
+                    "tertiary-fixed-dim": "#c6c7c2",
+                    "on-primary-fixed": "#1c1b1b",
+                    "on-background": "#1a1c1a",
+                    "on-surface-variant": "#444748",
+                    "inverse-primary": "#c8c6c5",
+                    "outline": "#747878",
+                    "primary": "#000000",
+                    "on-tertiary": "#ffffff",
+                    "inverse-on-surface": "#f1f1ed",
+                    "tertiary-container": "#1a1c19",
+                    "outline-variant": "#c4c7c7",
+                    "on-tertiary-fixed-variant": "#454744",
+                    "primary-container": "#1c1b1b",
+                    "primary-fixed": "#e5e2e1",
+                    "on-error-container": "#93000a",
+                    "background": "#faf9f5",
+                    "primary-fixed-dim": "#c8c6c5",
+                    "on-secondary-fixed-variant": "#584329",
+                    "on-surface": "#1a1c1a",
+                    "tertiary": "#000000",
+                    "surface-container": "#eeeeea",
+                    "on-error": "#ffffff",
+                    "surface-variant": "#e3e3df",
+                    "on-secondary-container": "#786044",
+                    "surface": "#faf9f5",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#2f312e",
+                    "surface-tint": "#5f5e5e",
+                    "on-primary-fixed-variant": "#474646",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary": "#ffffff",
+                    "secondary-container": "#fdddb9"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "container-max": "1440px",
+                    "margin-mobile": "20px",
+                    "margin-desktop": "64px",
+                    "gutter": "24px",
+                    "unit": "8px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Montserrat"],
+                    "label-caps": ["Inter"],
+                    "display-lg": ["Montserrat"],
+                    "headline-md": ["Montserrat"],
+                    "display-lg-mobile": ["Montserrat"],
+                    "body-md": ["Inter"],
+                    "body-lg": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                    "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "300"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                    "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.01em", "fontWeight": "300"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                    "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .glass-header {
+            background: rgba(250, 249, 245, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(229, 229, 225, 0.3);
+        }
+        .otp-input:focus {
+            outline: none;
+            border-color: #121212;
+            box-shadow: none;
+        }
+        .luxury-button-hover:hover {
+            background-color: #8C7355;
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md selection:bg-secondary-fixed selection:text-on-secondary-fixed">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full bg-surface/80 dark:bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant/30 flex justify-between items-center px-margin-desktop h-20 w-full z-50">
+<div class="font-headline-md text-headline-md tracking-tighter font-light text-primary dark:text-on-surface">Lumina</div>
+<nav class="hidden md:flex items-center space-x-12">
+<a class="font-body-md text-body-md tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Collections</a>
+<a class="font-body-md text-body-md tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Craftsmanship</a>
+<a class="font-body-md text-body-md tracking-widest uppercase text-on-surface-variant hover:text-primary transition-colors duration-300" href="#">Showrooms</a>
+</nav>
+<div class="flex items-center space-x-6">
+<button class="font-body-md text-body-md tracking-widest uppercase text-primary font-semibold border-b border-primary pb-1">Sign In</button>
+</div>
+</header>
+<main class="pt-20 min-h-screen flex flex-col md:flex-row">
+<!-- Image Side (Split Screen) -->
+<section class="hidden md:block md:w-1/2 lg:w-3/5 h-[calc(100vh-80px)] sticky top-20 overflow-hidden">
+<img alt="Lumina Lamp" class="w-full h-full object-cover grayscale-[20%] contrast-[1.05]" src="https://lh3.googleusercontent.com/aida/AP1WRLtuNU8hVZmXU1R-rZSdDjqzNbV9jImdPwZn1ZhvH6_iAh3v5eCONIzngwCZY9GhKEI5lgkaQ74UOxPE1vwknZ08uXv1nQpFlXKVw09aJuRbojpGevAz9fqYXs_k5KwaWuDVzFeuUD_Ip_7PxVKpI_yG1EWr6Z1hdgG6kKA1GjASbKLomqDwLamnZefBTEAAicf7QWdyBLCUCn82xd19lJX-NXsJXWCS-CPY91tsS4bcsz_8x_XRQQCEMcQI"/>
+</section>
+<!-- Form Side -->
+<section class="w-full md:w-1/2 lg:w-2/5 px-6 md:px-12 lg:px-24 flex flex-col justify-center py-20 bg-surface-container-lowest">
+<div class="max-w-md mx-auto w-full">
+<div class="mb-12">
+<h1 class="font-headline-lg text-headline-lg mb-4 text-primary">Verify Your Email</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">We've sent a 6-digit code to your email address. Please enter it below to continue.</p>
+</div>
+<form class="space-y-12" id="otp-form">
+<!-- OTP Input Grid -->
+<div class="flex justify-between gap-3">
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+<input class="otp-input w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary" maxlength="1" required="" type="text"/>
+</div>
+<div class="space-y-6">
+<button class="w-full bg-primary text-on-primary py-5 font-body-md text-body-md uppercase tracking-[0.2em] luxury-button-hover transition-all duration-300" type="submit">
+                            Verify Code
+                        </button>
+<div class="flex flex-col items-center gap-4">
+<p class="font-body-md text-body-md text-on-surface-variant">Didn't receive the code?</p>
+<button class="font-label-caps text-label-caps uppercase tracking-widest text-primary border-b border-transparent hover:border-primary transition-all duration-300" id="resend-btn" type="button">
+                                Resend Code
+                            </button>
+</div>
+</div>
+</form>
+<!-- Status Feedback -->
+<div class="mt-8 text-center font-body-md text-body-md hidden" id="status-message">
+<span class="text-secondary">Code resent. Please check your inbox.</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface dark:bg-surface-container border-t border-outline-variant/20 flex flex-col md:flex-row justify-between items-center px-margin-desktop py-unit-gutter w-full">
+<div class="font-headline-sm text-headline-sm text-on-surface mb-6 md:mb-0">Lumina</div>
+<div class="flex gap-8 mb-6 md:mb-0">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Contact</a>
+</div>
+<div class="font-label-caps text-label-caps text-on-surface-variant">
+            © 2024 Lumina Marketplace. All rights reserved.
+        </div>
+</footer>
+<script>
+        // OTP Input Auto-focus logic
+        const inputs = document.querySelectorAll('.otp-input');
+        
+        inputs.forEach((input, index) => {
+            input.addEventListener('keyup', (e) => {
+                if (e.key >= 0 && e.key <= 9) {
+                    if (index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                } else if (e.key === 'Backspace') {
+                    if (index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                }
+            });
+        });
+
+        // OTP Submission logic
+        const form = document.getElementById('otp-form');
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const otp = Array.from(inputs).map(input => input.value).join('');
+            if(otp.length === 6) {
+                const btn = form.querySelector('button[type="submit"]');
+                btn.innerHTML = 'Verifying...';
+                btn.classList.add('opacity-70');
+                
+                setTimeout(() => {
+                    alert('Email verified successfully. Welcome to Lumina.');
+                    btn.innerHTML = 'Verify Code';
+                    btn.classList.remove('opacity-70');
+                }, 1500);
+            }
+        });
+
+        // Resend logic
+        const resendBtn = document.getElementById('resend-btn');
+        const statusMsg = document.getElementById('status-message');
+        
+        resendBtn.addEventListener('click', () => {
+            resendBtn.classList.add('opacity-50');
+            resendBtn.disabled = true;
+            statusMsg.classList.remove('hidden');
+            
+            setTimeout(() => {
+                resendBtn.classList.remove('opacity-50');
+                resendBtn.disabled = false;
+                statusMsg.classList.add('hidden');
+            }, 5000);
+        });
+    </script>
+</body></html>

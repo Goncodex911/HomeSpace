@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Category Management | ATELIER ADMIN</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Montserrat:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#1c1b1b",
+                        "secondary-fixed-dim": "#e0c19f",
+                        "on-secondary-container": "#765f42",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed-variant": "#474646",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "error": "#ba1a1a",
+                        "on-error": "#ffffff",
+                        "surface": "#faf9f5",
+                        "on-background": "#1a1c1a",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "on-primary-fixed": "#1c1b1b",
+                        "primary": "#000000",
+                        "surface-bright": "#faf9f5",
+                        "outline-variant": "#c4c7c7",
+                        "on-surface": "#1a1c1a",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "surface-container-low": "#f4f4f0",
+                        "secondary-fixed": "#fdddba",
+                        "primary-fixed": "#e5e2e1",
+                        "tertiary-fixed": "#e3e3de",
+                        "inverse-on-surface": "#f1f1ed",
+                        "background": "#faf9f5",
+                        "surface-container": "#eeeeea",
+                        "surface-container-highest": "#e3e3df",
+                        "surface-container-high": "#e8e8e4",
+                        "on-tertiary-container": "#838480",
+                        "surface-variant": "#e3e3df",
+                        "success-green": "#166534",
+                        "error-red": "#BA1A1A",
+                        "on-secondary-fixed": "#281803",
+                        "on-surface-variant": "#444748",
+                        "surface-cream": "#FAF9F5",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "secondary-container": "#fadab7",
+                        "surface-tint": "#5f5e5e",
+                        "glass-bg": "rgba(255, 255, 255, 0.7)",
+                        "tertiary-container": "#1a1c19",
+                        "inverse-primary": "#c8c6c5",
+                        "surface-dim": "#dadad6",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "outline": "#747878",
+                        "on-secondary-fixed-variant": "#584329",
+                        "surface-container-lowest": "#ffffff",
+                        "on-primary-container": "#858383",
+                        "on-primary": "#ffffff",
+                        "tertiary": "#000000",
+                        "secondary": "#715a3e",
+                        "inverse-surface": "#2f312e",
+                        "on-secondary": "#ffffff"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-desktop": "64px",
+                        "unit": "8px",
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "chart-tick": ["Inter"],
+                        "headline-md": ["Montserrat"],
+                        "body-md": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "label-caps": ["Inter"],
+                        "body-lg": ["Inter"]
+                    },
+                    "fontSize": {
+                        "chart-tick": ["10px", {"lineHeight": "1", "fontWeight": "400"}],
+                        "headline-md": ["20px", {"lineHeight": "1.4", "letterSpacing": "0.02em", "fontWeight": "600"}],
+                        "body-md": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "display-lg": ["32px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                        "label-caps": ["12px", {"lineHeight": "1.2", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "body-lg": ["16px", {"lineHeight": "1.6", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            background-color: #faf9f5;
+            color: #1a1c1a;
+            -webkit-font-smoothing: antialiased;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #e3e3df;
+            border-radius: 10px;
+        }
+        .category-tree-node:hover .node-actions {
+            opacity: 1;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+        }
+    </style>
+</head>
+<body class="font-Inter">
+<!-- Sidebar Navigation Shell -->
+<aside class="h-screen w-64 fixed left-0 top-0 flex flex-col bg-surface border-r border-outline-variant/30 z-50">
+<div class="flex flex-col h-full py-8">
+<div class="px-6 mb-12">
+<h1 class="font-Montserrat font-medium text-primary text-headline-md tracking-wider">ATELIER</h1>
+<p class="font-Inter text-label-caps text-on-surface-variant mt-1 opacity-60">v2.4.0 STABLE</p>
+</div>
+<nav class="flex-1 space-y-1">
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-Inter text-label-caps hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="analytics">analytics</span>
+                    Analytics
+                </a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-Inter text-label-caps hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="storefront">storefront</span>
+                    Vendors
+                </a>
+<a class="flex items-center px-6 py-3 text-primary font-semibold border-r-2 border-primary bg-surface-container-high font-Inter text-label-caps" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="inventory_2">inventory_2</span>
+                    Inventory
+                </a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-Inter text-label-caps hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="shopping_cart">shopping_cart</span>
+                    Orders
+                </a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-Inter text-label-caps hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="group">group</span>
+                    User Management
+                </a>
+<a class="flex items-center px-6 py-3 text-on-surface-variant font-Inter text-label-caps hover:bg-surface-container-low transition-all duration-200" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="speed">speed</span>
+                    System Health
+                </a>
+</nav>
+<div class="mt-auto px-6 space-y-4">
+<a class="flex items-center text-on-surface-variant font-Inter text-label-caps hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="help_outline">help_outline</span>
+                    Support
+                </a>
+<a class="flex items-center text-on-surface-variant font-Inter text-label-caps hover:text-error transition-colors" href="#">
+<span class="material-symbols-outlined mr-4" data-icon="logout">logout</span>
+                    Log Out
+                </a>
+</div>
+</div>
+</aside>
+<!-- Main Canvas -->
+<main class="ml-64 min-h-screen bg-surface-cream">
+<!-- Top App Bar -->
+<header class="w-full sticky top-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-outline-variant/30 flex justify-between items-center px-margin-desktop py-4">
+<div class="flex items-center flex-1 max-w-xl">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-50" data-icon="search">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface-container-low border-none rounded-full text-body-md focus:ring-1 focus:ring-primary/20 transition-all" placeholder="Search taxonomies or product counts..." type="text"/>
+</div>
+</div>
+<div class="flex items-center space-x-6">
+<button class="material-symbols-outlined text-primary cursor-pointer hover:text-secondary transition-colors" data-icon="notifications">notifications</button>
+<button class="material-symbols-outlined text-primary cursor-pointer hover:text-secondary transition-colors" data-icon="settings">settings</button>
+<div class="h-8 w-8 rounded-full overflow-hidden border border-outline-variant">
+<img class="w-full h-full object-cover" data-alt="Close-up portrait of a professional administrator in a minimalist office setting, soft natural lighting, high-end photography style, clean aesthetic consistent with luxury brand identity, neutral tones." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAR9mOdWERIi62O8GYigXHES_vkZyFpE109MgpHpUKrCyG7-DGhmFTRa2L0piJe70diz-sUrz-JX21MxcuQfjL1AzGRP6tFnNv0QRTgsU4mfFI1c3k3cWgaAa7m0nvcRgLkc9TCUBZcwV8cMmiymttGkPjmCEg8uXetOmSloKZyL-2Cl1sRg1NvlyGcP_f3vu8icWf0O1UII0Xb0sRxefv3ujMTLSBPMBWn3CWTDcHzeIYlwMrmRu5EfBxdfHBseR7X9BteYbvz4fMH"/>
+</div>
+</div>
+</header>
+<section class="max-w-[1440px] mx-auto px-margin-desktop py-12">
+<!-- Header Section -->
+<div class="flex justify-between items-end mb-12">
+<div>
+<h2 class="font-Montserrat text-display-lg text-primary mb-2">Category Management</h2>
+<p class="font-Inter text-body-lg text-on-surface-variant max-w-2xl opacity-70">Architectural classification and hierarchy management for the product ecosystem.</p>
+</div>
+<div class="flex space-x-4">
+<button class="px-6 py-3 bg-surface-container-lowest border border-outline-variant text-label-caps font-semibold flex items-center hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined mr-2" data-icon="reorder">reorder</span>
+                        REORDER TREE
+                    </button>
+<button class="px-6 py-3 bg-primary text-on-primary text-label-caps font-semibold flex items-center hover:opacity-90 active:scale-95 transition-all">
+<span class="material-symbols-outlined mr-2" data-icon="add">add</span>
+                        ADD NEW CATEGORY
+                    </button>
+</div>
+</div>
+<!-- Dashboard Stats Grid -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-12">
+<div class="bg-surface-container-lowest border-b border-outline-variant/30 p-8">
+<p class="font-Inter text-label-caps text-on-surface-variant mb-4">TOTAL CATEGORIES</p>
+<div class="flex items-baseline space-x-2">
+<span class="font-Montserrat text-display-lg">42</span>
+<span class="font-Inter text-chart-tick text-success-green flex items-center"><span class="material-symbols-outlined text-[12px] mr-1" data-icon="trending_up">trending_up</span>+3 this month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border-b border-outline-variant/30 p-8">
+<p class="font-Inter text-label-caps text-on-surface-variant mb-4">MOST ACTIVE BRANCH</p>
+<div class="flex items-baseline space-x-2">
+<span class="font-Montserrat text-headline-md">FURNITURE / SEATING</span>
+</div>
+<p class="font-Inter text-chart-tick text-on-surface-variant mt-2">1,240 Active SKUs</p>
+</div>
+<div class="bg-surface-container-lowest border-b border-outline-variant/30 p-8">
+<p class="font-Inter text-label-caps text-on-surface-variant mb-4">TOTAL SALES REVENUE</p>
+<div class="flex items-baseline space-x-2">
+<span class="font-Montserrat text-display-lg">$4.2M</span>
+</div>
+</div>
+</div>
+<!-- Main Content Area: Bento-Style Grid -->
+<div class="grid grid-cols-12 gap-gutter">
+<!-- Left Column: The Tree -->
+<div class="col-span-12 lg:col-span-8">
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-unit">
+<!-- Table Header -->
+<div class="grid grid-cols-12 px-8 py-4 border-b border-outline-variant/30 mb-4">
+<div class="col-span-6 font-Inter text-label-caps text-on-surface-variant">CATEGORY NAME</div>
+<div class="col-span-2 font-Inter text-label-caps text-on-surface-variant text-right">PRODUCTS</div>
+<div class="col-span-2 font-Inter text-label-caps text-on-surface-variant text-right">TOTAL SALES</div>
+<div class="col-span-2 font-Inter text-label-caps text-on-surface-variant text-right">ACTIONS</div>
+</div>
+<!-- Tree Nodes -->
+<div class="space-y-1">
+<!-- Root Category 1 -->
+<div class="category-tree-node">
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="col-span-6 flex items-center">
+<span class="material-symbols-outlined text-on-surface-variant mr-4 transition-transform group-hover:rotate-90" data-icon="chevron_right">chevron_right</span>
+<span class="font-Inter text-body-lg font-semibold">Seating</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">1,240</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">$842k</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error" data-icon="delete">delete</button>
+</div>
+</div>
+<!-- Children -->
+<div class="ml-12 border-l border-outline-variant/20">
+<div class="grid grid-cols-12 px-8 py-3 items-center hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="col-span-6 flex items-center">
+<div class="w-4 h-[1px] bg-outline-variant mr-4"></div>
+<span class="font-Inter text-body-md">Sofas</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant/60">420</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant/60">$410k</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary scale-75" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error scale-75" data-icon="delete">delete</button>
+</div>
+</div>
+<div class="grid grid-cols-12 px-8 py-3 items-center hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="col-span-6 flex items-center">
+<div class="w-4 h-[1px] bg-outline-variant mr-4"></div>
+<span class="font-Inter text-body-md">Armchairs</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant/60">820</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant/60">$432k</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary scale-75" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error scale-75" data-icon="delete">delete</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Root Category 2 -->
+<div class="category-tree-node">
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group cursor-pointer border-t border-outline-variant/10">
+<div class="col-span-6 flex items-center">
+<span class="material-symbols-outlined text-on-surface-variant mr-4" data-icon="chevron_right">chevron_right</span>
+<span class="font-Inter text-body-lg font-semibold">Lighting</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">845</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">$1.2M</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error" data-icon="delete">delete</button>
+</div>
+</div>
+</div>
+<!-- Root Category 3 -->
+<div class="category-tree-node">
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group cursor-pointer border-t border-outline-variant/10">
+<div class="col-span-6 flex items-center">
+<span class="material-symbols-outlined text-on-surface-variant mr-4" data-icon="chevron_right">chevron_right</span>
+<span class="font-Inter text-body-lg font-semibold">Tables</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">312</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">$204k</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error" data-icon="delete">delete</button>
+</div>
+</div>
+</div>
+<!-- Root Category 4 -->
+<div class="category-tree-node">
+<div class="grid grid-cols-12 px-8 py-5 items-center hover:bg-surface-container-low transition-colors group cursor-pointer border-t border-outline-variant/10">
+<div class="col-span-6 flex items-center">
+<span class="material-symbols-outlined text-on-surface-variant mr-4" data-icon="chevron_right">chevron_right</span>
+<span class="font-Inter text-body-lg font-semibold">Storage</span>
+</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">518</div>
+<div class="col-span-2 text-right font-Inter text-body-md text-on-surface-variant">$612k</div>
+<div class="col-span-2 flex justify-end space-x-4 node-actions opacity-0 transition-opacity">
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary" data-icon="edit">edit</button>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-error" data-icon="delete">delete</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: Contextual Sidebar & Visualization -->
+<div class="col-span-12 lg:col-span-4 space-y-gutter">
+<!-- Category Spotlight Card -->
+<div class="bg-surface-container-lowest border border-outline-variant/30 p-8">
+<p class="font-Inter text-label-caps text-on-surface-variant mb-6">SELECTED: SEATING</p>
+<div class="relative h-48 w-full overflow-hidden mb-6">
+<img class="w-full h-full object-cover grayscale-[0.5] hover:grayscale-0 transition-all duration-700" data-alt="Minimalist, high-end design showroom with a single sculptural chair. Professional architectural lighting, soft shadows, neutral beige and off-white color palette. Clean aesthetic for a premium furniture brand category representation." src="https://lh3.googleusercontent.com/aida-public/AB6AXuC4wH1f644xTfblHfc8Z_mQphbWPIsMPJFaL059CeHqDVX3Vwhmr-2XWOV47fAU44cKt1EOeCo-22mU-AvvBvTbfSlR0e2-bXNcQqHGdQmhVh2RDGTxgHU0ID1jrCjxHgUNwAXw4tUeVOBLydI0u587y2w5Ubs06oKYJBrfOVb46K6kuZCMHXRvgdSrSo_CayntU6Dp1Djd3VXgGULb_LjTPjf0T6eBPwwqfCZHaBXjYIAvqJAgdwYH3oL-Vq4QMw6XmZ4J_FBZIHlf"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+</div>
+<div class="space-y-4">
+<div class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="font-Inter text-body-md text-on-surface-variant">Global Rank</span>
+<span class="font-Inter text-body-md font-semibold">#2</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="font-Inter text-body-md text-on-surface-variant">Growth Rate</span>
+<span class="font-Inter text-body-md font-semibold text-success-green">+14.2%</span>
+</div>
+<div class="flex justify-between items-center border-b border-outline-variant/10 pb-2">
+<span class="font-Inter text-body-md text-on-surface-variant">Sub-categories</span>
+<span class="font-Inter text-body-md font-semibold">8 Branches</span>
+</div>
+</div>
+<button class="w-full mt-8 py-3 bg-surface-container-high text-primary text-label-caps font-semibold hover:bg-surface-container-highest transition-all">
+                            VIEW FULL BRANCH ANALYTICS
+                        </button>
+</div>
+<!-- Hierarchy Visualization placeholder -->
+<div class="bg-primary text-on-primary p-8 min-h-[300px] relative overflow-hidden">
+<div class="relative z-10">
+<p class="font-Inter text-label-caps opacity-60 mb-8">TAXONOMY HEATMAP</p>
+<div class="space-y-6">
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-label-caps">SEATING</span>
+<span class="text-label-caps">85%</span>
+</div>
+<div class="w-full h-[1px] bg-on-primary/10 relative">
+<div class="absolute left-0 top-0 h-[3px] bg-on-primary -translate-y-[1px]" style="width: 85%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-label-caps">LIGHTING</span>
+<span class="text-label-caps">62%</span>
+</div>
+<div class="w-full h-[1px] bg-on-primary/10 relative">
+<div class="absolute left-0 top-0 h-[3px] bg-on-primary -translate-y-[1px]" style="width: 62%;"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between mb-2">
+<span class="text-label-caps">DECOR</span>
+<span class="text-label-caps">41%</span>
+</div>
+<div class="w-full h-[1px] bg-on-primary/10 relative">
+<div class="absolute left-0 top-0 h-[3px] bg-on-primary -translate-y-[1px]" style="width: 41%;"></div>
+</div>
+</div>
+</div>
+</div>
+<!-- Abstract Pattern -->
+<div class="absolute -right-20 -bottom-20 opacity-10 pointer-events-none">
+<svg height="300" viewbox="0 0 100 100" width="300">
+<circle cx="50" cy="50" fill="none" r="40" stroke="currentColor" stroke-width="0.5"></circle>
+<circle cx="50" cy="50" fill="none" r="30" stroke="currentColor" stroke-width="0.5"></circle>
+<circle cx="50" cy="50" fill="none" r="20" stroke="currentColor" stroke-width="0.5"></circle>
+</svg>
+</div>
+</div>
+</div>
+</div>
+</section>
+</main>
+<script>
+        // Micro-interactions for Category Tree
+        document.querySelectorAll('.category-tree-node').forEach(node => {
+            const rootItem = node.querySelector('.grid');
+            const children = node.querySelector('.ml-12');
+            
+            if (children) {
+                // Initialize as closed
+                children.classList.add('hidden');
+                
+                rootItem.addEventListener('click', (e) => {
+                    // Prevent if clicking action buttons
+                    if (e.target.closest('.node-actions')) return;
+
+                    const isHidden = children.classList.contains('hidden');
+                    const chevron = rootItem.querySelector('.material-symbols-outlined[data-icon="chevron_right"]');
+                    
+                    if (isHidden) {
+                        children.classList.remove('hidden');
+                        chevron.style.transform = 'rotate(90deg)';
+                    } else {
+                        children.classList.add('hidden');
+                        chevron.style.transform = 'rotate(0deg)';
+                    }
+                });
+            }
+        });
+
+        // Search highlight simulation
+        const searchInput = document.querySelector('input[type="text"]');
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            document.querySelectorAll('.font-Inter.text-body-lg, .font-Inter.text-body-md').forEach(el => {
+                if (term.length > 0 && el.textContent.toLowerCase().includes(term)) {
+                    el.classList.add('bg-secondary-container');
+                } else {
+                    el.classList.remove('bg-secondary-container');
+                }
+            });
+        });
+    </script>
+</body></html>
