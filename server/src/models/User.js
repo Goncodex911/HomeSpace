@@ -2,6 +2,13 @@ import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema(
   {
+    username: {
+      type: String,
+      trim: true,
+      minlength: 3,
+      maxlength: 50,
+      default: "",
+    },
     fullName: {
       type: String,
       required: true,
@@ -15,16 +22,49 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      default: "",
+    },
+    avatar: {
+      type: String,
+      default: "",
+    },
+    phone: {
+      type: String,
+      default: '',
+    },
+    address: {
+      type: String,
+      default: "",
+    },
+    provider: {
+      type: String,
+      enum: ["local", "google"],
+      default: "local",
+    },
+    firebaseUid: {
+      type: String,
+      default: null,
+    },
+    role: {
+      type: String,
+      enum: ['customer', 'store', 'seller', 'admin'],
+      default: 'customer',
     },
     isVerified: {
       type: Boolean,
       default: false,
     },
-    role: {
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    lastLogin: {
+      type: Date,
+      default: null,
+    },
+    refreshToken: {
       type: String,
-      enum: ['customer', 'store', 'admin'],
-      default: 'customer',
+      default: null,
     },
     vendorStatus: {
       type: String,
@@ -51,15 +91,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
-    phone: {
-      type: String,
-      default: '',
-    },
     occupation: {
-      type: String,
-      default: '',
-    },
-    streetAddress: {
       type: String,
       default: '',
     },

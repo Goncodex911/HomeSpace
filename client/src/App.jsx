@@ -11,6 +11,11 @@ import Settings from './pages/Settings';
 import VendorRegister from './pages/VendorRegister';
 import AdminDashboard from './pages/AdminDashboard';
 
+// Firebase local components
+import FbLogin from './pages/Login.js';
+import FbSignUp from './pages/SignUp.js';
+import FbForgotPassword from './pages/ForgotPassword.js';
+
 // Role-based Private Route Wrapper
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
   const { token, user, loading } = useContext(AuthContext);
@@ -107,6 +112,11 @@ function App() {
               </PublicRoute>
             }
           />
+
+          {/* Firebase Test Pages */}
+          <Route path="/fb-login" element={<FbLogin />} />
+          <Route path="/fb-signup" element={<FbSignUp />} />
+          <Route path="/fb-forgot-password" element={<FbForgotPassword />} />
 
           {/* Protected Store Management Dashboard (Only for store/admin roles) */}
           <Route
