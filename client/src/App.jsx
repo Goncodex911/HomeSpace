@@ -10,6 +10,8 @@ import Home from './pages/Home';
 import Settings from './pages/Settings';
 import VendorRegister from './pages/VendorRegister';
 import AdminDashboard from './pages/AdminDashboard';
+import Stores from './pages/Stores';
+import StoreProfile from './pages/StoreProfile';
 
 // Role-based Private Route Wrapper
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
@@ -73,6 +75,10 @@ function App() {
         <Routes>
           {/* Public Customer Homepage */}
           <Route path="/" element={<Home />} />
+
+          {/* Public Store Pages */}
+          <Route path="/stores" element={<Stores />} />
+          <Route path="/stores/:id" element={<StoreProfile />} />
 
           {/* Public Authentication Pages */}
           <Route

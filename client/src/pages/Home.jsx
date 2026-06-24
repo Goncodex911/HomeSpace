@@ -148,7 +148,7 @@ const Home = () => {
       {/* Header */}
       <header className="fixed w-full top-0 z-50 transition-all duration-700 py-6" id="main-header">
         <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-6">
             <Link className="flex items-center" to="/">
               <img 
                 alt="AURA Logo" 
@@ -156,18 +156,20 @@ const Home = () => {
                 src="https://lh3.googleusercontent.com/aida/AP1WRLsWGZ4LJsyWWw0DXI5i0NfMxhuFuxInq7d6NcREsRQma6gs0mTrWB6h28qpRcABtk3We1-9DLnWO45-C-Nn9EWMy8_BTFIOFWiOu0OTPqs2VcARYqgQa7JT1IyHYAIc1dlp-oQg2GsrEiph-0tKESg5sjj6-1iliWwqoDiztHIVWJswFGI-0xZS1IWK_RMm-5k6whLqsFQLFIpCNa5SpGArlemsLQhRt1oD4t_By4EPNHvJnSg-SiW26vA"
               />
             </Link>
-            <div className="hidden md:flex gap-8">
+            <div className="hidden md:flex gap-5">
               <a className="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" href="#collection">Living Room</a>
               <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Bedroom</a>
               <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Kitchen</a>
               <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Office</a>
+              <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" to="/stores">Curators</Link>
             </div>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:flex items-center bg-surface-container/50 px-4 py-2 rounded-full transition-shadow hover:shadow-sm">
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center bg-surface-container/50 px-3 py-2 rounded-full transition-shadow hover:shadow-sm">
               <span className="material-symbols-outlined text-on-surface-variant mr-2">search</span>
-              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-48 focus:outline-none" placeholder="Search collection..." type="text"/>
+              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-36 focus:outline-none" placeholder="Search..." type="text"/>
             </div>
+
 
             {token ? (
               <div className="flex items-center gap-4">

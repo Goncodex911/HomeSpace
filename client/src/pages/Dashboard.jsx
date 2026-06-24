@@ -97,7 +97,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await api('/items/all');
+      const res = await api('/items/my');
       setItems(res.data || []);
     } catch (err) {
       setError(err.message || 'Failed to fetch inventory items');
@@ -759,17 +759,20 @@ const Dashboard = () => {
                     <div className="grid grid-cols-2 gap-8">
                       <div className="col-span-2 relative">
                         <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-surface-container px-1">Category</label>
-                        <select 
+                        <input 
+                          list="category-options"
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
-                          className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-body-md text-sm appearance-none cursor-pointer text-primary"
-                        >
-                          <option value="Seating">Seating</option>
-                          <option value="Tables">Tables</option>
-                          <option value="Lighting">Lighting</option>
-                          <option value="Textiles">Textiles</option>
-                          <option value="Storage">Storage</option>
-                        </select>
+                          placeholder="Select or type a category..."
+                          className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-body-md text-sm text-primary focus:outline-none focus:border-primary transition-colors"
+                        />
+                        <datalist id="category-options">
+                          <option value="Seating" />
+                          <option value="Tables" />
+                          <option value="Lighting" />
+                          <option value="Textiles" />
+                          <option value="Storage" />
+                        </datalist>
                       </div>
                       
                       <div className="relative">

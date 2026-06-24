@@ -16,6 +16,15 @@ const itemSchema = new mongoose.Schema(
     price: {
       type: Number,
     },
+    category: {
+      type: String,
+      default: 'Uncategorized',
+    },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
     createdAt: {
       type: Date,
       default: Date.now,

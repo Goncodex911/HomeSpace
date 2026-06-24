@@ -8,7 +8,7 @@ const router = express.Router();
 // Thêm item mới - Chỉ dành cho store và admin
 router.post('/add', protect, authorize(['store', 'admin']), async (req, res) => {
   try {
-    const { name, description, quantity, price } = req.body;
+    const { name, description, quantity, price, category } = req.body;
 
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
@@ -19,6 +19,8 @@ router.post('/add', protect, authorize(['store', 'admin']), async (req, res) => 
       description,
       quantity,
       price,
+      category: category || 'Uncategorized',
+      owner: req.user._id,
     });
 
     await newItem.save();
@@ -34,9 +36,22 @@ router.post('/add', protect, authorize(['store', 'admin']), async (req, res) => 
 // Lấy tất cả items - Công khai cho khách hàng xem
 router.get('/all', async (req, res) => {
   try {
-    const items = await Item.find();
+    const items = await Item.find().populate('owner', 'fullName companyName');
     res.status(200).json({
       message: 'Items retrieved successfully',
+      data: items,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// Lấy items của curator đang đăng nhập - Chỉ trả về sản phẩm của chính mình
+router.get('/my', protect, authorize(['store', 'admin']), async (req, res) => {
+  try {
+    const items = await Item.find({ owner: req.user._id }).sort({ createdAt: -1 });
+    res.status(200).json({
+      message: 'Your items retrieved successfully',
       data: items,
     });
   } catch (error) {
@@ -60,20 +75,26 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Cập nhật item - Chỉ dành cho store và admin
+// Cập nhật item - Chỉ dành cho store (chủ sở hữu) và admin
 router.put('/update/:id', protect, authorize(['store', 'admin']), async (req, res) => {
   try {
     const { name, description, quantity, price } = req.body;
+
+    const item = await Item.findById(req.params.id);
+    if (!item) {
+      return res.status(404).json({ message: 'Item not found' });
+    }
+
+    // Chỉ chủ sở hữu hoặc admin mới được cập nhật
+    if (req.user.role !== 'admin' && item.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only update your own products' });
+    }
 
     const updatedItem = await Item.findByIdAndUpdate(
       req.params.id,
       { name, description, quantity, price },
       { new: true }
     );
-
-    if (!updatedItem) {
-      return res.status(404).json({ message: 'Item not found' });
-    }
 
     res.status(200).json({
       message: 'Item updated successfully',
@@ -84,18 +105,24 @@ router.put('/update/:id', protect, authorize(['store', 'admin']), async (req, re
   }
 });
 
-// Xóa item - Chỉ dành cho store và admin
+// Xóa item - Chỉ dành cho store (chủ sở hữu) và admin
 router.delete('/delete/:id', protect, authorize(['store', 'admin']), async (req, res) => {
   try {
-    const deletedItem = await Item.findByIdAndDelete(req.params.id);
-
-    if (!deletedItem) {
+    const item = await Item.findById(req.params.id);
+    if (!item) {
       return res.status(404).json({ message: 'Item not found' });
     }
 
+    // Chỉ chủ sở hữu hoặc admin mới được xóa
+    if (req.user.role !== 'admin' && item.owner.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'You can only delete your own products' });
+    }
+
+    await Item.findByIdAndDelete(req.params.id);
+
     res.status(200).json({
       message: 'Item deleted successfully',
-      data: deletedItem,
+      data: item,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
