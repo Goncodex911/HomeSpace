@@ -1,0 +1,298 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Join the Atelier | Lumina</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "outline": "#747878",
+                        "tertiary-container": "#1a1c19",
+                        "surface": "#faf9f5",
+                        "primary": "#000000",
+                        "on-primary-fixed": "#1c1b1b",
+                        "surface-dim": "#dadad6",
+                        "secondary-fixed-dim": "#e0c29f",
+                        "secondary": "#715a3e",
+                        "tertiary-fixed": "#e3e3de",
+                        "surface-variant": "#e3e3df",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "inverse-on-surface": "#f1f1ed",
+                        "on-tertiary": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-error-container": "#93000a",
+                        "surface-container-highest": "#e3e3df",
+                        "surface-tint": "#5f5e5e",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "surface-container-low": "#f4f4f0",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#fdddb9",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "on-surface": "#1a1c1a",
+                        "error": "#ba1a1a",
+                        "on-background": "#1a1c1a",
+                        "surface-container-high": "#e8e8e4",
+                        "surface-container": "#eeeeea",
+                        "error-container": "#ffdad6",
+                        "on-secondary-fixed-variant": "#584329",
+                        "primary-container": "#1c1b1b",
+                        "on-secondary-fixed": "#281803",
+                        "tertiary": "#000000",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#474646",
+                        "outline-variant": "#c4c7c7",
+                        "on-primary-container": "#858383",
+                        "surface-bright": "#faf9f5",
+                        "background": "#faf9f5",
+                        "on-surface-variant": "#444748",
+                        "inverse-surface": "#2f312e",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "secondary-fixed": "#fdddb9",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-container": "#786044",
+                        "on-tertiary-container": "#838480",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#c8c6c5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "margin-desktop": "64px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "label-caps": ["Inter"],
+                        "display-lg": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "headline-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                        "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "300"}],
+                        "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                        "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.01em", "fontWeight": "300"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .form-input-focus:focus {
+            outline: none;
+            border-bottom-color: #000000;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md selection:bg-secondary-container">
+<!-- TopNavBar -->
+<header class="w-full sticky top-0 z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/30 dark:border-outline/20">
+<nav class="flex justify-between items-center px-margin-desktop py-4 w-full max-w-container-max mx-auto transition-all duration-300 ease-in-out"><a class="font-headline-md text-headline-md tracking-widest text-on-background dark:text-surface-bright" href="#">Lumina</a></nav>
+</header>
+<main class="min-h-screen flex flex-col md:flex-row">
+<!-- Left: Registration Form -->
+<section class="w-full md:w-1/2 px-margin-mobile md:px-margin-desktop py-20 bg-surface">
+<div class="max-w-xl mx-auto">
+<header class="mb-12">
+<div class="flex items-center gap-4 mb-4">
+<span class="font-label-caps text-label-caps text-secondary tracking-widest">PARTNERSHIP APPLICATION</span>
+<div class="h-[1px] w-12 bg-outline-variant"></div>
+</div>
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-6">Become a Lumina Curator</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">Join our exclusive network of master artisans and architectural firms. We curate only the finest craftsmanship for the most discerning collectors.</p>
+</header>
+<!-- Progress Indicator -->
+<div class="flex items-center gap-2 mb-12">
+<div class="h-1 flex-1 bg-primary transition-all duration-500" id="step-indicator-1"></div>
+<div class="h-1 flex-1 bg-surface-container-highest transition-all duration-500" id="step-indicator-2"></div>
+<span class="font-label-caps text-label-caps ml-4 text-on-surface-variant"><span id="current-step-label" class="">Step 1</span> of 2</span>
+</div>
+<form class="space-y-12" id="registration-form">
+<!-- Section 1: Personal Information -->
+<div class="space-y-8 block transition-opacity duration-300" id="form-section-1">
+<h2 class="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Personal Information</h2>
+<div class="grid grid-cols-1 gap-8">
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">FULL NAME</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="Alexandre Moreau" type="text">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">PROFESSIONAL EMAIL</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="atelier@lumina.com" type="email">
+</div>
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">PHONE NUMBER</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="+33 1 23 45 67 89" type="tel">
+</div>
+</div>
+</div>
+</div>
+<!-- Section 2 & 3: Business & Credentials (Hidden until Next) -->
+<div class="space-y-10 hidden transition-opacity duration-300" id="form-section-2">
+<div class="space-y-8">
+<h2 class="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Business Specifics</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">COMPANY NAME</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="Atelier Architecture" type="text">
+</div>
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">BUSINESS TYPE</label>
+<select class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus appearance-none">
+<option>Independent Designer</option>
+<option>Furniture Manufacturer</option>
+<option>Architectural Firm</option>
+<option>Interior Stylist</option>
+</select>
+</div>
+</div>
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">WEBSITE / PORTFOLIO URL</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="https://www.yourportfolio.com" type="url">
+</div>
+</div>
+<div class="space-y-8 pt-6">
+<h2 class="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Credentials</h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">VAT / TAX ID</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="FR 12 3456789" type="text">
+</div>
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">YEARS IN INDUSTRY</label>
+<input class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus placeholder:text-outline-variant/50" placeholder="5" type="number">
+</div>
+</div>
+<div class="group">
+<label class="font-label-caps text-label-caps text-on-surface-variant block mb-2">BRAND PHILOSOPHY</label>
+<textarea class="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface form-input-focus resize-none placeholder:text-outline-variant/50" placeholder="Tell us about your design approach..." rows="3"></textarea>
+</div>
+</div>
+</div>
+<!-- Actions -->
+<div class="flex items-center gap-6 pt-12">
+<button class="hidden px-8 py-4 border border-outline-variant font-label-caps text-label-caps text-primary hover:bg-surface-container-high transition-colors duration-300" id="prev-btn" type="button">
+                            PREVIOUS
+                        </button>
+<button class="flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300" id="next-btn" type="button">
+                            CONTINUE TO BUSINESS DETAILS
+                        </button>
+<button class="hidden flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300" id="submit-btn" type="submit">
+                            SUBMIT APPLICATION
+                        </button>
+</div>
+</form>
+</div>
+</section>
+<!-- Right: Architectural Image Split -->
+<section class="hidden md:block w-1/2 relative overflow-hidden bg-surface-container">
+<div class="absolute inset-0">
+<img class="w-full h-full object-cover" data-alt="A high-end architectural interior featuring a minimalist living room with floor-to-ceiling windows overlooking a serene garden. The furniture consists of a low-profile cream sofa and a sculptural black floor lamp as the primary focus. Soft natural sunlight filters through sheer linen curtains, casting long shadows across the polished concrete floor. The overall aesthetic is one of calm, sophisticated luxury, perfectly matching the Lumina Atelier brand." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYuvbpZPvoXKcF6R9Zj7kcN3jl5vj_DElsGbfqAjkbsbMy4nwEtLZT-lpe5kpeYbT6hPWZjhbaqsPIAw3zpGHDvWoaaS9DGH6V1dGQTJSh2l-R2XEgbc7OJsVPFhr7vjD_t2s8ZvjKjTwUkoR1GN14_2dIaX8CeSkv_UxXqKVHCGHtwc2IoNP8KNMYGkXVjIEkz3_cDyWP_GjpdAVTEbGTnzq76xDBlJ69_CtjrPsztSOJKFZssPN1mXXVg28c9o8SJ54eS9jh9WTq">
+</div>
+<!-- Floating Decorative Glass Card -->
+<div class="absolute bottom-20 left-20 right-20 p-12 glass border border-white/20">
+<p class="font-display-lg text-headline-lg text-primary mb-4 italic">"Design is not just what it looks like and feels like. Design is how it works."</p>
+<div class="flex items-center gap-4">
+<div class="w-10 h-[1px] bg-primary"></div>
+<span class="font-label-caps text-label-caps tracking-widest">LUMINA ARTISAN ETHOS</span>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-surface dark:bg-on-background border-t border-outline-variant w-full mt-20">
+<div class="flex flex-col md:flex-row justify-between items-center px-margin-desktop py-12 w-full max-w-container-max mx-auto transition-opacity duration-300">
+<div class="mb-8 md:mb-0">
+<span class="font-headline-md text-headline-md text-primary">Lumina</span>
+<p class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant mt-2">Curating the future of architectural living.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 mb-8 md:mb-0">
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Shipping Info</a>
+<a class="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+</div>
+<div class="font-body-md text-body-md text-on-surface-variant dark:text-surface-variant">
+                © 2024 Lumina Atelier. All rights reserved.
+            </div>
+</div>
+</footer>
+<script>
+        const nextBtn = document.getElementById('next-btn');
+        const prevBtn = document.getElementById('prev-btn');
+        const submitBtn = document.getElementById('submit-btn');
+        const section1 = document.getElementById('form-section-1');
+        const section2 = document.getElementById('form-section-2');
+        const stepInd1 = document.getElementById('step-indicator-1');
+        const stepInd2 = document.getElementById('step-indicator-2');
+        const stepLabel = document.getElementById('current-step-label');
+
+        nextBtn.addEventListener('click', () => {
+            section1.classList.add('hidden');
+            section2.classList.remove('hidden');
+            section2.classList.add('animate-fade-in');
+            
+            nextBtn.classList.add('hidden');
+            prevBtn.classList.remove('hidden');
+            submitBtn.classList.remove('hidden');
+            
+            stepInd2.classList.replace('bg-surface-container-highest', 'bg-primary');
+            stepLabel.innerText = 'Step 2';
+        });
+
+        prevBtn.addEventListener('click', () => {
+            section2.classList.add('hidden');
+            section1.classList.remove('hidden');
+            
+            nextBtn.classList.remove('hidden');
+            prevBtn.classList.add('hidden');
+            submitBtn.classList.add('hidden');
+            
+            stepInd2.classList.replace('bg-primary', 'bg-surface-container-highest');
+            stepLabel.innerText = 'Step 1';
+        });
+
+        document.getElementById('registration-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            alert('Application submitted successfully to Lumina Atelier.');
+        });
+    </script>
+<style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+
+
+</body></html>

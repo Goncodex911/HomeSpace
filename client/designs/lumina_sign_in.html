@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Lumina | Sign In</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eeeeea",
+                        "on-tertiary-fixed": "#1a1c19",
+                        "on-background": "#1a1c1a",
+                        "on-tertiary": "#ffffff",
+                        "on-primary-fixed": "#1c1b1b",
+                        "on-error-container": "#93000a",
+                        "error": "#ba1a1a",
+                        "on-surface": "#1a1c1a",
+                        "surface-container-highest": "#e3e3df",
+                        "outline": "#747878",
+                        "surface-tint": "#5f5e5e",
+                        "secondary-fixed-dim": "#e0c29f",
+                        "on-primary": "#ffffff",
+                        "surface-bright": "#faf9f5",
+                        "inverse-surface": "#2f312e",
+                        "error-container": "#ffdad6",
+                        "surface": "#faf9f5",
+                        "inverse-on-surface": "#f1f1ed",
+                        "secondary-container": "#fdddb9",
+                        "primary-fixed": "#e5e2e1",
+                        "on-secondary-fixed": "#281803",
+                        "background": "#faf9f5",
+                        "on-tertiary-fixed-variant": "#454744",
+                        "on-secondary": "#ffffff",
+                        "primary": "#000000",
+                        "outline-variant": "#c4c7c7",
+                        "surface-container-high": "#e8e8e4",
+                        "inverse-primary": "#c8c6c5",
+                        "tertiary-fixed-dim": "#c6c7c2",
+                        "on-tertiary-container": "#838480",
+                        "on-primary-fixed-variant": "#474646",
+                        "primary-fixed-dim": "#c8c6c5",
+                        "on-secondary-container": "#786044",
+                        "on-primary-container": "#858383",
+                        "on-error": "#ffffff",
+                        "tertiary-fixed": "#e3e3de",
+                        "secondary-fixed": "#fdddb9",
+                        "secondary": "#715a3e",
+                        "surface-container-low": "#f4f4f0",
+                        "tertiary": "#000000",
+                        "surface-dim": "#dadad6",
+                        "surface-container-lowest": "#ffffff",
+                        "primary-container": "#1c1b1b",
+                        "on-surface-variant": "#444748",
+                        "surface-variant": "#e3e3df",
+                        "on-secondary-fixed-variant": "#584329",
+                        "tertiary-container": "#1a1c19"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "margin-mobile": "20px",
+                        "gutter": "24px",
+                        "container-max": "1440px",
+                        "unit": "8px",
+                        "margin-desktop": "64px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Montserrat"],
+                        "headline-md": ["Montserrat"],
+                        "body-lg": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-lg-mobile": ["Montserrat"],
+                        "display-lg": ["Montserrat"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "400" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600" }],
+                        "display-lg-mobile": ["40px", { "lineHeight": "48px", "letterSpacing": "-0.01em", "fontWeight": "300" }],
+                        "display-lg": ["64px", { "lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "300" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body {
+            background-color: #faf9f5;
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(229, 229, 225, 0.3);
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+        .auth-image-overlay {
+            background: linear-gradient(to right, rgba(245, 245, 240, 0) 0%, rgba(245, 245, 240, 0.1) 100%);
+        }
+        input:focus {
+            outline: none;
+            border-bottom-color: #121212 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col overflow-x-hidden">
+<!-- TopAppBar (Suppressed for focused login task, but included as per Brand Anchors for identity if needed, here we use the logo logic) -->
+<nav class="fixed top-0 w-full flex justify-between items-center px-margin-desktop h-20 w-full z-50 bg-transparent">
+<a class="font-headline-md text-headline-md tracking-tighter font-light text-primary" href="#">Lumina</a>
+</nav>
+<main class="flex-grow flex flex-col md:flex-row min-h-screen">
+<!-- Left Side: Architectural Interior Photo -->
+<section class="hidden md:block w-1/2 relative bg-surface-container-low overflow-hidden">
+<div class="absolute inset-0 auth-image-overlay z-10"></div>
+<img alt="Luxury Interior" class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 hover:scale-105" data-alt="An expansive, light-filled minimalist architectural living room featuring a singular sculptural designer chair placed on a polished concrete floor. Large floor-to-ceiling windows reveal a soft, misty morning light that washes over a neutral color palette of cream, charcoal, and warm wood. The scene captures a sophisticated gallery-like atmosphere with vast negative space and architectural precision. The overall mood is serene, luxurious, and timelessly curated." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAEWhWuXVsm4CULvR7CKtQdIEhwgaxM6LU57SNTG0nfgaqCg59IgSvLuhuyl79prK_XHOry-9TRFNDg2HDBBiHw_QojE7epdKmWPjBdUiN4pReR6NrRpJrNewa8LZmAMCRneVFYn2PKwaLV5NaTMishIoSxaJKg6CIfmNC6reV2HqCMYef7Ti1vaiWlfyCDvAYPb4FsPrF9dMLonJPtuBOjhFgaWzk-6r2QQl6XZGe_C2btBvqhhvLw5piJXFb_pYNH4h9PIH8kUElV"/>
+<div class="absolute bottom-margin-desktop left-margin-desktop z-20 max-w-md">
+<p class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-[0.2em] mb-4">Curated Living</p>
+<h2 class="font-display-lg text-display-lg text-primary leading-none">The art of the home.</h2>
+</div>
+</section>
+<!-- Right Side: Clean White Login Panel -->
+<section class="w-full md:w-1/2 flex items-center justify-center px-margin-mobile md:px-margin-desktop bg-surface-container-lowest">
+<div class="w-full max-w-[440px] py-12 md:py-0">
+<header class="mb-12">
+<h1 class="font-headline-lg text-headline-lg text-primary mb-2">Welcome Back</h1>
+<p class="font-body-md text-body-md text-on-surface-variant">Access your curated collection and design preferences.</p>
+</header>
+<form class="space-y-10" onsubmit="event.preventDefault();">
+<!-- Email Field -->
+<div class="relative">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase mb-2" for="email">Email Address</label>
+<input class="w-full bg-transparent border-t-0 border-x-0 border-b border-outline-variant py-3 px-0 font-body-md text-body-md text-on-surface placeholder:text-outline-variant/50 focus:ring-0 transition-all duration-300" id="email" name="email" placeholder="name@example.com" required="" type="email"/>
+</div>
+<!-- Password Field -->
+<div class="relative">
+<div class="flex justify-between items-center mb-2">
+<label class="block font-label-caps text-label-caps text-on-surface-variant uppercase" for="password">Password</label>
+<a class="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors" href="#">Forgot Password?</a>
+</div>
+<input class="w-full bg-transparent border-t-0 border-x-0 border-b border-outline-variant py-3 px-0 font-body-md text-body-md text-on-surface placeholder:text-outline-variant/50 focus:ring-0 transition-all duration-300" id="password" name="password" placeholder="••••••••" required="" type="password"/>
+<button class="absolute right-0 bottom-3 text-on-surface-variant hover:text-primary transition-colors" type="button">
+<span class="material-symbols-outlined" style="font-variation-settings: 'opsz' 20;">visibility</span>
+</button>
+</div>
+<!-- Action Button -->
+<div class="pt-4">
+<button class="w-full bg-primary text-on-primary font-label-caps text-label-caps uppercase py-5 px-unit-gutter tracking-widest hover:bg-secondary transition-colors duration-300 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2" type="submit">
+                            Sign In
+                        </button>
+</div>
+</form>
+<!-- Alternative Methods (Optional high-end UI detail) -->
+<div class="mt-10 flex items-center gap-4 text-outline-variant">
+<hr class="flex-grow border-outline-variant/30"/>
+<span class="font-label-caps text-label-caps">or continue with</span>
+<hr class="flex-grow border-outline-variant/30"/>
+</div>
+<div class="mt-8 flex gap-4">
+<button class="flex-1 flex items-center justify-center gap-2 border border-outline-variant/30 py-3 hover:bg-surface-container-low transition-colors">
+<span class="material-symbols-outlined" style="font-variation-settings: 'opsz' 18;">fingerprint</span>
+<span class="font-label-caps text-label-caps uppercase">Biometric</span>
+</button>
+</div>
+<footer class="mt-16 text-center">
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Don't have an account? 
+                        <a class="text-primary font-semibold hover:underline underline-offset-4 transition-all" href="#">Sign Up</a>
+</p>
+</footer>
+</div>
+</section>
+</main>
+<!-- Simple Footer (As per JSON hierarchy logic for non-top-level but allowed for legal info) -->
+<footer class="w-full bg-surface py-unit-gutter px-margin-desktop border-t border-outline-variant/20 flex flex-col md:flex-row justify-between items-center gap-4">
+<div class="font-label-caps text-label-caps text-on-surface-variant">
+            © 2024 Lumina Marketplace. All rights reserved.
+        </div>
+<div class="flex gap-margin-mobile">
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+<a class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors" href="#">Contact</a>
+</div>
+</footer>
+<script>
+        // Micro-interaction for input floating feel (though keeping it minimal per guidelines)
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', () => {
+                input.parentElement.querySelector('label').classList.replace('text-on-surface-variant', 'text-primary');
+            });
+            input.addEventListener('blur', () => {
+                input.parentElement.querySelector('label').classList.replace('text-primary', 'text-on-surface-variant');
+            });
+        });
+
+        // Simple visibility toggle logic
+        const toggleBtn = document.querySelector('button .material-symbols-outlined');
+        if (toggleBtn) {
+            toggleBtn.parentElement.addEventListener('click', () => {
+                const passwordInput = document.getElementById('password');
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    toggleBtn.textContent = 'visibility_off';
+                } else {
+                    passwordInput.type = 'password';
+                    toggleBtn.textContent = 'visibility';
+                }
+            });
+        }
+    </script>
+</body></html>
