@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AURA ARTEFACTS | Refined Living</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                "on-secondary-fixed": "#281803",
+                "inverse-surface": "#2f312e",
+                "primary-container": "#1c1b1b",
+                "on-surface-variant": "#444748",
+                "on-error": "#ffffff",
+                "on-primary": "#ffffff",
+                "tertiary-container": "#1a1c19",
+                "tertiary": "#000000",
+                "surface-tint": "#5f5e5e",
+                "secondary": "#715a3e",
+                "on-tertiary": "#ffffff",
+                "surface-container-lowest": "#ffffff",
+                "on-tertiary-fixed": "#1a1c19",
+                "on-tertiary-container": "#838480",
+                "surface-container-low": "#f4f4f0",
+                "error-container": "#ffdad6",
+                "on-error-container": "#93000a",
+                "primary-fixed": "#e5e2e1",
+                "on-primary-fixed": "#1c1b1b",
+                "error": "#ba1a1a",
+                "secondary-container": "#fdddb9",
+                "background": "#faf9f5",
+                "surface-container-highest": "#e3e3df",
+                "on-tertiary-fixed-variant": "#454744",
+                "surface-bright": "#faf9f5",
+                "on-secondary-fixed-variant": "#584329",
+                "on-primary-container": "#858383",
+                "tertiary-fixed-dim": "#c6c7c2",
+                "on-secondary-container": "#786044",
+                "on-primary-fixed-variant": "#474646",
+                "surface-variant": "#e3e3df",
+                "on-secondary": "#ffffff",
+                "tertiary-fixed": "#e3e3de",
+                "outline-variant": "#c4c7c7",
+                "surface-container": "#eeeeea",
+                "secondary-fixed-dim": "#e0c29f",
+                "inverse-on-surface": "#f1f1ed",
+                "surface-dim": "#dadad6",
+                "secondary-fixed": "#fdddb9",
+                "surface": "#faf9f5",
+                "primary-fixed-dim": "#c8c6c5",
+                "on-background": "#1a1c1a",
+                "primary": "#000000",
+                "inverse-primary": "#c8c6c5",
+                "on-surface": "#1a1c1a",
+                "surface-container-high": "#e8e8e4",
+                "outline": "#747878"
+              },
+              "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+              },
+              "spacing": {
+                "margin-mobile": "20px",
+                "unit": "8px",
+                "gutter": "24px",
+                "margin-desktop": "64px",
+                "container-max": "1440px"
+              },
+              "fontFamily": {
+                "display-lg": ["Montserrat"],
+                "display-lg-mobile": ["Montserrat"],
+                "label-caps": ["Inter"],
+                "headline-md": ["Montserrat"],
+                "body-lg": ["Inter"],
+                "body-md": ["Inter"],
+                "headline-lg": ["Montserrat"]
+              },
+              "fontSize": {
+                "display-lg": ["64px", {"lineHeight": "72px", "letterSpacing": "-0.02em", "fontWeight": "300"}],
+                "display-lg-mobile": ["40px", {"lineHeight": "48px", "letterSpacing": "-0.01em", "fontWeight": "300"}],
+                "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.1em", "fontWeight": "600"}],
+                "headline-md": ["24px", {"lineHeight": "32px", "letterSpacing": "0.03em", "fontWeight": "500"}],
+                "body-lg": ["18px", {"lineHeight": "28px", "letterSpacing": "0", "fontWeight": "400"}],
+                "body-md": ["16px", {"lineHeight": "24px", "letterSpacing": "0", "fontWeight": "400"}],
+                "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "0.05em", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        /* Ambient Motion Background */
+        body {
+            position: relative;
+            background: #faf9f5;
+        }
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 50% 50%, rgba(113, 90, 62, 0.03) 0%, transparent 50%),
+                        radial-gradient(circle at 10% 20%, rgba(0, 0, 0, 0.02) 0%, transparent 40%);
+            z-index: -1;
+            animation: ambientMove 20s ease-in-out infinite alternate;
+        }
+        @keyframes ambientMove {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(-2%, 2%) scale(1.05); }
+        }
+
+        /* Scroll Reveal Transitions */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 1s cubic-bezier(0.21, 0.6, 0.35, 1), transform 1s cubic-bezier(0.21, 0.6, 0.35, 1);
+            will-change: opacity, transform;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Staggered Reveals */
+        .stagger-item {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.21, 0.6, 0.35, 1), transform 0.8s cubic-bezier(0.21, 0.6, 0.35, 1);
+        }
+        .stagger-container.active .stagger-item {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .stagger-container.active .stagger-item:nth-child(1) { transition-delay: 0.1s; }
+        .stagger-container.active .stagger-item:nth-child(2) { transition-delay: 0.2s; }
+        .stagger-container.active .stagger-item:nth-child(3) { transition-delay: 0.3s; }
+        .stagger-container.active .stagger-item:nth-child(4) { transition-delay: 0.4s; }
+
+        /* Interactive Hover Effects */
+        .magnetic-btn {
+            transition: transform 0.3s cubic-bezier(0.23, 1, 0.32, 1), background-color 0.3s ease;
+        }
+        .magnetic-btn:hover {
+            transform: scale(1.03) translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+        }
+        .card-hover {
+            transition: transform 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-8px);
+        }
+
+        /* Newsletter Animation */
+        .input-underline {
+            position: relative;
+        }
+        .input-underline::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: #000;
+            transition: width 0.4s cubic-bezier(0.21, 0.6, 0.35, 1);
+        }
+        .input-underline:focus-within::after {
+            width: 100%;
+        }
+
+        /* Smooth Scroll Behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .reveal, .stagger-item, body::before {
+                animation: none !important;
+                transition: none !important;
+                opacity: 1 !important;
+                transform: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- Dynamic Header (Shared Component: TopNavBar) -->
+<header class="fixed w-full top-0 z-50 transition-all duration-700 py-6" id="main-header">
+<nav class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="flex items-center gap-8">
+<a class="flex items-center" href="#">
+<img alt="AURA" class="h-8 md:h-10" src="https://lh3.googleusercontent.com/aida/AP1WRLsWGZ4LJsyWWw0DXI5i0NfMxhuFuxInq7d6NcREsRQma6gs0mTrWB6h28qpRcABtk3We1-9DLnWO45-C-Nn9EWMy8_BTFIOFWiOu0OTPqs2VcARYqgQa7JT1IyHYAIc1dlp-oQg2GsrEiph-0tKESg5sjj6-1iliWwqoDiztHIVWJswFGI-0xZS1IWK_RMm-5k6whLqsFQLFIpCNa5SpGArlemsLQhRt1oD4t_By4EPNHvJnSg-SiW26vA"/>
+</a>
+<div class="hidden md:flex gap-8">
+<a class="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" href="#">Living Room</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#">Bedroom</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#">Kitchen</a>
+<a class="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#">Office</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container/50 px-4 py-2 rounded-full transition-shadow hover:shadow-sm">
+<span class="material-symbols-outlined text-on-surface-variant mr-2">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md p-0 w-48" placeholder="Search collection..." type="text"/>
+</div>
+<button class="material-symbols-outlined text-on-surface hover:opacity-70 transition-opacity">person</button>
+<button class="material-symbols-outlined text-on-surface hover:opacity-70 transition-opacity">shopping_bag</button>
+</div>
+</nav>
+</header>
+<!-- Hero Section with Parallax -->
+<section class="relative h-screen w-full overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 z-0 scale-110" id="hero-parallax-container">
+<div class="absolute inset-0 bg-black/25 z-10"></div>
+<img alt="Hero background" class="w-full h-full object-cover will-change-transform" id="hero-image" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiGW6cAcnwTCfjLdDnsd7xZP42CS9rPVYz05A8QbYQHwuXnoSyqNmGv5LLotdbIwcknSe9c5ZFWi4PjpR9zChdImif72E80Xd_bmlxIkKhGOIT69CDB9HKsh2cAJrFwOWr7MCH2o1QfsNnZp8dm759_M2lz4waBM9grw8Ge_IZOBBXms-FSLAM78HZOeqkk3uxzh7rKcgKAsowORhTR05OVgpV8fTh6UL0b0vAO6rLFOgF5dmmpEs1v1RtRVzgZnev6tB8H_gVB--n"/>
+</div>
+<div class="relative z-20 text-center text-white px-margin-mobile">
+<h1 class="font-display-lg text-display-lg-mobile md:text-display-lg mb-8 tracking-tight reveal">The Art of Refined Living</h1>
+<button class="magnetic-btn bg-primary text-on-primary px-12 py-5 font-label-caps text-label-caps hover:bg-secondary transition-all reveal">
+            EXPLORE COLLECTION
+        </button>
+</div>
+<div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 animate-bounce cursor-pointer opacity-70 hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-white text-4xl">keyboard_double_arrow_down</span>
+</div>
+</section>
+<!-- Featured Categories: Staggered Reveal -->
+<section class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto reveal stagger-container">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-4 stagger-item">
+<div>
+<span class="font-label-caps text-label-caps text-secondary uppercase tracking-widest block mb-4">Curation</span>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Browse by Environment</h2>
+</div>
+<a class="text-primary font-label-caps text-label-caps border-b border-primary pb-1 hover:text-secondary hover:border-secondary transition-colors" href="#">View All Categories</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-gutter h-auto md:h-[800px]">
+<!-- Living -->
+<div class="md:col-span-8 relative group overflow-hidden bg-surface-container h-96 md:h-full stagger-item card-hover">
+<img alt="Living Room" class="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6y8H-1FldXO_a1GP28ldBv-CKe6H6uj0yXn0kzpdAi7kaCTWhF2f7VzfFTvktIKRY0feUHZUABw50yMb2L7IDpepIkAC70-iKlgbxe8-Qbzx0nG5DijFk3mT5oPD--poV0aXgybrRiCBVu6rzlCMtZ5QfAeNfyAh6Sx_Gz5os0yCh6ws-xEPnsPkG_w22NfcbB95eQVcINk4tAWyXg5CJrcd2M3ryi-ABr-GtoF_-mOi3LX8z6E_C1LId4z7iYF8Rhk9q912_8DGa"/>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
+<div class="absolute bottom-10 left-10 text-white transform transition-all duration-500 group-hover:-translate-y-2">
+<h3 class="font-headline-md text-headline-md mb-2">Living Room</h3>
+<p class="font-label-caps text-label-caps opacity-80">124 Items</p>
+</div>
+</div>
+<!-- Column -->
+<div class="md:col-span-4 grid grid-rows-2 gap-gutter">
+<div class="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover">
+<img alt="Bedroom" class="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv8Sw7SWaAYxVJnlU6H8WzXNpWZJ0lMaUSUY6Be6un3ToFCvIOCU1gxsC8GK73RdI5-TSgxbqmynn2qvoi6s03rHWzh1lR_9P25gWTExY5lG_w9XDm3qaKEQIleeoxbDSLPupKbtDMEKOvJy6mkVtcdPU96BhxF59hfw3E_oZUikatfDEdmQ7ixLZOw5TO8RD7DPo4VcTmkRMhtSqsjrPFpWolXCQCdCZafV7c9FnlJxOUImIf9lTy_jA8lm4XVBRkAX64XZ4UPxWD"/>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
+<div class="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
+<h3 class="font-headline-md text-headline-md mb-2">Bedroom</h3>
+<p class="font-label-caps text-label-caps opacity-80">86 Items</p>
+</div>
+</div>
+<div class="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover">
+<img alt="Office" class="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnyYkAa3MYuMkb-k37jNtFIp6xcaCs35PeelFquLdfc-jGDuedIW6ZziDMwce-s2ZoOhqZ7f02FuumGYurzCEQXSZH5-c7CdvxNQKlyIHno9PKCi1eGdTQ15zUkz2H1CWHbZoyGECNa4MZP2E1V3E95_KhbFvgZj1LUOevbmp-J51EWIB1h8ge-nr3s1V6LHDOEGnFWje3Yk43rjuMZpdxZU0BX-H5cCXMJpjoFxrUydNdEuxEkEaPQx6JA7C1zHiXi8zlliw4fgjp"/>
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
+<div class="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
+<h3 class="font-headline-md text-headline-md mb-2">Office</h3>
+<p class="font-label-caps text-label-caps opacity-80">42 Items</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Dynamic Product Feed: Staggered Fade In -->
+<section class="py-32 bg-surface-container-low reveal">
+<div class="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+<div class="flex flex-col items-center mb-16">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-8">Seasonal Selection</h2>
+<div class="flex gap-12 border-b border-surface-variant w-full md:w-auto justify-center">
+<button class="font-label-caps text-label-caps border-b-2 border-primary pb-4 px-2">New Arrivals</button>
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary pb-4 px-2 transition-colors">Best Sellers</button>
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary pb-4 px-2 transition-colors">For You</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter stagger-container">
+<!-- Product Cards with enhanced hovers -->
+<div class="group cursor-pointer stagger-item card-hover">
+<div class="relative aspect-[3/4] overflow-hidden bg-white mb-6">
+<img alt="Ether Arc Lounge Chair" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDyqhinz1WRpRywtmtoOJl-Xjnv3ZbvvTm2JmT-zPfqdWGUzbgVFW3SuEYFW0ePw7PVS5vIYE_7VQNTj3c6aHRykSS0VW_UsqvEEpGUdASGaUd7L-M6e5YH9inLvruE5x1kjWYNWl0iQ5F79sK_-V5BlV6sQG86UWSsMTyCor4_AxC_C2ByrHcb2UIE6WuvBD88KEASLN3SCe4fJDlQK1KneVSBlqKwy78y896DRnsdyEoj5WkUghaOTPykAgZSg3yGgOVN1AhlEPEm"/>
+<div class="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
+<button class="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all">QUICK ADD</button>
+<button class="flex-none glass-card w-12 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">view_in_ar</span>
+</button>
+</div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Ether Arc Lounge Chair</h4>
+<p class="text-on-surface-variant font-body-md">$1,240.00</p>
+</div>
+<div class="group cursor-pointer stagger-item card-hover">
+<div class="relative aspect-[3/4] overflow-hidden bg-white mb-6">
+<img alt="Orbital Sphere Lamp" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfcBqkWM3r21aDql5wiXK8r1kXDdZYe864IbIjJUXSGVCHKjEyK_UBES8bQM_fStWpzy37DyBN79HsugLf9B74NUc32hFtDivnF4iQMcvK3uAyLhTkfa5JTJ73f2Zl0izH8djHjzV7QHwEJY5FiyxH7sZZhYcBNYlrmU0soGLsyb0lHojl7T_fTfpRH8t9ZuqVqKfuRvXVSRhS2eeStyQk38lfXm3E1M5AxcxbYSvo2Bx9iiENsY4KqiVu2HFJIEq6gf4tU4SySm1k"/>
+<div class="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
+<button class="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all">QUICK ADD</button>
+<button class="flex-none glass-card w-12 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">view_in_ar</span>
+</button>
+</div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Orbital Sphere Lamp</h4>
+<p class="text-on-surface-variant font-body-md">$450.00</p>
+</div>
+<div class="group cursor-pointer stagger-item card-hover">
+<div class="relative aspect-[3/4] overflow-hidden bg-white mb-6">
+<img alt="Monolith Travertine Table" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXTVBsxtaabBH2J27cPb743kO_wPxof7yVDuNbR2VmrU1aQwAPxJt05kRu9X5kYNSfHznuKJ2MD2J38XPhwutH9eSDBmXVp3AsoxlmWUVBuywXJt8kDR5nWsPIGUKYRpiV2JdRzf8o5BlHknMcoNjfPBYefT04tn-l_wLr50QqMb2Hny0fwWR3euuGWGI1hu8QkPJHdt6bfwxVo98uI0PicozHCn0Hrct2nr2T5VIVJ_cb6W9sVlVwKY0nihRf6ycr4MUW_ejNTZb7"/>
+<div class="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
+<button class="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all">QUICK ADD</button>
+<button class="flex-none glass-card w-12 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">view_in_ar</span>
+</button>
+</div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Monolith Travertine Table</h4>
+<p class="text-on-surface-variant font-body-md">$3,800.00</p>
+</div>
+<div class="group cursor-pointer stagger-item card-hover">
+<div class="relative aspect-[3/4] overflow-hidden bg-white mb-6">
+<img alt="Stratus Modular Sofa" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAo0TFeq2XW3kTWiVvdUs-6HkTCbtUDvNOShLeF_DrVZPK_L7-f7WGbvvIW5c26zkOkQXCmTD2xHwFZjtwhpNI-aH8vPQ8sORWWRW-ml8W4S4cVHwKzxgJEBOZT2rIl8742AjVzhJwzDD34k7WqMkN-CGxwKshpuodtVVOHe9htIoY46E3UM9Ge257eymDu9vyHgn8Wc3M3M9RUaTnNhW7KUPz3LfQ85fMQZvr92C6skzsJnq4-CJALH2GMUyyNCA5zAT-K20qVLp_R"/>
+<div class="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
+<button class="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all">QUICK ADD</button>
+<button class="flex-none glass-card w-12 flex items-center justify-center hover:bg-primary hover:text-white transition-all">
+<span class="material-symbols-outlined text-sm">view_in_ar</span>
+</button>
+</div>
+</div>
+<h4 class="font-headline-md text-[18px] mb-1">Stratus Modular Sofa</h4>
+<p class="text-on-surface-variant font-body-md">$5,600.00</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Teaser -->
+<section class="py-32 bg-primary text-white overflow-hidden reveal">
+<div class="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+<div class="relative group">
+<img alt="3D Room Preview" class="w-full h-[500px] object-cover opacity-80 will-change-transform transition-transform duration-[2s] group-hover:scale-110" id="studio-parallax" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcS_cC93TlAgHuOI0P7abpiS6h2tNvVXWlinm6YtRoguLs1fdyAGD24ucZXx64woxQ2K2Nxz1P-KdaPW6E1JpKDuMluouPSYeG3xREU_Ni7H5xAvdzw4J8-lq5ZlSvBisGDfg1P6xIwUTSR7_SRR1zBOWRmFzPUl-ZxOA3xjwgQJuRvWvZeJdk0EjUHJrv-K9xvTr23bhOnh9xuP42rhRaFahIqHcAZfK301x1q8Lq9RfHN3YZEmRvb8FApRTEML2pQatJFJ68Q9Sz"/>
+<div class="absolute inset-0 bg-gradient-to-r from-primary via-transparent to-transparent"></div>
+</div>
+<div>
+<span class="font-label-caps text-label-caps text-on-primary-container tracking-widest block mb-6">AURA STUDIO</span>
+<h2 class="font-display-lg text-display-lg-mobile md:text-headline-lg mb-8 leading-tight">Visualize your future space in high-fidelity 3D.</h2>
+<p class="font-body-lg text-on-primary-container mb-12 max-w-lg">Our interactive room builder allows you to drag, drop, and configure any piece from our collection directly into your own architecture.</p>
+<button class="magnetic-btn bg-white text-primary px-10 py-4 font-label-caps text-label-caps hover:bg-secondary-fixed transition-all">
+                START DESIGNING
+            </button>
+</div>
+</div>
+</section>
+<!-- Designer Spotlight: Staggered Fade In -->
+<section class="py-32 px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto reveal stagger-container">
+<div class="text-center mb-24 stagger-item">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-4">Meet the Artisans</h2>
+<p class="text-on-surface-variant font-body-lg">The visionary minds behind our most iconic pieces.</p>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-20">
+<div class="text-center group stagger-item">
+<div class="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000">
+<img alt="Elias Thorne" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEW4DtywODGeHenLJ346LTjB7EwAn1UEvsnckn0C6oW-zkadrDtBQ1XYTAiQJS54y_TFJqG2Qorjy7QmY9x7da6WTT8ZHa0RdOmLLM_aupCj9tc-hzuKtNC5hRa6UiLa17ig3nCDCEaqej70hAUvDFWCR-yVLpGplsExTVvZS6vbLChhKcCzlMfQqTMhIa0a2zGDCOZ6bjAbdI8efIrODZX4C25EgPGc3EdnuSTQERtXlzgCm0xXA35JiK0FZ0WdvApIah5d-LKYow"/>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Elias Thorne</h3>
+<p class="font-label-caps text-label-caps text-secondary mb-4">LEAD ARCHITECT</p>
+<p class="text-on-surface-variant font-body-md px-4 italic">"Furniture is the sculpture of the everyday. It must be as functional as it is beautiful."</p>
+</div>
+<div class="text-center group stagger-item">
+<div class="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000">
+<img alt="Sienna Mare" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2FA3ztRwUXRbf4S6jnkzbrpY4sWxrR8PRQJWLIrDeWB6ANZLkVdosCn4MMFEYBPqb2RqrCVdhEQVz-KtZ60acVhkeCrYAoHL26EO_a0DGm3WsDd26sLTD-t7sGgTuP9qptgo2ooOs-WomNv31HPsk-ipsei8JnEiCYZWbWG_-qn9eVJqQYLFjoycwS9x8RwlIC2CCEfWfVIaLwKL2zR2stVInd8N9AYa1_GteYOCRjriShQzkpWLUJKDXWY0IpBqtCVkS9UxZOnhA"/>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Sienna Mare</h3>
+<p class="font-label-caps text-label-caps text-secondary mb-4">TEXTILE ARTISAN</p>
+<p class="text-on-surface-variant font-body-md px-4 italic">"Sustainability isn't a trend; it's the foundation of modern luxury and lasting quality."</p>
+</div>
+<div class="text-center group stagger-item">
+<div class="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000">
+<img alt="Arthur Vance" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHOVCva3Y4fd_fDlLjxp9loaI6GJjHe3yipWmzHCQ2YB6Wh0jhOeIp0n_p4u0fF7_3r9zNQvXk9VDLYW2AM_ndE7vPgT4XvWMzoE7W8FkfDGpP-v8aL_8n2eHf3tib8mRjz-Xt8NWQm-qt7BpPn813Dj-o59LrcQxw9ftgEQL5zz7NFD_ZDEEvuGz-ZBorc_GWP3fR5FUbZbwnI9CnOhqRre45f8uhsSu0MLCiMpUjSy7Y3xTQUOGDTNsmxLQWvyuKerlUqVrQCLOR"/>
+</div>
+<h3 class="font-headline-md text-headline-md mb-2">Arthur Vance</h3>
+<p class="font-label-caps text-label-caps text-secondary mb-4">MASTER CRAFTSMAN</p>
+<p class="text-on-surface-variant font-body-md px-4 italic">"Every piece tells a story of the tree it came from. I just help the wood find its new voice."</p>
+</div>
+</div>
+</section>
+<!-- Newsletter Section -->
+<section class="py-32 bg-surface-container-highest reveal">
+<div class="px-margin-mobile md:px-margin-desktop max-w-3xl mx-auto text-center">
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-6">Join the Inner Circle</h2>
+<p class="text-on-surface-variant font-body-lg mb-12">Receive early access to new drops, artisan stories, and interior inspiration directly to your inbox.</p>
+<form class="flex flex-col md:flex-row gap-4">
+<div class="flex-1 input-underline">
+<input class="w-full bg-transparent border-0 border-b border-outline focus:border-transparent focus:ring-0 text-body-lg py-4 placeholder:text-outline" placeholder="Email Address" type="email"/>
+</div>
+<button class="magnetic-btn bg-primary text-on-primary px-10 py-4 font-label-caps text-label-caps hover:bg-secondary transition-all whitespace-nowrap" type="submit">SUBSCRIBE</button>
+</form>
+</div>
+</section>
+<!-- Footer (Shared Component: Footer) -->
+<footer class="bg-surface border-t border-surface-variant mt-32">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-gutter px-margin-mobile md:px-margin-desktop py-20 max-w-container-max mx-auto">
+<div class="col-span-1 md:col-span-1">
+<h2 class="font-display-lg text-headline-lg-mobile tracking-tighter text-primary mb-8">AURA</h2>
+<p class="font-body-md text-on-surface-variant max-w-xs mb-8">Elevating everyday environments through curated architectural furniture and artisanal objects.</p>
+</div>
+<div class="col-span-1">
+<h4 class="font-label-caps text-label-caps text-primary mb-6">EXPLORE</h4>
+<ul class="space-y-4">
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Collection</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Showrooms</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Artisans</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h4 class="font-label-caps text-label-caps text-primary mb-6">SERVICES</h4>
+<ul class="space-y-4">
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Shipping</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Returns</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Room Builder</a></li>
+</ul>
+</div>
+<div class="col-span-1">
+<h4 class="font-label-caps text-label-caps text-primary mb-6">LEGAL</h4>
+<ul class="space-y-4">
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Privacy</a></li>
+<li><a class="text-on-surface-variant hover:text-secondary transition-colors duration-300 font-body-md" href="#">Terms</a></li>
+<li class="pt-8 flex gap-4">
+<span class="material-symbols-outlined text-primary">language</span>
+<span class="material-symbols-outlined text-primary">shield</span>
+</li>
+</ul>
+</div>
+</div>
+<div class="px-margin-mobile md:px-margin-desktop py-8 border-t border-surface-variant max-w-container-max mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+<p class="font-body-md text-body-md tracking-tight text-on-surface-variant">© 2024 AURA ARTEFACTS. REFINED LIVING.</p>
+<div class="flex gap-8">
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface-variant">INSTAGRAM</span>
+<span class="font-label-caps text-[10px] tracking-widest text-on-surface-variant">PINTEREST</span>
+</div>
+</div>
+</footer>
+<script>
+    // Parallax Effects
+    const heroImage = document.getElementById('hero-image');
+    const studioParallax = document.getElementById('studio-parallax');
+    
+    window.addEventListener('scroll', () => {
+        const scrolled = window.pageYOffset;
+        
+        // Hero Image Parallax
+        if (scrolled < window.innerHeight) {
+            heroImage.style.transform = `translateY(${scrolled * 0.4}px)`;
+        }
+        
+        // Header Transition
+        const header = document.getElementById('main-header');
+        if (scrolled > 50) {
+            header.classList.add('bg-white/80', 'backdrop-blur-xl', 'border-b', 'border-surface-variant', 'py-4');
+            header.classList.remove('py-6');
+        } else {
+            header.classList.remove('bg-white/80', 'backdrop-blur-xl', 'border-b', 'border-surface-variant', 'py-4');
+            header.classList.add('py-6');
+        }
+
+        // General subtle scroll motion for decorative elements
+        studioParallax.style.transform = `translateY(${(scrolled - studioParallax.offsetTop) * 0.1}px)`;
+    });
+
+    // Scroll-Triggered Reveals using IntersectionObserver
+    const observerOptions = {
+        threshold: 0.12,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add('active');
+            }
+        });
+    }, observerOptions);
+
+    document.querySelectorAll('.reveal, .stagger-container').forEach(el => revealObserver.observe(el));
+
+    // Magnetic Buttons implementation
+    document.querySelectorAll('.magnetic-btn').forEach(btn => {
+        btn.addEventListener('mousemove', (e) => {
+            const rect = btn.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            btn.style.transform = `translate(${x * 0.2}px, ${y * 0.2}px) scale(1.03)`;
+        });
+        btn.addEventListener('mouseleave', () => {
+            btn.style.transform = `translate(0, 0) scale(1)`;
+        });
+    });
+
+    // Initial check for viewport
+    window.addEventListener('load', () => {
+        document.querySelectorAll('.reveal').forEach(el => {
+            const rect = el.getBoundingClientRect();
+            if (rect.top < window.innerHeight) el.classList.add('active');
+        });
+    });
+</script>
+</body></html>
