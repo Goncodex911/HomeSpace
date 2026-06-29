@@ -35,6 +35,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'withdrawals'
   
   // Selection & Filters
   const [activeId, setActiveId] = useState(null);
@@ -44,6 +45,15 @@ const AdminDashboard = () => {
   const [rejectModalOpen, setRejectModalOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState('Incomplete documentation');
   const [customReason, setCustomReason] = useState('');
+
+  // Withdrawals state
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawFilter, setWithdrawFilter] = useState('all'); // 'all' | 'pending' | 'accepted' | 'rejected'
+  const [activeWithdrawal, setActiveWithdrawal] = useState(null);
+  const [rejectWithdrawModal, setRejectWithdrawModal] = useState(false);
+  const [rejectWithdrawNote, setRejectWithdrawNote] = useState('');
+  const [withdrawActionLoading, setWithdrawActionLoading] = useState(false);
 
   const fetchApplications = async () => {
     try {
@@ -66,9 +76,46 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchWithdrawals = async () => {
+    try {
+      setWithdrawLoading(true);
+      const res = await api('/payment/withdraw/admin/all');
+      setWithdrawals(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch withdrawals:', err.message);
+    } finally {
+      setWithdrawLoading(false);
+    }
+  };
+
+  const handleWithdrawalAction = async (id, action, note = '') => {
+    setWithdrawActionLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await api(`/payment/withdraw/admin/${id}`, {
+        method: 'PUT',
+        body: { action, note },
+      });
+      setSuccess(action === 'accept' ? 'Yêu cầu rút tiền đã được chấp thuận!' : 'Yêu cầu đã bị từ chối.');
+      setRejectWithdrawModal(false);
+      setRejectWithdrawNote('');
+      setActiveWithdrawal(null);
+      fetchWithdrawals();
+    } catch (err) {
+      setError(err.message || 'Thao tác thất bại.');
+    } finally {
+      setWithdrawActionLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchApplications();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'withdrawals') fetchWithdrawals();
+  }, [activeTab]);
 
   const handleApprove = async (id) => {
     if (!window.confirm('Are you sure you want to approve this curator application?')) return;
@@ -117,6 +164,10 @@ const AdminDashboard = () => {
     );
   });
 
+  const filteredWithdrawals = withdrawals.filter(w =>
+    withdrawFilter === 'all' ? true : w.status === withdrawFilter
+  );
+
   const activeApp = applications.find(app => app._id === activeId);
   const pendingCount = applications.filter(app => app.vendorStatus === 'pending').length;
 
@@ -133,13 +184,24 @@ const AdminDashboard = () => {
           <p className="font-label-caps text-[10px] tracking-widest text-on-surface-variant mt-1">Enterprise Suite</p>
         </div>
         <nav className="flex-grow space-y-1">
-          <a href="#" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
-            <span className="material-symbols-outlined mr-3">analytics</span>
-            <span className="font-label-caps text-label-caps">Analytics</span>
-          </a>
-          <button className="w-full flex items-center px-6 py-3 text-primary border-r-2 border-primary font-semibold hover:bg-surface-container-low transition-all">
+          <button
+            onClick={() => setActiveTab('vendors')}
+            className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'vendors' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
+          >
             <span className="material-symbols-outlined mr-3">storefront</span>
             <span className="font-label-caps text-label-caps text-left">Vendors</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('withdrawals')}
+            className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'withdrawals' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
+          >
+            <span className="material-symbols-outlined mr-3">payments</span>
+            <span className="font-label-caps text-label-caps text-left">Withdrawals</span>
+            {withdrawals.filter(w => w.status === 'pending').length > 0 && (
+              <span className="ml-auto bg-amber-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">
+                {withdrawals.filter(w => w.status === 'pending').length}
+              </span>
+            )}
           </button>
           <a href="#" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
             <span className="material-symbols-outlined mr-3">group</span>
@@ -188,7 +250,11 @@ const AdminDashboard = () => {
         </header>
 
         {/* Content Pane */}
-        <div className="flex-grow p-8 max-w-7xl mx-auto w-full grid grid-cols-12 gap-8">
+        <div className="flex-grow p-8 max-w-7xl mx-auto w-full">
+
+          {/* ── VENDORS TAB ── */}
+          {activeTab === 'vendors' && (
+          <div className="grid grid-cols-12 gap-8">
           {/* Header */}
           <div className="col-span-12">
             <nav className="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
@@ -369,6 +435,202 @@ const AdminDashboard = () => {
             )}
           </section>
         </div>
+        )}
+
+        {/* ── WITHDRAWALS TAB ── */}
+        {activeTab === 'withdrawals' && (
+          <div className="space-y-6">
+            <div>
+              <nav className="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
+                <span>Finance</span>
+                <span>/</span>
+                <span className="text-primary font-bold">Withdrawal Requests</span>
+              </nav>
+              <h2 className="font-headline-md text-3xl text-primary font-light">Withdrawal Management</h2>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-error-container text-on-error-container border border-error/20 text-sm">{error}</div>
+            )}
+            {success && (
+              <div className="p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm">{success}</div>
+            )}
+
+            {/* Filter tabs */}
+            <div className="flex gap-2 flex-wrap">
+              {['all','pending','accepted','rejected'].map(f => (
+                <button
+                  key={f}
+                  onClick={() => setWithdrawFilter(f)}
+                  className={`px-4 py-2 font-label-caps text-[10px] uppercase tracking-wider border transition-all ${
+                    withdrawFilter === f ? 'bg-primary text-white border-primary' : 'border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {f === 'all' ? 'Tất cả' : f === 'pending' ? 'Đang chờ' : f === 'accepted' ? 'Đã duyệt' : 'Từ chối'}
+                  {f !== 'all' && (
+                    <span className="ml-1 opacity-60">({withdrawals.filter(w => w.status === f).length})</span>
+                  )}
+                </button>
+              ))}
+              <button onClick={fetchWithdrawals} className="ml-auto px-3 py-2 font-label-caps text-[10px] text-secondary hover:underline flex items-center gap-1">
+                <span className="material-symbols-outlined text-sm">refresh</span> Làm mới
+              </button>
+            </div>
+
+            {/* Two-panel layout */}
+            <div className="grid grid-cols-12 gap-8">
+              {/* Left: withdrawal list */}
+              <section className="col-span-12 lg:col-span-4 space-y-3 max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                {withdrawLoading ? (
+                  <div className="text-center py-12 text-sm text-outline">Loading...</div>
+                ) : filteredWithdrawals.length === 0 ? (
+                  <div className="text-center py-12 text-sm text-outline border border-dashed border-outline-variant p-6">
+                    Không có yêu cầu nào.
+                  </div>
+                ) : (
+                  filteredWithdrawals.map((w) => (
+                    <div
+                      key={w._id}
+                      onClick={() => setActiveWithdrawal(w)}
+                      className={`p-5 cursor-pointer border transition-all ${
+                        activeWithdrawal?._id === w._id ? 'active-card shadow-md border-primary' : 'bg-white/50 border-outline-variant/20 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex justify-between items-start mb-1">
+                        <h3 className="font-headline-md text-sm text-primary font-medium truncate w-36">
+                          {w.store?.companyName || w.store?.fullName || 'Store'}
+                        </h3>
+                        <span className={`font-label-caps text-[9px] px-2 py-0.5 rounded capitalize ${
+                          w.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          w.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                          {w.status === 'pending' ? 'Đang chờ' : w.status === 'accepted' ? 'Đã duyệt' : 'Từ chối'}
+                        </span>
+                      </div>
+                      <p className="text-primary font-bold text-base">${Number(w.amount).toLocaleString()}</p>
+                      <p className="text-on-surface-variant text-xs mt-1">{w.bankName} &bull; {w.accountNumber}</p>
+                      <p className="text-[10px] text-on-surface-variant mt-2">{new Date(w.createdAt).toLocaleDateString('vi-VN')}</p>
+                    </div>
+                  ))
+                )}
+              </section>
+
+              {/* Right: withdrawal detail */}
+              <section className="col-span-12 lg:col-span-8">
+                {activeWithdrawal ? (
+                  <div className="bg-white border border-outline-variant/30 p-8 flex flex-col space-y-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-outline-variant/20">
+                      <div>
+                        <h2 className="font-headline-md text-2xl text-primary font-light">
+                          Yêu cầu rút ${Number(activeWithdrawal.amount).toLocaleString()}
+                        </h2>
+                        <p className="text-on-surface-variant text-xs mt-1">ID: {activeWithdrawal._id}</p>
+                      </div>
+                      <span className={`self-start px-4 py-1.5 text-[10px] font-bold uppercase rounded-full ${
+                        activeWithdrawal.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                        activeWithdrawal.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                        {activeWithdrawal.status === 'pending' ? 'Đang chờ xét duyệt' : activeWithdrawal.status === 'accepted' ? 'Đã chấp thuận' : 'Đã từ chối'}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div>
+                          <label className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Store / Owner</label>
+                          <p className="text-base text-primary font-medium">{activeWithdrawal.store?.companyName || activeWithdrawal.store?.fullName}</p>
+                          <p className="text-xs text-on-surface-variant">{activeWithdrawal.store?.email}</p>
+                        </div>
+                        <div>
+                          <label className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Số dư hiện tại của store</label>
+                          <p className="text-sm text-primary font-bold">${Number(activeWithdrawal.store?.walletBalance || 0).toLocaleString()}</p>
+                        </div>
+                        <div>
+                          <label className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Ngày gửi yêu cầu</label>
+                          <p className="text-sm text-primary">{new Date(activeWithdrawal.createdAt).toLocaleString('vi-VN')}</p>
+                        </div>
+                        {activeWithdrawal.resolvedAt && (
+                          <div>
+                            <label className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Ngày xử lý</label>
+                            <p className="text-sm text-primary">{new Date(activeWithdrawal.resolvedAt).toLocaleString('vi-VN')}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="bg-surface-container-low p-6 border border-outline-variant/20 space-y-3">
+                        <label className="font-label-caps text-[10px] text-on-surface-variant block">Thông tin ngân hàng</label>
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-secondary">account_balance</span>
+                          <div>
+                            <p className="text-sm font-bold text-primary">{activeWithdrawal.bankName}</p>
+                            <p className="text-xs text-on-surface-variant">Ngân hàng</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-secondary">credit_card</span>
+                          <div>
+                            <p className="text-sm font-bold text-primary font-mono">{activeWithdrawal.accountNumber}</p>
+                            <p className="text-xs text-on-surface-variant">Số tài khoản</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-secondary">person</span>
+                          <div>
+                            <p className="text-sm font-bold text-primary uppercase">{activeWithdrawal.accountHolder}</p>
+                            <p className="text-xs text-on-surface-variant">Chủ tài khoản</p>
+                          </div>
+                        </div>
+                        <div className="pt-3 border-t border-outline-variant/20">
+                          <p className="font-label-caps text-[10px] text-on-surface-variant">Số tiền yêu cầu</p>
+                          <p className="text-2xl font-bold text-primary">${Number(activeWithdrawal.amount).toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {activeWithdrawal.status === 'rejected' && activeWithdrawal.note && (
+                      <div className="p-4 bg-red-50 border border-red-200">
+                        <p className="font-label-caps text-[10px] text-red-500 mb-1">LÝ DO TỪ CHỐI</p>
+                        <p className="text-sm text-red-700">{activeWithdrawal.note}</p>
+                      </div>
+                    )}
+
+                    {activeWithdrawal.status === 'pending' && (
+                      <div className="pt-6 border-t border-outline-variant/20 flex flex-wrap gap-4 items-center justify-between">
+                        <button
+                          onClick={() => { setRejectWithdrawNote(''); setRejectWithdrawModal(true); }}
+                          className="px-6 py-3 border border-red-600 text-red-600 font-label-caps text-[11px] hover:bg-red-50 transition-colors uppercase tracking-wider"
+                        >
+                          Từ chối
+                        </button>
+                        <button
+                          onClick={() => handleWithdrawalAction(activeWithdrawal._id, 'accept')}
+                          disabled={withdrawActionLoading}
+                          className="px-8 py-3 bg-emerald-600 text-white font-label-caps text-[11px] hover:bg-emerald-700 transition-colors uppercase tracking-widest shadow-lg disabled:opacity-60"
+                        >
+                          {withdrawActionLoading ? 'Processing...' : 'Chấp thuận & Giải ngân'}
+                        </button>
+                      </div>
+                    )}
+
+                    {activeWithdrawal.status !== 'pending' && (
+                      <div className="pt-4 border-t border-outline-variant/20 text-xs text-on-surface-variant text-center">
+                        Yêu cầu này đã được xử lý với trạng thái: <span className="font-bold capitalize text-primary">{activeWithdrawal.status}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-white border border-outline-variant/30 p-12 text-center text-outline">
+                    <span className="material-symbols-outlined text-5xl mb-4 opacity-55">payments</span>
+                    <p>Chọn một yêu cầu rút tiền từ danh sách bên trái.</p>
+                  </div>
+                )}
+              </section>
+            </div>
+          </div>
+        )}
+        </div>
       </div>
 
       {/* Reject Modal Overlay */}
@@ -453,6 +715,50 @@ const AdminDashboard = () => {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {/* Reject Withdrawal Modal */}
+      {rejectWithdrawModal && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/30 backdrop-blur-sm">
+          <div className="bg-white max-w-md w-full p-8 shadow-2xl border border-outline-variant/50">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-headline-md text-lg text-primary font-bold">Lý Do Từ Chối</h3>
+              <button
+                type="button"
+                onClick={() => setRejectWithdrawModal(false)}
+                className="text-on-surface-variant hover:text-primary"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <p className="text-xs text-on-surface-variant mb-6">
+              Nhập lý do từ chối yêu cầu rút tiền này. Store sẽ nhận được thông báo cùng lý do.
+            </p>
+            <textarea
+              className="w-full border border-outline-variant/35 bg-surface p-3 text-sm text-primary h-28 focus:outline-none focus:border-primary resize-none"
+              placeholder="Nhập lý do từ chối..."
+              value={rejectWithdrawNote}
+              onChange={(e) => setRejectWithdrawNote(e.target.value)}
+            />
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRejectWithdrawModal(false)}
+                className="flex-grow py-3 border border-outline-variant text-on-surface-variant font-label-caps text-xs uppercase hover:bg-surface transition-colors"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                disabled={withdrawActionLoading}
+                onClick={() => handleWithdrawalAction(activeWithdrawal._id, 'reject', rejectWithdrawNote)}
+                className="flex-grow py-3 bg-red-600 text-white font-label-caps text-xs uppercase hover:bg-red-700 transition-colors shadow disabled:opacity-60"
+              >
+                {withdrawActionLoading ? 'Đang xử lý...' : 'Xác Nhận Từ Chối'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

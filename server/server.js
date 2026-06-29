@@ -3,10 +3,29 @@ import mongoose from 'mongoose';
 import app from './src/app.js';
 import bcrypt from 'bcryptjs';
 import User from './src/models/User.js';
+import https from 'https';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const PORT = process.env.PORT || 5000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const keyPath = path.resolve(__dirname, '../key.pem');
+const certPath = path.resolve(__dirname, '../cert.pem');
+
+let credentials = {};
+try {
+  credentials = {
+    key: fs.readFileSync(keyPath),
+    cert: fs.readFileSync(certPath)
+  };
+} catch (error) {
+  console.error('Error reading SSL certificates. Make sure key.pem and cert.pem exist in the project root.', error);
+}
 
 const seedAdminUser = async () => {
   try {
@@ -44,9 +63,16 @@ mongoose.connect(process.env.MONGO_URI)
         console.log("MongoDB Connected");
         await seedAdminUser();
 
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
+        if (credentials.key && credentials.cert) {
+            const httpsServer = https.createServer(credentials, app);
+            httpsServer.listen(PORT, () => {
+                console.log(`HTTPS Server running on port ${PORT}`);
+            });
+        } else {
+            app.listen(PORT, () => {
+                console.log(`HTTP Server running on port ${PORT}`);
+            });
+        }
     })
     .catch((err) => {
         console.log(err);

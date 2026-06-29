@@ -529,7 +529,7 @@ router.put('/admin/approve-vendor/:id', protect, async (req, res) => {
             <p>We are thrilled to inform you that your vendor application for <strong>Lumina Atelier</strong> has been approved!</p>
             <p>Your account has been upgraded to a Curator Partner. You can now access your Store Manager panel to manage your furniture pieces and showcase your craftsmanship.</p>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="http://localhost:5173/store" style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 14px; letter-spacing: 2px;">ACCESS STORE MANAGER</a>
+              <a href="https://localhost:5173/store" style="background-color: #000000; color: #ffffff; padding: 15px 30px; text-decoration: none; font-family: 'Montserrat', sans-serif; font-weight: bold; font-size: 14px; letter-spacing: 2px;">ACCESS STORE MANAGER</a>
             </div>
             <p style="font-size: 12px; color: #747878;">Welcome to our exclusive inner circle. We look forward to curating your finest work.</p>
             <hr style="border: 0; border-top: 1px solid #e5e5e1; margin-top: 20px;" />

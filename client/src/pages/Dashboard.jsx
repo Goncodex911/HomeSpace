@@ -74,11 +74,24 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [view, setView] = useState('overview'); // overview, inventory, add_product
+  const [view, setView] = useState('overview'); // overview, inventory, add_product, wallet
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Search filter
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Wallet & Withdrawal states
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [withdrawals, setWithdrawals] = useState([]);
+  const [walletLoading, setWalletLoading] = useState(false);
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawBank, setWithdrawBank] = useState('');
+  const [withdrawAccount, setWithdrawAccount] = useState('');
+  const [withdrawHolder, setWithdrawHolder] = useState('');
+  const [withdrawError, setWithdrawError] = useState('');
+  const [withdrawSuccess, setWithdrawSuccess] = useState('');
+  const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
 
   // Form states
   const [name, setName] = useState('');
@@ -106,9 +119,59 @@ const Dashboard = () => {
     }
   };
 
+  const fetchWallet = async () => {
+    try {
+      setWalletLoading(true);
+      const [balRes, histRes] = await Promise.all([
+        api('/payment/wallet'),
+        api('/payment/withdraw/my'),
+      ]);
+      setWalletBalance(balRes.walletBalance || 0);
+      setWithdrawals(histRes.data || []);
+    } catch (err) {
+      // silently fail – wallet is secondary feature
+      console.error('Wallet fetch error:', err.message);
+    } finally {
+      setWalletLoading(false);
+    }
+  };
+
+  const handleWithdrawSubmit = async (e) => {
+    e.preventDefault();
+    setWithdrawError('');
+    setWithdrawSuccess('');
+    setWithdrawSubmitting(true);
+    try {
+      await api('/payment/withdraw', {
+        method: 'POST',
+        body: {
+          amount: parseFloat(withdrawAmount),
+          bankName: withdrawBank,
+          accountNumber: withdrawAccount,
+          accountHolder: withdrawHolder,
+        },
+      });
+      setWithdrawSuccess('Yêu cầu rút tiền đã được gửi thành công! Admin sẽ xét duyệt sớm.');
+      setWithdrawAmount('');
+      setWithdrawBank('');
+      setWithdrawAccount('');
+      setWithdrawHolder('');
+      setShowWithdrawModal(false);
+      fetchWallet();
+    } catch (err) {
+      setWithdrawError(err.message || 'Gửi yêu cầu thất bại.');
+    } finally {
+      setWithdrawSubmitting(false);
+    }
+  };
+
   useEffect(() => {
     fetchItems();
   }, []);
+
+  useEffect(() => {
+    if (view === 'wallet') fetchWallet();
+  }, [view]);
 
   const resetForm = () => {
     setName('');
@@ -300,6 +363,14 @@ const Dashboard = () => {
             <span className="font-label-caps text-label-caps">Inventory</span>
           </button>
 
+          <button 
+            onClick={() => { setView('wallet'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-4 pl-5 py-3 nav-link ${view === 'wallet' ? 'nav-link-active' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
+          >
+            <span className="material-symbols-outlined">account_balance_wallet</span>
+            <span className="font-label-caps text-label-caps">Wallet</span>
+          </button>
+
           <a 
             href="/orders" 
             onClick={(e) => { e.preventDefault(); alert('Orders panel integration coming soon.'); }}
@@ -356,6 +427,7 @@ const Dashboard = () => {
               {view === 'overview' && 'Store Overview'}
               {view === 'inventory' && 'Inventory Catalog'}
               {view === 'add_product' && (editingId ? 'Edit Product' : 'New Catalog Item')}
+              {view === 'wallet' && 'Wallet & Withdrawals'}
             </h2>
           </div>
           <div className="flex items-center gap-6">
@@ -893,7 +965,246 @@ const Dashboard = () => {
               </form>
             </div>
           )}
+
+          {/* VIEW: WALLET */}
+          {view === 'wallet' && (
+            <div className="space-y-10 animate-fade-in">
+              <div className="flex items-end justify-between">
+                <div>
+                  <span className="font-label-caps text-label-caps text-secondary uppercase tracking-widest mb-2 block">Finance</span>
+                  <h3 className="font-display-lg text-4xl text-primary font-light">Store Wallet</h3>
+                </div>
+              </div>
+
+              {withdrawSuccess && (
+                <div className="p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm flex items-center gap-2">
+                  <span className="material-symbols-outlined text-emerald-600">check_circle</span>
+                  {withdrawSuccess}
+                </div>
+              )}
+
+              {/* Balance Card + Withdraw Button */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+                <div className="md:col-span-2 bento-card border border-outline-variant/30 p-8 flex flex-col justify-between" style={{background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)'}}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest block mb-1">Available Balance</span>
+                      <span className="font-label-caps text-[10px] text-white/40 uppercase tracking-widest">Store Wallet</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
+                      <span className="material-symbols-outlined text-white">account_balance_wallet</span>
+                    </div>
+                  </div>
+                  {walletLoading ? (
+                    <div className="text-white/50 text-sm mt-8">Loading balance...</div>
+                  ) : (
+                    <div className="mt-8">
+                      <span className="font-display-lg text-5xl font-light text-white leading-none">
+                        {walletBalance.toLocaleString('vi-VN')} ₫
+                      </span>
+                      <p className="text-white/40 text-xs mt-3 font-label-caps">VNĐ khả dụng để rút</p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="bento-card border border-outline-variant/30 p-8 flex flex-col justify-between">
+                  <div>
+                    <span className="font-label-caps text-label-caps text-on-surface-variant block mb-2">Quick Actions</span>
+                    <p className="text-xs text-on-surface-variant leading-relaxed">
+                      Gửi yêu cầu rút tiền về tài khoản ngân hàng. Admin sẽ xét duyệt trong 1-3 ngày làm việc.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setWithdrawError(''); setWithdrawSuccess(''); setShowWithdrawModal(true); }}
+                    disabled={walletBalance <= 0}
+                    className="w-full mt-6 bg-primary text-white font-label-caps text-xs uppercase tracking-widest py-4 hover:bg-secondary transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    <span className="material-symbols-outlined text-sm">download</span>
+                    Rút Tiền
+                  </button>
+                  {walletBalance <= 0 && (
+                    <p className="text-[10px] text-on-surface-variant text-center mt-2">Số dư ví bằng 0, không thể rút tiền</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Withdrawal History Table */}
+              <section className="bento-card border border-outline-variant/30 overflow-hidden">
+                <div className="px-8 py-6 border-b border-outline-variant/30 flex justify-between items-center bg-white">
+                  <h4 className="font-headline-md text-headline-md">Lịch Sử Yêu Cầu Rút Tiền</h4>
+                  <button onClick={fetchWallet} className="text-xs text-secondary hover:underline font-label-caps flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm">refresh</span> Làm mới
+                  </button>
+                </div>
+                {walletLoading ? (
+                  <div className="text-center py-12 text-on-surface-variant text-sm">Đang tải...</div>
+                ) : withdrawals.length === 0 ? (
+                  <div className="text-center py-12 text-on-surface-variant text-sm border border-dashed border-outline-variant/40 m-8">
+                    <span className="material-symbols-outlined text-4xl mb-3 opacity-30 block">receipt_long</span>
+                    Chưa có yêu cầu rút tiền nào.
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="bg-surface-container-low">
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Ngày gửi</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Số tiền</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Ngân hàng</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Số TK</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-right">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/20">
+                        {withdrawals.map((w) => (
+                          <tr key={w._id} className="hover:bg-surface-container-lowest transition-colors">
+                            <td className="px-8 py-5 text-sm text-on-surface-variant">{new Date(w.createdAt).toLocaleDateString('vi-VN')}</td>
+                            <td className="px-8 py-5 font-bold text-primary">{Number(w.amount).toLocaleString('vi-VN')} ₫</td>
+                            <td className="px-8 py-5 text-sm">{w.bankName}</td>
+                            <td className="px-8 py-5 text-sm font-mono">{w.accountNumber}</td>
+                            <td className="px-8 py-5 text-right">
+                              <span className={`px-3 py-1 text-[10px] font-bold uppercase rounded-full ${
+                                w.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                                w.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {w.status === 'pending' ? 'Đang chờ' : w.status === 'accepted' ? 'Đã duyệt' : 'Từ chối'}
+                              </span>
+                              {w.status === 'rejected' && w.note && (
+                                <p className="text-[10px] text-red-500 mt-1 text-right">Lý do: {w.note}</p>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
         </div>
+
+        {/* Withdraw Modal */}
+        {showWithdrawModal && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+            <form onSubmit={handleWithdrawSubmit} className="bg-white max-w-md w-full p-8 shadow-2xl border border-outline-variant/50">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="font-headline-md text-lg text-primary font-bold">Yêu Cầu Rút Tiền</h3>
+                <button type="button" onClick={() => setShowWithdrawModal(false)} className="text-on-surface-variant hover:text-primary">
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+
+              <div className="mb-6 p-4 bg-surface-container-low border border-outline-variant/20">
+                <span className="font-label-caps text-[10px] text-on-surface-variant block">Số dư hiện tại</span>
+                <span className="font-display-lg text-2xl text-primary font-light">{walletBalance.toLocaleString('vi-VN')} ₫</span>
+              </div>
+
+              {withdrawError && (
+                <div className="mb-4 p-3 bg-red-50 text-red-700 border border-red-200 text-xs">{withdrawError}</div>
+              )}
+
+              <div className="space-y-6">
+                <div className="relative">
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Số tiền muốn rút (VNĐ)</label>
+                  <input
+                    type="number"
+                    min="1000"
+                    max={walletBalance}
+                    step="1000"
+                    required
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-headline-md text-xl text-primary"
+                  />
+                  {withdrawAmount && (
+                    <span className="absolute right-0 bottom-4 text-xs text-on-surface-variant">
+                      = {Number(withdrawAmount).toLocaleString('vi-VN')} ₫
+                    </span>
+                  )}
+                </div>
+
+                <div className="relative">
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Ngân Hàng</label>
+                  <select
+                    required
+                    value={withdrawBank}
+                    onChange={(e) => setWithdrawBank(e.target.value)}
+                    className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary appearance-none cursor-pointer focus:outline-none focus:border-primary transition-colors"
+                  >
+                    <option value="">-- Chọn ngân hàng --</option>
+                    <option value="Vietcombank">Vietcombank (VCB)</option>
+                    <option value="BIDV">BIDV</option>
+                    <option value="Agribank">Agribank</option>
+                    <option value="VietinBank">VietinBank (CTG)</option>
+                    <option value="Techcombank">Techcombank (TCB)</option>
+                    <option value="MB Bank">MB Bank</option>
+                    <option value="ACB">ACB</option>
+                    <option value="Sacombank">Sacombank (STB)</option>
+                    <option value="TPBank">TPBank</option>
+                    <option value="VPBank">VPBank</option>
+                    <option value="HDBank">HDBank</option>
+                    <option value="OCB">OCB</option>
+                    <option value="SHB">SHB</option>
+                    <option value="SeABank">SeABank</option>
+                    <option value="LienVietPostBank">LienVietPostBank</option>
+                    <option value="MSB">MSB (Maritime Bank)</option>
+                    <option value="Eximbank">Eximbank</option>
+                    <option value="Nam A Bank">Nam A Bank</option>
+                    <option value="Bac A Bank">Bac A Bank</option>
+                    <option value="VIB">VIB</option>
+                    <option value="Cake by VPBank">Cake by VPBank</option>
+                    <option value="Timo by Ban Viet">Timo by Ban Viet</option>
+                  </select>
+                  <span className="material-symbols-outlined absolute right-0 bottom-4 text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
+                </div>
+
+                <div className="relative">
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Số Tài Khoản</label>
+                  <input
+                    type="text"
+                    required
+                    value={withdrawAccount}
+                    onChange={(e) => setWithdrawAccount(e.target.value)}
+                    placeholder="Nhập số tài khoản ngân hàng"
+                    className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary font-mono"
+                  />
+                </div>
+
+                <div className="relative">
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Tên Chủ Tài Khoản</label>
+                  <input
+                    type="text"
+                    required
+                    value={withdrawHolder}
+                    onChange={(e) => setWithdrawHolder(e.target.value)}
+                    placeholder="Nhập tên chủ tài khoản (in hoa)"
+                    className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary uppercase"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-8 flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowWithdrawModal(false)}
+                  className="flex-1 py-3 border border-outline-variant text-on-surface-variant font-label-caps text-xs uppercase hover:bg-surface transition-colors"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={withdrawSubmitting}
+                  className="flex-1 py-3 bg-primary text-white font-label-caps text-xs uppercase hover:bg-secondary transition-colors shadow disabled:opacity-60"
+                >
+                  {withdrawSubmitting ? 'Đang gửi...' : 'Gửi Yêu Cầu'}
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
 
         {/* Footer */}
         <footer className="w-full mt-auto bg-surface border-t border-outline-variant py-8 bg-white/40">
