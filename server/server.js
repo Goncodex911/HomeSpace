@@ -15,7 +15,7 @@ const seedAdminUser = async () => {
     if (!adminUser) {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash('adminpassword123', salt);
-      
+
       const newAdmin = new User({
         fullName: 'Lumina Admin',
         email: adminEmail,
@@ -24,7 +24,7 @@ const seedAdminUser = async () => {
         role: 'admin',
         vendorStatus: 'none',
       });
-      
+
       await newAdmin.save();
       console.log('--------------------------------------------------');
       console.log('TEST ADMIN ACCOUNT SEEDED SUCCESSFULLY!');
@@ -40,14 +40,14 @@ const seedAdminUser = async () => {
 };
 
 mongoose.connect(process.env.MONGO_URI)
-    .then(async () => {
-        console.log("MongoDB Connected");
-        await seedAdminUser();
+  .then(async () => {
+    console.log("MongoDB Connected");
+    await seedAdminUser();
 
-        app.listen(PORT, () => {
-            console.log(`Server running on port ${PORT}`);
-        });
-    })
-    .catch((err) => {
-        console.log(err);
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
+  })
+  .catch((err) => {
+    console.log(err);
+  });

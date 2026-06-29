@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api/api';
+import toast from 'react-hot-toast';
 
 const dashboardStyles = `
   .material-symbols-outlined {
@@ -300,23 +301,21 @@ const Dashboard = () => {
             <span className="font-label-caps text-label-caps">Inventory</span>
           </button>
 
-          <a 
-            href="/orders" 
-            onClick={(e) => { e.preventDefault(); alert('Orders panel integration coming soon.'); }}
+          <button 
+            onClick={(e) => { e.preventDefault(); toast.success('Orders panel integration coming soon.'); }}
             className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
           >
             <span className="material-symbols-outlined">shopping_bag</span>
             <span className="font-label-caps text-label-caps">Orders</span>
-          </a>
+          </button>
 
-          <a 
-            href="/customers" 
-            onClick={(e) => { e.preventDefault(); alert('Customers feed coming soon.'); }}
+          <button 
+            onClick={(e) => { e.preventDefault(); toast.success('Customers feed coming soon.'); }}
             className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
           >
             <span className="material-symbols-outlined">group</span>
             <span className="font-label-caps text-label-caps">Customers</span>
-          </a>
+          </button>
         </nav>
 
         <div className="mt-auto px-6 pt-8 border-t border-outline-variant/30">

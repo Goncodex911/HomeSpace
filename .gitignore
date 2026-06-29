@@ -36,3 +36,5 @@ yarn-error.log*
 # Stitch directories
 .stitch/
 **/.stitch/
+server/src/firebase/serviceAccountKey.json
+

@@ -343,14 +343,14 @@ router.post('/reset-password', async (req, res) => {
     // Hash new password
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
-    
+
     // Clear OTP
     user.otp = undefined;
     user.otpExpires = undefined;
-    
+
     // Auto-verify if they were somehow unverified
     user.isVerified = true;
-    
+
     await user.save();
 
     res.status(200).json({ message: 'Password has been reset successfully. Please log in.' });

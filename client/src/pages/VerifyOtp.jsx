@@ -75,7 +75,7 @@ const VerifyOtp = () => {
     e.preventDefault();
     setError('');
     setMessage('');
-    
+
     const otpCode = otp.join('');
     if (otpCode.length !== 6) {
       setError('Please enter all 6 digits');
@@ -145,106 +145,106 @@ const VerifyOtp = () => {
           />
         </section>
 
-      {/* Form Side */}
-      <section className="w-full md:w-1/2 lg:w-2/5 px-6 md:px-12 lg:px-24 flex flex-col justify-center py-20 bg-surface-container-lowest">
-        <div className="max-w-md mx-auto w-full">
-          <div className="mb-12">
-            <h1 className="font-headline-lg text-headline-lg mb-4 text-primary">Verify Your Email</h1>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              We've sent a 6-digit code to your email address. Please enter it below to activate your account.
-            </p>
-          </div>
-
-          {error && (
-            <div className="mb-6 p-4 bg-error-container text-on-error-container text-sm border border-error/20">
-              {error}
+        {/* Form Side */}
+        <section className="w-full md:w-1/2 lg:w-2/5 px-6 md:px-12 lg:px-24 flex flex-col justify-center py-20 bg-surface-container-lowest">
+          <div className="max-w-md mx-auto w-full">
+            <div className="mb-12">
+              <h1 className="font-headline-lg text-headline-lg mb-4 text-primary">Verify Your Email</h1>
+              <p className="font-body-md text-body-md text-on-surface-variant">
+                We've sent a 6-digit code to your email address. Please enter it below to activate your account.
+              </p>
             </div>
-          )}
 
-          {message && (
-            <div className="mb-6 p-4 bg-secondary-container text-on-secondary-container text-sm border border-secondary/20">
-              {message}
-            </div>
-          )}
-
-          <form className="space-y-10" onSubmit={handleSubmit}>
-            {showEmailInput && (
-              <div className="space-y-1">
-                <label className="font-label-caps text-label-caps text-on-surface-variant uppercase" htmlFor="verify-email">Email Address</label>
-                <input
-                  className="w-full border-none border-b border-outline-variant py-2 bg-transparent text-body-md placeholder:text-outline-variant/50 focus:outline-none focus:ring-0 focus:border-primary rounded-none px-0"
-                  id="verify-email"
-                  type="email"
-                  placeholder="name@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+            {error && (
+              <div className="mb-6 p-4 bg-error-container text-on-error-container text-sm border border-error/20">
+                {error}
               </div>
             )}
 
-            {!showEmailInput && (
-              <div className="flex justify-between items-center text-sm bg-surface-container-low px-4 py-3 border border-outline-variant/30">
-                <span className="text-on-surface-variant">Verifying <strong>{email}</strong></span>
-                <button
-                  type="button"
-                  className="text-primary hover:underline text-xs"
-                  onClick={() => setShowEmailInput(true)}
-                >
-                  Change Email
-                </button>
+            {message && (
+              <div className="mb-6 p-4 bg-secondary-container text-on-secondary-container text-sm border border-secondary/20">
+                {message}
               </div>
             )}
 
-            {/* OTP Input Grid */}
-            <div className="flex justify-between gap-3">
-              {otp.map((val, idx) => (
-                <input
-                  key={idx}
-                  ref={inputRefs[idx]}
-                  className="w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary focus:ring-0 rounded-none"
-                  maxlength="1"
-                  type="text"
-                  value={val}
-                  onChange={(e) => handleChange(idx, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(idx, e)}
-                  required
-                />
-              ))}
-            </div>
+            <form className="space-y-10" onSubmit={handleSubmit}>
+              {showEmailInput && (
+                <div className="space-y-1">
+                  <label className="font-label-caps text-label-caps text-on-surface-variant uppercase" htmlFor="verify-email">Email Address</label>
+                  <input
+                    className="w-full border-none border-b border-outline-variant py-2 bg-transparent text-body-md placeholder:text-outline-variant/50 focus:outline-none focus:ring-0 focus:border-primary rounded-none px-0"
+                    id="verify-email"
+                    type="email"
+                    placeholder="name@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
 
-            <div className="space-y-6">
-              <button
-                className={`w-full bg-primary text-on-primary py-5 font-body-md text-body-md uppercase tracking-[0.2em] hover:bg-secondary transition-all duration-300 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
-                type="submit"
-                disabled={loading}
-              >
-                {loading ? 'Verifying...' : 'Verify Code'}
-              </button>
+              {!showEmailInput && (
+                <div className="flex justify-between items-center text-sm bg-surface-container-low px-4 py-3 border border-outline-variant/30">
+                  <span className="text-on-surface-variant">Verifying <strong>{email}</strong></span>
+                  <button
+                    type="button"
+                    className="text-primary hover:underline text-xs"
+                    onClick={() => setShowEmailInput(true)}
+                  >
+                    Change Email
+                  </button>
+                </div>
+              )}
 
-              <div className="flex flex-col items-center gap-4">
-                <p className="font-body-md text-body-md text-on-surface-variant">Didn't receive the code?</p>
-                <button
-                  className={`font-label-caps text-label-caps uppercase tracking-widest text-primary border-b border-transparent hover:border-primary transition-all duration-300 ${resendCooldown > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  id="resend-btn"
-                  type="button"
-                  onClick={handleResend}
-                  disabled={resendCooldown > 0}
-                >
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
-                </button>
+              {/* OTP Input Grid */}
+              <div className="flex justify-between gap-3">
+                {otp.map((val, idx) => (
+                  <input
+                    key={idx}
+                    ref={inputRefs[idx]}
+                    className="w-12 h-16 md:w-14 md:h-20 text-center text-headline-md border-0 border-b-2 border-outline-variant bg-transparent transition-all duration-300 focus:border-primary focus:ring-0 rounded-none"
+                    maxLength="1"
+                    type="text"
+                    value={val}
+                    onChange={(e) => handleChange(idx, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(idx, e)}
+                    required
+                  />
+                ))}
               </div>
+
+              <div className="space-y-6">
+                <button
+                  className={`w-full bg-primary text-on-primary py-5 font-body-md text-body-md uppercase tracking-[0.2em] hover:bg-secondary transition-all duration-300 ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                  type="submit"
+                  disabled={loading}
+                >
+                  {loading ? 'Verifying...' : 'Verify Code'}
+                </button>
+
+                <div className="flex flex-col items-center gap-4">
+                  <p className="font-body-md text-body-md text-on-surface-variant">Didn't receive the code?</p>
+                  <button
+                    className={`font-label-caps text-label-caps uppercase tracking-widest text-primary border-b border-transparent hover:border-primary transition-all duration-300 ${resendCooldown > 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    id="resend-btn"
+                    type="button"
+                    onClick={handleResend}
+                    disabled={resendCooldown > 0}
+                  >
+                    {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+                  </button>
+                </div>
+              </div>
+            </form>
+
+            <div className="mt-8 text-center">
+              <Link to="/login" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
+                Back to Sign In
+              </Link>
             </div>
-          </form>
-          
-          <div className="mt-8 text-center">
-            <Link to="/login" className="text-sm text-on-surface-variant hover:text-primary transition-colors">
-              Back to Sign In
-            </Link>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      </main>
     </div>
   );
 };
