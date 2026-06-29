@@ -174,7 +174,7 @@ const Stores = () => {
         <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
           <div className="flex items-center gap-8">
             <Link className="flex items-center" to="/">
-              <span className="font-display-lg text-lg md:text-xl font-bold tracking-[0.25em] text-primary">LUMINA</span>
+              <img alt="AURA Logo" className="h-8 md:h-10" src="https://lh3.googleusercontent.com/aida/AP1WRLsWGZ4LJsyWWw0DXI5i0NfMxhuFuxInq7d6NcREsRQma6gs0mTrWB6h28qpRcABtk3We1-9DLnWO45-C-Nn9EWMy8_BTFIOFWiOu0OTPqs2VcARYqgQa7JT1IyHYAIc1dlp-oQg2GsrEiph-0tKESg5sjj6-1iliWwqoDiztHIVWJswFGI-0xZS1IWK_RMm-5k6whLqsFQLFIpCNa5SpGArlemsLQhRt1oD4t_By4EPNHvJnSg-SiW26vA" />
             </Link>
             <div className="hidden md:flex gap-8">
               <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" to="/">Home</Link>

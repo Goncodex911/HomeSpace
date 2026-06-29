@@ -5,41 +5,28 @@ import { protect } from '../middlewares/auth.js';
 
 const router = express.Router();
 
-// Lấy thông tin giỏ hàng của người dùng hiện tại
+// @route   GET /api/cart
+// @desc    Get current user's cart
+// @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.user._id })
-      .populate({
-        path: 'items.item',
-        populate: {
-          path: 'owner',
-          select: 'fullName companyName businessType',
-        },
-      });
-
+    let cart = await Cart.findOne({ user: req.user._id }).populate('items.item');
     if (!cart) {
-      cart = new Cart({ user: req.user._id, items: [] });
-      await cart.save();
+      cart = await Cart.create({ user: req.user._id, items: [] });
     }
-
-    res.status(200).json({
-      message: 'Cart retrieved successfully',
-      data: cart,
-    });
+    res.json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error while fetching cart' });
   }
 });
 
-// Thêm sản phẩm vào giỏ hàng
-router.post('/add', protect, async (req, res) => {
+// @route   POST /api/cart
+// @desc    Add item to cart or update quantity
+// @access  Private
+router.post('/', protect, async (req, res) => {
   try {
     const { itemId, quantity } = req.body;
-    const qty = parseInt(quantity) || 1;
-
-    if (!itemId) {
-      return res.status(400).json({ message: 'Item ID is required' });
-    }
 
     const item = await Item.findById(itemId);
     if (!item) {
@@ -51,84 +38,92 @@ router.post('/add', protect, async (req, res) => {
       cart = new Cart({ user: req.user._id, items: [] });
     }
 
-    // Tìm xem sản phẩm đã có trong giỏ hàng chưa
-    const existingIndex = cart.items.findIndex(
-      (p) => p.item.toString() === itemId
-    );
-
-    if (existingIndex > -1) {
-      cart.items[existingIndex].quantity += qty;
-    } else {
-      cart.items.push({ item: itemId, quantity: qty });
-    }
-
-    await cart.save();
-    res.status(200).json({
-      message: 'Item added to cart successfully',
-      data: cart,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// Cập nhật số lượng sản phẩm
-router.post('/update', protect, async (req, res) => {
-  try {
-    const { itemId, quantity } = req.body;
-    const qty = parseInt(quantity);
-
-    if (!itemId || isNaN(qty) || qty < 1) {
-      return res.status(400).json({ message: 'Valid Item ID and quantity >= 1 are required' });
-    }
-
-    const cart = await Cart.findOne({ user: req.user._id });
-    if (!cart) {
-      return res.status(404).json({ message: 'Cart not found' });
-    }
-
-    const itemIndex = cart.items.findIndex(
-      (p) => p.item.toString() === itemId
-    );
+    const itemIndex = cart.items.findIndex(p => p.item.toString() === itemId);
 
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity = qty;
-      await cart.save();
-      return res.status(200).json({
-        message: 'Cart updated successfully',
-        data: cart,
-      });
+      // Item exists in cart, update quantity
+      cart.items[itemIndex].quantity += quantity || 1;
     } else {
-      return res.status(404).json({ message: 'Item not found in cart' });
+      // Item does not exist in cart, add it
+      cart.items.push({ item: itemId, quantity: quantity || 1 });
     }
+
+    await cart.save();
+    
+    // Return populated cart
+    cart = await cart.populate('items.item');
+    res.json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error while adding to cart' });
   }
 });
-
-// Xóa sản phẩm khỏi giỏ hàng
-router.post('/remove', protect, async (req, res) => {
+// @route   PUT /api/cart/:itemId
+// @desc    Update exact quantity of an item in cart
+// @access  Private
+router.put('/:itemId', protect, async (req, res) => {
   try {
-    const { itemId } = req.body;
-
-    if (!itemId) {
-      return res.status(400).json({ message: 'Item ID is required' });
-    }
-
-    const cart = await Cart.findOne({ user: req.user._id });
+    const { quantity } = req.body;
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
       return res.status(404).json({ message: 'Cart not found' });
     }
 
-    cart.items = cart.items.filter((p) => p.item.toString() !== itemId);
+    const itemIndex = cart.items.findIndex(p => p.item.toString() === req.params.itemId);
+
+    if (itemIndex > -1) {
+      if (quantity > 0) {
+        cart.items[itemIndex].quantity = quantity;
+      } else {
+        cart.items.splice(itemIndex, 1);
+      }
+      await cart.save();
+    }
+
+    cart = await cart.populate('items.item');
+    res.json(cart);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while updating cart item' });
+  }
+});
+
+
+// @route   DELETE /api/cart/:itemId
+// @desc    Remove an item from cart
+// @access  Private
+router.delete('/:itemId', protect, async (req, res) => {
+  try {
+    let cart = await Cart.findOne({ user: req.user._id });
+    if (!cart) {
+      return res.status(404).json({ message: 'Cart not found' });
+    }
+
+    cart.items = cart.items.filter(p => p.item.toString() !== req.params.itemId);
     await cart.save();
 
-    res.status(200).json({
-      message: 'Item removed from cart successfully',
-      data: cart,
-    });
+    cart = await cart.populate('items.item');
+    res.json(cart);
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: 'Server error while removing from cart' });
+  }
+});
+
+// @route   DELETE /api/cart
+// @desc    Clear entire cart
+// @access  Private
+router.delete('/', protect, async (req, res) => {
+  try {
+    const cart = await Cart.findOne({ user: req.user._id });
+    if (cart) {
+      cart.items = [];
+      await cart.save();
+    }
+    res.json({ message: 'Cart cleared' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while clearing cart' });
   }
 });
 

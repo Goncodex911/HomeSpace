@@ -6,22 +6,10 @@ import api from '../api/api';
 const Home = () => {
   const { user, logout, token } = useContext(AuthContext);
   const navigate = useNavigate();
-  
+
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('New Arrivals');
-  const [cartCount, setCartCount] = useState(0);
-
-  const fetchCartCount = async () => {
-    if (!token) return;
-    try {
-      const res = await api('/cart');
-      const count = res.data?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-      setCartCount(count);
-    } catch (err) {
-      console.error('Failed to fetch cart count:', err);
-    }
-  };
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -35,26 +23,7 @@ const Home = () => {
       }
     };
     fetchItems();
-    fetchCartCount();
-  }, [token]);
-
-  const handleAddToCart = async (productId) => {
-    if (!token) {
-      navigate('/login');
-      return;
-    }
-    try {
-      await api('/cart/add', {
-        method: 'POST',
-        body: { itemId: productId, quantity: 1 },
-      });
-      fetchCartCount();
-      alert('Sản phẩm đã được thêm vào giỏ hàng thành công!');
-    } catch (err) {
-      alert(err.message || 'Lỗi thêm vào giỏ hàng');
-    }
-  };
-
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -62,11 +31,11 @@ const Home = () => {
       const heroImage = document.getElementById('hero-image');
       const studioParallax = document.getElementById('studio-parallax');
       const header = document.getElementById('main-header');
-      
+
       if (heroImage && scrolled < window.innerHeight) {
         heroImage.style.transform = `translateY(${scrolled * 0.4}px)`;
       }
-      
+
       if (header) {
         if (scrolled > 50) {
           header.classList.add('bg-white/80', 'backdrop-blur-xl', 'border-b', 'border-surface-variant', 'py-4');
@@ -81,7 +50,7 @@ const Home = () => {
         studioParallax.style.transform = `translateY(${(scrolled - studioParallax.offsetTop) * 0.1}px)`;
       }
     };
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -181,7 +150,11 @@ const Home = () => {
         <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
           <div className="flex items-center gap-6">
             <Link className="flex items-center" to="/">
-              <span className="font-display-lg text-lg md:text-xl font-bold tracking-[0.25em] text-primary">LUMINA</span>
+              <img
+                alt="AURA Logo"
+                className="h-8 md:h-10"
+                src="https://lh3.googleusercontent.com/aida/AP1WRLsWGZ4LJsyWWw0DXI5i0NfMxhuFuxInq7d6NcREsRQma6gs0mTrWB6h28qpRcABtk3We1-9DLnWO45-C-Nn9EWMy8_BTFIOFWiOu0OTPqs2VcARYqgQa7JT1IyHYAIc1dlp-oQg2GsrEiph-0tKESg5sjj6-1iliWwqoDiztHIVWJswFGI-0xZS1IWK_RMm-5k6whLqsFQLFIpCNa5SpGArlemsLQhRt1oD4t_By4EPNHvJnSg-SiW26vA"
+              />
             </Link>
             <div className="hidden md:flex gap-5">
               <a className="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" href="#collection">Living Room</a>
@@ -194,25 +167,19 @@ const Home = () => {
           <div className="flex items-center gap-4">
             <div className="hidden lg:flex items-center bg-surface-container/50 px-3 py-2 rounded-full transition-shadow hover:shadow-sm">
               <span className="material-symbols-outlined text-on-surface-variant mr-2">search</span>
-              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-36 focus:outline-none" placeholder="Search..." type="text"/>
+              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-36 focus:outline-none" placeholder="Search..." type="text" />
             </div>
 
 
             {token ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm hidden sm:inline text-on-surface-variant">Hello, <strong>{user?.fullName}</strong></span>
-                <Link to="/cart" className="flex items-center text-on-surface hover:opacity-70 transition-opacity relative mr-2" title="Shopping Cart">
+                <Link to="/cart" className="flex items-center text-on-surface hover:opacity-70 transition-opacity" title="Cart">
                   <span className="material-symbols-outlined text-2xl">shopping_cart</span>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                      {cartCount}
-                    </span>
-                  )}
                 </Link>
                 <Link to="/settings" className="flex items-center text-on-surface hover:opacity-70 transition-opacity" title="Profile Settings">
                   <span className="material-symbols-outlined text-2xl">person</span>
                 </Link>
-
                 {user?.role === 'admin' && (
                   <Link to="/admin" className="bg-secondary text-on-secondary text-xs font-label-caps px-4 py-2 hover:bg-primary transition-colors uppercase tracking-wider mr-2">
                     Admin Panel
@@ -252,10 +219,10 @@ const Home = () => {
       <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
         <div className="absolute inset-0 z-0 scale-110" id="hero-parallax-container">
           <div className="absolute inset-0 bg-black/25 z-10"></div>
-          <img 
-            alt="Hero background" 
-            className="w-full h-full object-cover will-change-transform" 
-            id="hero-image" 
+          <img
+            alt="Hero background"
+            className="w-full h-full object-cover will-change-transform"
+            id="hero-image"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDiGW6cAcnwTCfjLdDnsd7xZP42CS9rPVYz05A8QbYQHwuXnoSyqNmGv5LLotdbIwcknSe9c5ZFWi4PjpR9zChdImif72E80Xd_bmlxIkKhGOIT69CDB9HKsh2cAJrFwOWr7MCH2o1QfsNnZp8dm759_M2lz4waBM9grw8Ge_IZOBBXms-FSLAM78HZOeqkk3uxzh7rKcgKAsowORhTR05OVgpV8fTh6UL0b0vAO6rLFOgF5dmmpEs1v1RtRVzgZnev6tB8H_gVB--n"
           />
         </div>
@@ -284,7 +251,7 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter h-auto md:h-[800px]">
           {/* Living */}
           <div className="md:col-span-8 relative group overflow-hidden bg-surface-container h-96 md:h-full stagger-item card-hover cursor-pointer">
-            <img alt="Living Room" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6y8H-1FldXO_a1GP28ldBv-CKe6H6uj0yXn0kzpdAi7kaCTWhF2f7VzfFTvktIKRY0feUHZUABw50yMb2L7IDpepIkAC70-iKlgbxe8-Qbzx0nG5DijFk3mT5oPD--poV0aXgybrRiCBVu6rzlCMtZ5QfAeNfyAh6Sx_Gz5os0yCh6ws-xEPnsPkG_w22NfcbB95eQVcINk4tAWyXg5CJrcd2M3ryi-ABr-GtoF_-mOi3LX8z6E_C1LId4z7iYF8Rhk9q912_8DGa"/>
+            <img alt="Living Room" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6y8H-1FldXO_a1GP28ldBv-CKe6H6uj0yXn0kzpdAi7kaCTWhF2f7VzfFTvktIKRY0feUHZUABw50yMb2L7IDpepIkAC70-iKlgbxe8-Qbzx0nG5DijFk3mT5oPD--poV0aXgybrRiCBVu6rzlCMtZ5QfAeNfyAh6Sx_Gz5os0yCh6ws-xEPnsPkG_w22NfcbB95eQVcINk4tAWyXg5CJrcd2M3ryi-ABr-GtoF_-mOi3LX8z6E_C1LId4z7iYF8Rhk9q912_8DGa" />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
             <div className="absolute bottom-10 left-10 text-white transform transition-all duration-500 group-hover:-translate-y-2">
               <h3 className="font-headline-md text-headline-md mb-2">Living Room</h3>
@@ -294,7 +261,7 @@ const Home = () => {
           {/* Column */}
           <div className="md:col-span-4 grid grid-rows-2 gap-gutter">
             <div className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer">
-              <img alt="Bedroom" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv8Sw7SWaAYxVJnlU6H8WzXNpWZJ0lMaUSUY6Be6un3ToFCvIOCU1gxsC8GK73RdI5-TSgxbqmynn2qvoi6s03rHWzh1lR_9P25gWTExY5lG_w9XDm3qaKEQIleeoxbDSLPupKbtDMEKOvJy6mkVtcdPU96BhxF59hfw3E_oZUikatfDEdmQ7ixLZOw5TO8RD7DPo4VcTmkRMhtSqsjrPFpWolXCQCdCZafV7c9FnlJxOUImIf9lTy_jA8lm4XVBRkAX64XZ4UPxWD"/>
+              <img alt="Bedroom" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv8Sw7SWaAYxVJnlU6H8WzXNpWZJ0lMaUSUY6Be6un3ToFCvIOCU1gxsC8GK73RdI5-TSgxbqmynn2qvoi6s03rHWzh1lR_9P25gWTExY5lG_w9XDm3qaKEQIleeoxbDSLPupKbtDMEKOvJy6mkVtcdPU96BhxF59hfw3E_oZUikatfDEdmQ7ixLZOw5TO8RD7DPo4VcTmkRMhtSqsjrPFpWolXCQCdCZafV7c9FnlJxOUImIf9lTy_jA8lm4XVBRkAX64XZ4UPxWD" />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
                 <h3 className="font-headline-md text-headline-md mb-2">Bedroom</h3>
@@ -302,7 +269,7 @@ const Home = () => {
               </div>
             </div>
             <div className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer">
-              <img alt="Office" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnyYkAa3MYuMkb-k37jNtFIp6xcaCs35PeelFquLdfc-jGDuedIW6ZziDMwce-s2ZoOhqZ7f02FuumGYurzCEQXSZH5-c7CdvxNQKlyIHno9PKCi1eGdTQ15zUkz2H1CWHbZoyGECNa4MZP2E1V3E95_KhbFvgZj1LUOevbmp-J51EWIB1h8ge-nr3s1V6LHDOEGnFWje3Yk43rjuMZpdxZU0BX-H5cCXMJpjoFxrUydNdEuxEkEaPQx6JA7C1zHiXi8zlliw4fgjp"/>
+              <img alt="Office" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnyYkAa3MYuMkb-k37jNtFIp6xcaCs35PeelFquLdfc-jGDuedIW6ZziDMwce-s2ZoOhqZ7f02FuumGYurzCEQXSZH5-c7CdvxNQKlyIHno9PKCi1eGdTQ15zUkz2H1CWHbZoyGECNa4MZP2E1V3E95_KhbFvgZj1LUOevbmp-J51EWIB1h8ge-nr3s1V6LHDOEGnFWje3Yk43rjuMZpdxZU0BX-H5cCXMJpjoFxrUydNdEuxEkEaPQx6JA7C1zHiXi8zlliw4fgjp" />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
                 <h3 className="font-headline-md text-headline-md mb-2">Office</h3>
@@ -319,14 +286,14 @@ const Home = () => {
           <div className="flex flex-col items-center mb-16">
             <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-8">Seasonal Selection</h2>
             <div className="flex gap-12 border-b border-surface-variant w-full md:w-auto justify-center">
-              <button 
-                onClick={() => setActiveCategory('New Arrivals')} 
+              <button
+                onClick={() => setActiveCategory('New Arrivals')}
                 className={`font-label-caps text-label-caps pb-4 px-2 transition-all ${activeCategory === 'New Arrivals' ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant hover:text-primary'}`}
               >
                 New Arrivals
               </button>
-              <button 
-                onClick={() => setActiveCategory('Best Sellers')} 
+              <button
+                onClick={() => setActiveCategory('Best Sellers')}
                 className={`font-label-caps text-label-caps pb-4 px-2 transition-all ${activeCategory === 'Best Sellers' ? 'border-b-2 border-primary text-primary' : 'text-on-surface-variant hover:text-primary'}`}
               >
                 Best Sellers
@@ -336,24 +303,17 @@ const Home = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter stagger-container">
             {displayProducts.map((product, index) => (
-              <div key={product._id || index} className="group cursor-pointer stagger-item card-hover">
+              <Link to={`/product/${product._id}`} key={product._id || index} className="group cursor-pointer stagger-item card-hover block">
                 <div className="relative aspect-[3/4] overflow-hidden bg-white mb-6">
-                  <img 
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
+                  <img
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     alt={product.name}
                     src={product.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'}
                   />
                   <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(product._id);
-                      }}
-                      className="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all border border-outline-variant/35"
-                    >
+                    <button className="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all border border-outline-variant/35">
                       QUICK ADD
                     </button>
-
                     <button className="flex-none glass-card w-12 flex items-center justify-center hover:bg-primary hover:text-white transition-all border border-outline-variant/35">
                       <span className="material-symbols-outlined text-sm">view_in_ar</span>
                     </button>
@@ -361,7 +321,7 @@ const Home = () => {
                 </div>
                 <h4 className="font-headline-md text-[18px] mb-1">{product.name}</h4>
                 <p className="text-on-surface-variant font-body-md">${product.price?.toLocaleString() || '0.00'}</p>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
@@ -371,10 +331,10 @@ const Home = () => {
       <section className="py-32 bg-primary text-white overflow-hidden reveal">
         <div className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
           <div className="relative group">
-            <img 
-              alt="3D Room Preview" 
-              className="w-full h-[500px] object-cover opacity-80 will-change-transform transition-transform duration-[2s] group-hover:scale-110" 
-              id="studio-parallax" 
+            <img
+              alt="3D Room Preview"
+              className="w-full h-[500px] object-cover opacity-80 will-change-transform transition-transform duration-[2s] group-hover:scale-110"
+              id="studio-parallax"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuCcS_cC93TlAgHuOI0P7abpiS6h2tNvVXWlinm6YtRoguLs1fdyAGD24ucZXx64woxQ2K2Nxz1P-KdaPW6E1JpKDuMluouPSYeG3xREU_Ni7H5xAvdzw4J8-lq5ZlSvBisGDfg1P6xIwUTSR7_SRR1zBOWRmFzPUl-ZxOA3xjwgQJuRvWvZeJdk0EjUHJrv-K9xvTr23bhOnh9xuP42rhRaFahIqHcAZfK301x1q8Lq9RfHN3YZEmRvb8FApRTEML2pQatJFJ68Q9Sz"
             />
             <div className="absolute inset-0 bg-gradient-to-r from-primary via-transparent to-transparent"></div>
@@ -399,7 +359,7 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
           <div className="text-center group stagger-item">
             <div className="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000 rounded-full">
-              <img alt="Elias Thorne" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEW4DtywODGeHenLJ346LTjB7EwAn1UEvsnckn0C6oW-zkadrDtBQ1XYTAiQJS54y_TFJqG2Qorjy7QmY9x7da6WTT8ZHa0RdOmLLM_aupCj9tc-hzuKtNC5hRa6UiLa17ig3nCDCEaqej70hAUvDFWCR-yVLpGplsExTVvZS6vbLChhKcCzlMfQqTMhIa0a2zGDCOZ6bjAbdI8efIrODZX4C25EgPGc3EdnuSTQERtXlzgCm0xXA35JiK0FZ0WdvApIah5d-LKYow"/>
+              <img alt="Elias Thorne" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCEW4DtywODGeHenLJ346LTjB7EwAn1UEvsnckn0C6oW-zkadrDtBQ1XYTAiQJS54y_TFJqG2Qorjy7QmY9x7da6WTT8ZHa0RdOmLLM_aupCj9tc-hzuKtNC5hRa6UiLa17ig3nCDCEaqej70hAUvDFWCR-yVLpGplsExTVvZS6vbLChhKcCzlMfQqTMhIa0a2zGDCOZ6bjAbdI8efIrODZX4C25EgPGc3EdnuSTQERtXlzgCm0xXA35JiK0FZ0WdvApIah5d-LKYow" />
             </div>
             <h3 className="font-headline-md text-headline-md mb-2">Elias Thorne</h3>
             <p className="font-label-caps text-label-caps text-secondary mb-4">LEAD ARCHITECT</p>
@@ -407,7 +367,7 @@ const Home = () => {
           </div>
           <div className="text-center group stagger-item">
             <div className="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000 rounded-full">
-              <img alt="Sienna Mare" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2FA3ztRwUXRbf4S6jnkzbrpY4sWxrR8PRQJWLIrDeWB6ANZLkVdosCn4MMFEYBPqb2RqrCVdhEQVz-KtZ60acVhkeCrYAoHL26EO_a0DGm3WsDd26sLTD-t7sGgTuP9qptgo2ooOs-WomNv31HPsk-ipsei8JnEiCYZWbWG_-qn9eVJqQYLFjoycwS9x8RwlIC2CCEfWfVIaLwKL2zR2stVInd8N9AYa1_GteYOCRjriShQzkpWLUJKDXWY0IpBqtCVkS9UxZOnhA"/>
+              <img alt="Sienna Mare" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2FA3ztRwUXRbf4S6jnkzbrpY4sWxrR8PRQJWLIrDeWB6ANZLkVdosCn4MMFEYBPqb2RqrCVdhEQVz-KtZ60acVhkeCrYAoHL26EO_a0DGm3WsDd26sLTD-t7sGgTuP9qptgo2ooOs-WomNv31HPsk-ipsei8JnEiCYZWbWG_-qn9eVJqQYLFjoycwS9x8RwlIC2CCEfWfVIaLwKL2zR2stVInd8N9AYa1_GteYOCRjriShQzkpWLUJKDXWY0IpBqtCVkS9UxZOnhA" />
             </div>
             <h3 className="font-headline-md text-headline-md mb-2">Sienna Mare</h3>
             <p className="font-label-caps text-label-caps text-secondary mb-4">TEXTILE ARTISAN</p>
@@ -415,7 +375,7 @@ const Home = () => {
           </div>
           <div className="text-center group stagger-item">
             <div className="w-48 h-48 mx-auto mb-8 overflow-hidden grayscale group-hover:grayscale-0 transition-all duration-1000 rounded-full">
-              <img alt="Arthur Vance" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHOVCva3Y4fd_fDlLjxp9loaI6GJjHe3yipWmzHCQ2YB6Wh0jhOeIp0n_p4u0fF7_3r9zNQvXk9VDLYW2AM_ndE7vPgT4XvWMzoE7W8FkfDGpP-v8aL_8n2eHf3tib8mRjz-Xt8NWQm-qt7BpPn813Dj-o59LrcQxw9ftgEQL5zz7NFD_ZDEEvuGz-ZBorc_GWP3fR5FUbZbwnI9CnOhqRre45f8uhsSu0MLCiMpUjSy7Y3xTQUOGDTNsmxLQWvyuKerlUqVrQCLOR"/>
+              <img alt="Arthur Vance" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHOVCva3Y4fd_fDlLjxp9loaI6GJjHe3yipWmzHCQ2YB6Wh0jhOeIp0n_p4u0fF7_3r9zNQvXk9VDLYW2AM_ndE7vPgT4XvWMzoE7W8FkfDGpP-v8aL_8n2eHf3tib8mRjz-Xt8NWQm-qt7BpPn813Dj-o59LrcQxw9ftgEQL5zz7NFD_ZDEEvuGz-ZBorc_GWP3fR5FUbZbwnI9CnOhqRre45f8uhsSu0MLCiMpUjSy7Y3xTQUOGDTNsmxLQWvyuKerlUqVrQCLOR" />
             </div>
             <h3 className="font-headline-md text-headline-md mb-2">Arthur Vance</h3>
             <p className="font-label-caps text-label-caps text-secondary mb-4">MASTER CRAFTSMAN</p>
@@ -449,7 +409,7 @@ const Home = () => {
           <p className="text-on-surface-variant font-body-lg mb-12">Receive early access to new drops, artisan stories, and interior inspiration directly to your inbox.</p>
           <form className="flex flex-col md:flex-row gap-4" onSubmit={(e) => e.preventDefault()}>
             <div className="flex-1 input-underline">
-              <input className="w-full bg-transparent border-0 border-b border-outline focus:border-transparent focus:ring-0 text-body-lg py-4 placeholder:text-outline focus:outline-none" placeholder="Email Address" type="email"/>
+              <input className="w-full bg-transparent border-0 border-b border-outline focus:border-transparent focus:ring-0 text-body-lg py-4 placeholder:text-outline focus:outline-none" placeholder="Email Address" type="email" />
             </div>
             <button className="magnetic-btn bg-primary text-on-primary px-10 py-4 font-label-caps text-label-caps hover:bg-secondary transition-all whitespace-nowrap" type="submit">SUBSCRIBE</button>
           </form>

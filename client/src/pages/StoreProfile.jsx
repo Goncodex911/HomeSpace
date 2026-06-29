@@ -53,19 +53,6 @@ const StoreProfile = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('collection');
 
-  const [cartCount, setCartCount] = useState(0);
-
-  const fetchCartCount = async () => {
-    if (!token) return;
-    try {
-      const res = await api('/cart');
-      const count = res.data?.items?.reduce((sum, item) => sum + (item.quantity || 0), 0) || 0;
-      setCartCount(count);
-    } catch (err) {
-      console.error('Failed to fetch cart count:', err);
-    }
-  };
-
   useEffect(() => {
     const fetchStore = async () => {
       try {
@@ -78,26 +65,7 @@ const StoreProfile = () => {
       } finally { setLoading(false); }
     };
     fetchStore();
-    fetchCartCount();
-  }, [id, token]);
-
-  const handleAddToCart = async (productId) => {
-    if (!token) {
-      window.location.href = '/login';
-      return;
-    }
-    try {
-      await api('/cart/add', {
-        method: 'POST',
-        body: { itemId: productId, quantity: 1 },
-      });
-      fetchCartCount();
-      alert('Sản phẩm đã được thêm vào giỏ hàng thành công!');
-    } catch (err) {
-      alert(err.message || 'Lỗi thêm vào giỏ hàng');
-    }
-  };
-
+  }, [id]);
 
   const displayStore = store || defaultStore;
   const displayItems = items.length > 0 ? items : defaultItems;
@@ -125,7 +93,7 @@ const StoreProfile = () => {
       <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-surface-variant py-4">
         <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
           <div className="flex items-center gap-8">
-            <Link to="/"><span className="font-display-lg text-lg md:text-xl font-bold tracking-[0.25em] text-primary">LUMINA</span></Link>
+            <Link to="/"><img alt="AURA" className="h-8 md:h-10" src="https://lh3.googleusercontent.com/aida/AP1WRLsWGZ4LJsyWWw0DXI5i0NfMxhuFuxInq7d6NcREsRQma6gs0mTrWB6h28qpRcABtk3We1-9DLnWO45-C-Nn9EWMy8_BTFIOFWiOu0OTPqs2VcARYqgQa7JT1IyHYAIc1dlp-oQg2GsrEiph-0tKESg5sjj6-1iliWwqoDiztHIVWJswFGI-0xZS1IWK_RMm-5k6whLqsFQLFIpCNa5SpGArlemsLQhRt1oD4t_By4EPNHvJnSg-SiW26vA" /></Link>
             <div className="hidden md:flex gap-8">
               <Link className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" to="/">Home</Link>
               <Link className="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" to="/stores">Curators</Link>
@@ -134,19 +102,10 @@ const StoreProfile = () => {
           <div className="flex items-center gap-4">
             {token ? (
               <>
-                <Link to="/cart" className="flex items-center text-on-surface hover:opacity-70 transition-opacity relative mr-2" title="Shopping Cart">
-                  <span className="material-symbols-outlined text-2xl">shopping_cart</span>
-                  {cartCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 bg-primary text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
                 <Link to="/settings"><span className="material-symbols-outlined text-2xl text-on-surface hover:opacity-70">person</span></Link>
                 <button onClick={logout} className="font-label-caps text-label-caps border border-primary px-4 py-2 hover:bg-primary hover:text-on-primary transition-all uppercase">Logout</button>
               </>
             ) : (
-
               <>
                 <Link to="/login" className="font-label-caps text-label-caps text-primary hover:opacity-75 uppercase">Sign In</Link>
                 <Link to="/register" className="bg-primary text-on-primary font-label-caps text-label-caps px-5 py-2.5 hover:bg-secondary transition-colors uppercase">Sign Up</Link>
@@ -268,14 +227,8 @@ const StoreProfile = () => {
                         <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Premium artisan piece.'}</p>
                         <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
                           <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
-                          <button
-                            onClick={() => handleAddToCart(item._id)}
-                            className="bg-primary text-on-primary text-[10px] font-label-caps px-3 py-1.5 hover:bg-secondary transition-colors uppercase tracking-wider"
-                          >
-                            Add to Cart
-                          </button>
+                          <span className="text-[10px] text-on-surface-variant">Qty: {item.quantity}</span>
                         </div>
-
                       </div>
                     </div>
                   );
@@ -319,14 +272,8 @@ const StoreProfile = () => {
                                 <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Artisan crafted piece.'}</p>
                                 <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
                                   <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
-                                  <button
-                                    onClick={() => handleAddToCart(item._id)}
-                                    className="bg-primary text-on-primary text-[10px] font-label-caps px-3 py-1.5 hover:bg-secondary transition-colors uppercase tracking-wider"
-                                  >
-                                    Add to Cart
-                                  </button>
+                                  <span className={`text-[10px] font-bold uppercase ${item.quantity > 0 ? 'text-green-600' : 'text-error'}`}>{item.quantity > 0 ? 'Available' : 'Sold Out'}</span>
                                 </div>
-
                               </div>
                             </div>
                           );

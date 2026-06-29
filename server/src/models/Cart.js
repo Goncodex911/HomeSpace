@@ -19,7 +19,6 @@ const cartSchema = new mongoose.Schema(
           type: Number,
           required: true,
           default: 1,
-          min: 1,
         },
       },
     ],
@@ -28,4 +27,5 @@ const cartSchema = new mongoose.Schema(
 );
 
 const Cart = mongoose.model('Cart', cartSchema);
+
 export default Cart;

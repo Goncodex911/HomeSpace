@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { vietnamAddressData } from '../services/vietnamAddressData';
 import api from '../api/api';
 
-
 const Settings = () => {
   const { user, logout, updateProfile, token } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Tab State
-  const [activeTab, setActiveTab] = useState('profile');
+  const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
 
   // Profile Form State
   const [formData, setFormData] = useState({
@@ -30,61 +30,33 @@ const Settings = () => {
   const [successMsg, setSuccessMsg] = useState('');
 
   // 1. Order History State
-  const [orders, setOrders] = useState([
-    {
-      id: 'LUM-89241',
-      date: '12 Tháng 5, 2026',
-      status: 'Đã giao hàng',
-      statusColor: 'bg-emerald-500',
-      total: 2140,
-      items: [
-        {
-          name: 'Ether Arc Lounge Chair',
-          price: 1240,
-          quantity: 1,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyqhinz1WRpRywtmtoOJl-Xjnv3ZbvvTm2JmT-zPfqdWGUzbgVFW3SuEYFW0ePw7PVS5vIYE_7VQNTj3c6aHRykSS0VW_UsqvEEpGUdASGaUd7L-M6e5YH9inLvruE5x1kjWYNWl0iQ5F79sK_-V5BlV6sQG86UWSsMTyCor4_AxC_C2ByrHcb2UIE6WuvBD88KEASLN3SCe4fJDlQK1KneVSBlqKwy78y896DRnsdyEoj5WkUghaOTPykAgZSg3yGgOVN1AhlEPEm'
-        },
-        {
-          name: 'Orbital Sphere Lamp',
-          price: 450,
-          quantity: 2,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfcBqkWM3r21aDql5wiXK8r1kXDdZYe864IbIjJUXSGVCHKjEyK_UBES8bQM_fStWpzy37DyBN79HsugLf9B74NUc32hFtDivnF4iQMcvK3uAyLhTkfa5JTJ73f2Zl0izH8djHjzV7QHwEJY5FiyxH7sZZhYcBNYlrmU0soGLsyb0lHojl7T_fTfpRH8t9ZuqVqKfuRvXVSRhS2eeStyQk38lfXm3E1M5AxcxbYSvo2Bx9iiENsY4KqiVu2HFJIEq6gf4tU4SySm1k'
-        }
-      ]
-    },
-    {
-      id: 'LUM-78104',
-      date: '28 Tháng 4, 2026',
-      status: 'Đã giao hàng',
-      statusColor: 'bg-emerald-500',
-      total: 3800,
-      items: [
-        {
-          name: 'Monolith Travertine Table',
-          price: 3800,
-          quantity: 1,
-          image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXTVBsxtaabBH2J27cPb743kO_wPxof7yVDuNbR2VmrU1aQwAPxJt05kRu9X5kYNSfHznuKJ2MD2J38XPhwutH9eSDBmXVp3AsoxlmWUVBuywXJt8kDR5nWsPIGUKYRpiV2JdRzf8o5BlHknMcoNjfPBYefT04tn-l_wLr50QqMb2Hny0fwWR3euuGWGI1hu8QkPJHdt6bfwxVo98uI0PicozHCn0Hrct2nr2T5VIVJ_cb6W9sVlVwKY0nihRf6ycr4MUW_ejNTZb7'
-        }
-      ]
-    }
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
 
   // 2. Saved Addresses State
-  const [savedAddresses, setSavedAddresses] = useState([]);
-
-  useEffect(() => {
-    const fetchSavedAddresses = async () => {
-      if (!token) return;
-      try {
-        const res = await api('/auth/addresses');
-        setSavedAddresses(res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch addresses:', err);
-      }
-    };
-    fetchSavedAddresses();
-  }, [token]);
-
+  const [savedAddresses, setSavedAddresses] = useState([
+    {
+      id: 1,
+      name: 'Alexander Vance',
+      phone: '+84 912 345 678',
+      streetAddress: '742 Nguyễn Huệ, Phường Bến Nghé',
+      city: 'Quận 1',
+      state: 'Hồ Chí Minh',
+      zipCode: '700000',
+      isDefault: true,
+    },
+    {
+      id: 2,
+      name: 'Alexander Vance (Studio Office)',
+      phone: '+84 903 888 999',
+      streetAddress: 'Căn hộ 402, Tòa nhà Artisan, Đường Cầu Giấy',
+      city: 'Quận Cầu Giấy',
+      state: 'Hà Nội',
+      zipCode: '100000',
+      isDefault: false,
+    }
+  ]);
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressForm, setAddressForm] = useState({
@@ -129,6 +101,37 @@ const Settings = () => {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    if (activeTab === 'orders' && token) {
+      fetchOrders();
+    }
+  }, [activeTab, token]);
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true);
+    try {
+      const res = await api('/orders');
+      const formattedOrders = res.map(o => ({
+        id: o._id,
+        date: new Date(o.createdAt).toLocaleDateString(),
+        status: o.status,
+        statusColor: o.status === 'Pending' ? 'bg-yellow-500' : (o.status === 'Cancelled' ? 'bg-red-500' : 'bg-emerald-500'),
+        total: o.totalAmount,
+        items: o.items.map(i => ({
+          name: i.item.name || 'Unknown Item',
+          price: i.price,
+          quantity: i.quantity,
+          image: i.item.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'
+        }))
+      }));
+      setOrders(formattedOrders);
+    } catch (err) {
+      setOrdersError('Failed to fetch orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -191,62 +194,48 @@ const Settings = () => {
   };
 
   // Saved Address management
-  const handleAddAddress = async (e) => {
+  const handleAddAddress = (e) => {
     e.preventDefault();
     if (!addressForm.name || !addressForm.phone || !addressForm.streetAddress || !addressForm.state || !addressForm.city) {
       return;
     }
-    try {
-      const addressStr = `${addressForm.streetAddress}, ${addressForm.city}, ${addressForm.state}`;
-      const res = await api('/auth/addresses', {
-        method: 'POST',
-        body: {
-          fullName: addressForm.name,
-          phone: addressForm.phone,
-          address: addressStr,
-          isDefault: addressForm.isDefault,
-        },
-      });
-      setSavedAddresses(res.addresses || []);
-      setAddressForm({
-        name: '',
-        phone: '',
-        streetAddress: '',
-        city: '',
-        state: '',
-        zipCode: '',
-        isDefault: false,
-      });
-      setShowAddressForm(false);
-      alert('Đã thêm địa chỉ giao hàng thành công!');
-    } catch (err) {
-      alert(err.message || 'Lỗi thêm địa chỉ');
+    const newAddress = {
+      id: Date.now(),
+      ...addressForm,
+    };
+
+    if (addressForm.isDefault) {
+      setSavedAddresses((prev) =>
+        prev.map((addr) => ({ ...addr, isDefault: false })).concat(newAddress)
+      );
+    } else {
+      setSavedAddresses((prev) => prev.concat(newAddress));
     }
+
+    setAddressForm({
+      name: '',
+      phone: '',
+      streetAddress: '',
+      city: '',
+      state: '',
+      zipCode: '',
+      isDefault: false,
+    });
+    setShowAddressForm(false);
   };
 
-  const handleDeleteAddress = async (id) => {
-    if (!window.confirm('Bạn muốn xóa địa chỉ này?')) return;
-    try {
-      const res = await api(`/auth/addresses/${id}`, {
-        method: 'DELETE',
-      });
-      setSavedAddresses(res.addresses || []);
-    } catch (err) {
-      alert(err.message || 'Lỗi xóa địa chỉ');
-    }
+  const handleDeleteAddress = (id) => {
+    setSavedAddresses((prev) => prev.filter((addr) => addr.id !== id));
   };
 
-  const handleSetDefaultAddress = async (id) => {
-    try {
-      const res = await api(`/auth/addresses/${id}/default`, {
-        method: 'PUT',
-      });
-      setSavedAddresses(res.addresses || []);
-    } catch (err) {
-      alert(err.message || 'Lỗi đặt địa chỉ mặc định');
-    }
+  const handleSetDefaultAddress = (id) => {
+    setSavedAddresses((prev) =>
+      prev.map((addr) => ({
+        ...addr,
+        isDefault: addr.id === id,
+      }))
+    );
   };
-
 
 
 
@@ -277,11 +266,11 @@ const Settings = () => {
               <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Office</Link>
             </div>
           </div>
-          
+
           <div className="flex items-center gap-6">
             <div className="hidden lg:flex items-center bg-surface-container px-4 py-2 rounded-full">
               <span className="material-symbols-outlined text-on-surface-variant mr-2">search</span>
-              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-48 focus:outline-none" placeholder="Search collection..." type="text"/>
+              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-48 focus:outline-none" placeholder="Search collection..." type="text" />
             </div>
 
             {token ? (
@@ -321,7 +310,7 @@ const Settings = () => {
       {/* Main Settings Content */}
       <main className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-24">
         <div className="flex flex-col md:flex-row gap-16">
-          
+
           {/* Side Navigation */}
           <aside className="w-full md:w-64 flex-shrink-0">
             <div className="flex flex-col gap-10">
@@ -329,23 +318,23 @@ const Settings = () => {
                 <h1 className="font-headline-md text-headline-md text-on-surface">Account Settings</h1>
                 <p className="font-body-md text-on-surface-variant opacity-70">Manage your profile and preferences.</p>
               </div>
-              
+
               <nav className="flex flex-col space-y-2">
-                <button 
+                <button
                   onClick={() => setActiveTab('profile')}
                   className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'profile' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                 >
                   <span className="material-symbols-outlined">person</span>
                   <span className="font-label-caps text-label-caps">Profile Information</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('orders')}
                   className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'orders' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                 >
                   <span className="material-symbols-outlined">shopping_bag</span>
                   <span className="font-label-caps text-label-caps">Order History</span>
                 </button>
-                <button 
+                <button
                   onClick={() => setActiveTab('addresses')}
                   className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'addresses' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                 >
@@ -353,7 +342,7 @@ const Settings = () => {
                   <span className="font-label-caps text-label-caps">Saved Addresses</span>
                 </button>
 
-                <button 
+                <button
                   onClick={() => setActiveTab('notifications')}
                   className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'notifications' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                 >
@@ -362,7 +351,7 @@ const Settings = () => {
                 </button>
 
                 {user?.role === 'customer' && (
-                  <button 
+                  <button
                     onClick={() => setActiveTab('curator')}
                     className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'curator' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                   >
@@ -383,7 +372,7 @@ const Settings = () => {
 
           {/* Content Area */}
           <section className="flex-grow max-w-3xl">
-            
+
             {/* Tab 1: Profile Information */}
             {activeTab === 'profile' && (
               <div className="space-y-12">
@@ -391,9 +380,9 @@ const Settings = () => {
                 <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-lg shadow-[0px_10px_30px_rgba(0,0,0,0.04)] border border-surface-variant/20">
                   <div className="relative group cursor-pointer">
                     <div className="w-32 h-32 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-surface-variant">
-                      <img 
-                        alt="Profile Avatar" 
-                        className="w-full h-full object-cover" 
+                      <img
+                        alt="Profile Avatar"
+                        className="w-full h-full object-cover"
                         src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf8Y2YMjKNpq7_6wEW8rITB7ya93v-jWc_NSAp2zQkzdKcJxn3ZVucYxKSpmqaOzBqWNI-z4Qb-llBOxAjnqlvuu3J7V4kS8YPRdcphOxld2Duy_1QD6BSdpqBSK033x0YoYxiTLDCAm_VkHNC64XancrLlP-SqA8cfXw2VgpRGmSrp_M5GaUvwtimJJoOHie72PfTUAvZSVkj-5DgHp5D0GtasfHqa1DloP2keyPb8KgRl7Lc3UzoP6LmaAMaWAvNsbD_uABo8gsD"
                       />
                       <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
@@ -426,56 +415,66 @@ const Settings = () => {
                 {/* Personal Details Form */}
                 <form onSubmit={handleSubmit} className="space-y-12">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    
+
                     <div className="flex flex-col gap-2">
                       <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.15em]">Full Name</label>
-                      <input 
+                      <input
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
-                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                        type="text" 
+                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                        type="text"
                         required
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.15em]">Email Address</label>
-                      <input 
+                      <input
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                        type="email" 
+                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                        type="email"
                         required
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
+                      <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.15em]">Phone Number</label>
+                      <input
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                        type="tel"
+                      />
+                    </div>
+
+                    <div className="flex flex-col gap-2">
                       <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.15em]">Occupation</label>
-                      <input 
+                      <input
                         name="occupation"
                         value={formData.occupation}
                         onChange={handleChange}
-                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                        type="text" 
+                        className="bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-lg text-body-lg focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                        type="text"
                       />
                     </div>
 
                   </div>
 
-
                   <div className="flex items-center justify-end gap-6 pt-12">
-                    <button 
+                    <button
                       onClick={handleDiscard}
-                      className="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-widest hover:text-primary transition-colors focus:outline-none" 
+                      className="text-on-surface-variant font-label-caps text-label-caps uppercase tracking-widest hover:text-primary transition-colors focus:outline-none"
                       type="button"
                     >
                       Discard Changes
                     </button>
-                    <button 
+                    <button
                       disabled={isSaving}
-                      className={`bg-primary text-on-primary px-12 py-4 font-label-caps text-label-caps uppercase tracking-widest transition-all duration-300 shadow-xl hover:shadow-2xl focus:outline-none ${isSaving ? 'opacity-70 cursor-not-allowed' : ''} ${isSaved ? 'bg-secondary' : 'bg-primary'}`} 
+                      className={`bg-primary text-on-primary px-12 py-4 font-label-caps text-label-caps uppercase tracking-widest transition-all duration-300 shadow-xl hover:shadow-2xl focus:outline-none ${isSaving ? 'opacity-70 cursor-not-allowed' : ''} ${isSaved ? 'bg-secondary' : 'bg-primary'}`}
                       type="submit"
                     >
                       {isSaving ? 'SAVING...' : isSaved ? 'PROFILE UPDATED' : 'Save Profile'}
@@ -494,7 +493,16 @@ const Settings = () => {
                 </div>
 
                 <div className="space-y-8">
-                  {orders.map((order) => (
+                  {ordersLoading ? (
+                    <p className="text-on-surface-variant font-label-caps uppercase tracking-widest">Loading Orders...</p>
+                  ) : ordersError ? (
+                    <p className="text-error mb-4">{ordersError}</p>
+                  ) : orders.length === 0 ? (
+                    <div className="text-center py-10 bg-surface-container-low border border-surface-variant/20 rounded-lg">
+                      <p className="font-headline-md mb-2">No orders yet.</p>
+                      <Link to="/" className="text-primary font-label-caps uppercase tracking-widest hover:underline">Start Shopping</Link>
+                    </div>
+                  ) : orders.map((order) => (
                     <div key={order.id} className="bg-white border border-surface-variant/20 rounded-lg p-6 md:p-8 shadow-[0px_10px_30px_rgba(0,0,0,0.02)] space-y-6">
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-surface-variant/30 pb-4 gap-4">
                         <div>
@@ -533,9 +541,33 @@ const Settings = () => {
                       </div>
 
                       <div className="flex flex-wrap gap-4 pt-4 border-t border-surface-variant/30 justify-end">
-                        <button className="px-6 py-2.5 border border-outline-variant text-primary font-label-caps text-xs uppercase hover:bg-surface-container-low transition-colors tracking-wider">
+                        <Link
+                          to={`/orders/${order.id}`}
+                          className="px-6 py-2.5 border border-outline-variant text-primary font-label-caps text-xs uppercase hover:bg-surface-container-low transition-colors tracking-wider flex items-center justify-center"
+                        >
                           Xem chi tiết đơn hàng
-                        </button>
+                        </Link>
+                        {(order.status === 'pending' || order.status === 'processing') && (
+                          <Link
+                            to={`/orders/${order.id}/cancel`}
+                            className="px-6 py-2.5 border border-error text-error font-label-caps text-xs uppercase hover:bg-error-container transition-colors tracking-wider"
+                          >
+                            Hủy đơn hàng
+                          </Link>
+                        )}
+                        {order.status === 'delivered' && !order.returnRequest?.isRequested && (
+                          <Link
+                            to={`/orders/${order.id}/return`}
+                            className="px-6 py-2.5 border border-primary text-primary font-label-caps text-xs uppercase hover:bg-surface-container-low transition-colors tracking-wider"
+                          >
+                            Hoàn trả hàng
+                          </Link>
+                        )}
+                        {order.returnRequest?.isRequested && (
+                          <span className="px-6 py-2.5 border border-outline-variant text-on-surface-variant font-label-caps text-xs uppercase tracking-wider bg-surface-container-lowest opacity-70">
+                            Đã yêu cầu hoàn trả
+                          </span>
+                        )}
                         <button className="px-6 py-2.5 bg-primary text-on-primary font-label-caps text-xs uppercase hover:bg-secondary transition-colors tracking-wider">
                           Mua lại
                         </button>
@@ -555,7 +587,7 @@ const Settings = () => {
                     <p className="font-body-md text-on-surface-variant">Manage your alternate delivery points in Vietnam.</p>
                   </div>
                   {!showAddressForm && (
-                    <button 
+                    <button
                       onClick={() => setShowAddressForm(true)}
                       className="bg-primary text-on-primary px-6 py-3 font-label-caps text-xs uppercase tracking-wider hover:bg-secondary transition-colors"
                     >
@@ -568,25 +600,25 @@ const Settings = () => {
                 {showAddressForm && (
                   <form onSubmit={handleAddAddress} className="bg-white border border-surface-variant/20 rounded-lg p-6 md:p-8 shadow-[0px_10px_30px_rgba(0,0,0,0.03)] space-y-8">
                     <h3 className="font-headline-md text-lg text-primary">Địa chỉ giao hàng mới</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">Họ và tên người nhận</label>
-                        <input 
+                        <input
                           value={addressForm.name}
                           onChange={(e) => setAddressForm({ ...addressForm, name: e.target.value })}
-                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                          type="text" 
+                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                          type="text"
                           required
                         />
                       </div>
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">Số điện thoại</label>
-                        <input 
+                        <input
                           value={addressForm.phone}
                           onChange={(e) => setAddressForm({ ...addressForm, phone: e.target.value })}
-                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                          type="tel" 
+                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                          type="tel"
                           required
                         />
                       </div>
@@ -594,11 +626,11 @@ const Settings = () => {
 
                     <div className="flex flex-col gap-2">
                       <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">Địa chỉ chi tiết (Số nhà, Tên đường, Phường/Xã)</label>
-                      <input 
+                      <input
                         value={addressForm.streetAddress}
                         onChange={(e) => setAddressForm({ ...addressForm, streetAddress: e.target.value })}
-                        className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                        type="text" 
+                        className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                        type="text"
                         required
                       />
                     </div>
@@ -606,7 +638,7 @@ const Settings = () => {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">Tỉnh / Thành phố</label>
-                        <select 
+                        <select
                           value={addressForm.state}
                           onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value, city: '' })}
                           className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none cursor-pointer w-full"
@@ -621,7 +653,7 @@ const Settings = () => {
 
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">Quận / Huyện</label>
-                        <select 
+                        <select
                           value={addressForm.city}
                           onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                           disabled={!addressForm.state}
@@ -637,35 +669,35 @@ const Settings = () => {
 
                       <div className="flex flex-col gap-2">
                         <label className="font-label-caps text-label-caps text-primary uppercase tracking-[0.1em]">ZIP Code (Mã bưu điện)</label>
-                        <input 
+                        <input
                           value={addressForm.zipCode}
                           onChange={(e) => setAddressForm({ ...addressForm, zipCode: e.target.value })}
-                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none" 
-                          type="text" 
+                          className="bg-transparent border-0 border-b border-outline-variant py-2 px-0 font-body-md focus:border-primary transition-colors focus:ring-0 focus:outline-none"
+                          type="text"
                         />
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3">
-                      <input 
-                        id="isDefault" 
+                      <input
+                        id="isDefault"
                         type="checkbox"
                         checked={addressForm.isDefault}
                         onChange={(e) => setAddressForm({ ...addressForm, isDefault: e.target.checked })}
-                        className="rounded border-outline-variant text-primary focus:ring-0" 
+                        className="rounded border-outline-variant text-primary focus:ring-0"
                       />
                       <label htmlFor="isDefault" className="font-body-md text-sm text-primary select-none cursor-pointer">Đặt làm địa chỉ giao hàng mặc định</label>
                     </div>
 
                     <div className="flex justify-end gap-4">
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setShowAddressForm(false)}
                         className="text-on-surface-variant font-label-caps text-xs uppercase tracking-widest hover:text-primary transition-colors"
                       >
                         Hủy
                       </button>
-                      <button 
+                      <button
                         type="submit"
                         className="bg-primary text-on-primary px-8 py-3 font-label-caps text-xs uppercase tracking-widest hover:bg-secondary transition-colors"
                       >
@@ -677,43 +709,45 @@ const Settings = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {savedAddresses.map((addr) => (
-                    <div key={addr._id || addr.id} className={`bg-white border rounded-lg p-6 shadow-[0px_10px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between ${addr.isDefault ? 'border-primary' : 'border-surface-variant/20'}`}>
+                    <div key={addr.id} className={`bg-white border rounded-lg p-6 shadow-[0px_10px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between ${addr.isDefault ? 'border-primary' : 'border-surface-variant/20'}`}>
                       <div className="space-y-4">
                         <div className="flex justify-between items-start gap-4">
-                          <span className="font-headline-md text-base text-primary font-bold">{addr.fullName || addr.name}</span>
+                          <span className="font-headline-md text-base text-primary font-bold">{addr.name}</span>
                           {addr.isDefault && (
                             <span className="bg-primary text-on-primary px-2.5 py-1 text-[9px] font-label-caps uppercase tracking-wider">Mặc định</span>
                           )}
                         </div>
                         <div className="space-y-1 font-body-md text-on-surface-variant text-sm">
                           <p>SĐT: {addr.phone}</p>
-                          <p>{addr.address || `${addr.streetAddress}, ${addr.city}, ${addr.state}`}</p>
+                          <p>{addr.streetAddress}</p>
+                          <p>{addr.city}, {addr.state}</p>
+                          {addr.zipCode && <p>Mã bưu điện: {addr.zipCode}</p>}
                         </div>
-                        <div className="w-full h-32 border border-outline-variant/25 rounded-sm overflow-hidden bg-gray-50 mt-3">
+                        {/* Google Maps Visual Preview */}
+                        <div className="mt-4 aspect-[16/9] w-full rounded-md overflow-hidden border border-outline-variant/20 shadow-inner">
                           <iframe
-                            title={`Map for ${addr.fullName || addr.name}`}
+                            title={`Map for ${addr.name}`}
                             width="100%"
                             height="100%"
                             frameBorder="0"
-                            scrolling="no"
-                            marginHeight="0"
-                            marginWidth="0"
-                            src={`https://maps.google.com/maps?q=${encodeURIComponent(addr.address || `${addr.streetAddress}, ${addr.city}, ${addr.state}`)}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                          />
+                            style={{ border: 0 }}
+                            src={`https://maps.google.com/maps?q=${encodeURIComponent(`${addr.streetAddress}, ${addr.city}, ${addr.state}`)}&t=&z=17&ie=UTF8&iwloc=&output=embed`}
+                            allowFullScreen
+                          ></iframe>
                         </div>
                       </div>
 
                       <div className="flex gap-4 pt-6 border-t border-surface-variant/20 mt-6 justify-end items-center">
                         {!addr.isDefault && (
-                          <button 
-                            onClick={() => handleSetDefaultAddress(addr._id || addr.id)}
+                          <button
+                            onClick={() => handleSetDefaultAddress(addr.id)}
                             className="text-xs font-label-caps uppercase tracking-wider text-on-surface-variant hover:text-primary"
                           >
                             Đặt mặc định
                           </button>
                         )}
-                        <button 
-                          onClick={() => handleDeleteAddress(addr._id || addr.id)}
+                        <button
+                          onClick={() => handleDeleteAddress(addr.id)}
                           className="text-xs font-label-caps uppercase tracking-wider text-error hover:opacity-80"
                         >
                           Xóa
@@ -721,7 +755,6 @@ const Settings = () => {
                       </div>
                     </div>
                   ))}
-
                 </div>
               </div>
             )}
@@ -742,18 +775,18 @@ const Settings = () => {
 
                 <form onSubmit={handleSaveNotifications} className="space-y-8 bg-white border border-surface-variant/20 rounded-lg p-6 md:p-8 shadow-[0px_10px_30px_rgba(0,0,0,0.02)]">
                   <div className="divide-y divide-surface-variant/30 space-y-6">
-                    
+
                     <div className="flex justify-between items-center py-4 first:pt-0">
                       <div className="max-w-md pr-6">
                         <h4 className="text-body-md font-bold text-primary mb-1">Cập nhật đơn hàng</h4>
                         <p className="text-sm text-on-surface-variant opacity-70">Nhận thông báo qua email về tình trạng đơn hàng, vận chuyển và giao nhận hàng.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={notificationSettings.orderUpdates}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, orderUpdates: e.target.checked })}
-                          className="sr-only peer" 
+                          className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -765,11 +798,11 @@ const Settings = () => {
                         <p className="text-sm text-on-surface-variant opacity-70">Nhận email thông báo về bộ sưu tập mới, đợt giảm giá theo mùa và sự kiện đặc biệt.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={notificationSettings.promotions}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, promotions: e.target.checked })}
-                          className="sr-only peer" 
+                          className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -781,11 +814,11 @@ const Settings = () => {
                         <p className="text-sm text-on-surface-variant opacity-70">Nhận bản tin hàng tháng chia sẻ các ý tưởng thiết kế nội thất và câu chuyện của thợ thủ công.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={notificationSettings.newsletter}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, newsletter: e.target.checked })}
-                          className="sr-only peer" 
+                          className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -797,11 +830,11 @@ const Settings = () => {
                         <p className="text-sm text-on-surface-variant opacity-70">Nhận cảnh báo về hoạt động đăng nhập lạ và các thay đổi quan trọng trên tài khoản của bạn.</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer select-none">
-                        <input 
-                          type="checkbox" 
+                        <input
+                          type="checkbox"
                           checked={notificationSettings.securityAlerts}
                           onChange={(e) => setNotificationSettings({ ...notificationSettings, securityAlerts: e.target.checked })}
-                          className="sr-only peer" 
+                          className="sr-only peer"
                         />
                         <div className="w-11 h-6 bg-surface-container rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-surface-variant after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
                       </label>
@@ -810,7 +843,7 @@ const Settings = () => {
                   </div>
 
                   <div className="flex justify-end pt-6 border-t border-surface-variant/30">
-                    <button 
+                    <button
                       type="submit"
                       className="bg-primary text-on-primary px-12 py-4 font-label-caps text-xs uppercase tracking-widest hover:bg-secondary transition-colors shadow-lg hover:shadow-xl"
                     >
@@ -919,7 +952,7 @@ const Settings = () => {
           <div>
             <h4 className="font-label-caps text-label-caps text-primary dark:text-primary-fixed uppercase tracking-widest mb-6">Newsletter</h4>
             <div className="flex border-b border-outline-variant py-2">
-              <input className="bg-transparent border-none focus:ring-0 font-body-md text-body-md w-full focus:outline-none" placeholder="Email Address" type="email"/>
+              <input className="bg-transparent border-none focus:ring-0 font-body-md text-body-md w-full focus:outline-none" placeholder="Email Address" type="email" />
               <button className="material-symbols-outlined text-primary">arrow_forward</button>
             </div>
           </div>

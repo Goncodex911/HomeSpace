@@ -11,6 +11,36 @@ import { protect, isAdmin } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+// ─────────────────────────────────────────────────────────────────────────────
+// HELPER: Cộng tiền vào ví của từng store khi đơn hàng được thanh toán
+// ─────────────────────────────────────────────────────────────────────────────
+const creditStoreWallets = async (order) => {
+  try {
+    // Nhóm items theo từng store
+    const storeMap = {}; // { storeId: totalAmount }
+    for (const orderItem of order.items) {
+      if (orderItem.store) {
+        const storeId = orderItem.store.toString();
+        const earned = orderItem.price * orderItem.quantity;
+        storeMap[storeId] = (storeMap[storeId] || 0) + earned;
+      }
+    }
+
+    // Cộng tiền vào ví từng store
+    for (const [storeId, amount] of Object.entries(storeMap)) {
+      await Wallet.findOneAndUpdate(
+        { userId: storeId },
+        { $inc: { balance: amount } },
+        { upsert: true, new: true, setDefaultsOnInsert: true }
+      );
+      console.log(`[WALLET CREDIT] Store ${storeId} +${amount.toLocaleString('vi-VN')} ₫`);
+    }
+  } catch (err) {
+    console.error('[WALLET CREDIT ERROR]', err.message);
+  }
+};
+
+
 // Tạo liên kết thanh toán PayOS
 router.post('/create-payment-link', protect, async (req, res) => {
   try {
@@ -173,8 +203,17 @@ router.post('/confirm-payment', protect, async (req, res) => {
       return res.status(404).json({ message: 'Order not found' });
     }
 
-    order.paymentStatus = status === 'success' ? 'PAID' : 'CANCELLED';
+    const previousStatus = order.paymentStatus;
+    order.paymentStatus = status === 'success' ? 'paid' : 'failed';
+    if (order.paymentStatus === 'paid') {
+      order.status = 'processing';
+    }
     await order.save();
+
+    // Cộng tiền vào ví store khi đơn chuyển sang paid
+    if (order.paymentStatus === 'paid' && previousStatus !== 'paid') {
+      await creditStoreWallets(order);
+    }
 
     res.status(200).json({
       message: 'Order status updated successfully',
@@ -195,11 +234,19 @@ router.post('/webhook', async (req, res) => {
     const webhookData = await payOS.webhooks.verify(req.body);
     const { orderCode, success } = webhookData;
 
-
     const order = await Order.findOne({ orderCode });
     if (order) {
-      order.paymentStatus = success ? 'PAID' : 'CANCELLED';
+      const previousStatus = order.paymentStatus;
+      order.paymentStatus = success ? 'paid' : 'failed';
+      if (order.paymentStatus === 'paid') {
+        order.status = 'processing';
+      }
       await order.save();
+
+      // Cộng tiền vào ví store khi đơn chuyển sang paid
+      if (order.paymentStatus === 'paid' && previousStatus !== 'paid') {
+        await creditStoreWallets(order);
+      }
     }
 
     res.status(200).json({ success: true });

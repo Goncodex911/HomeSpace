@@ -1,592 +1,290 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
-
-const cartStyles = `
-  .cart-item-card {
-    background: #ffffff;
-    border: 1px solid rgba(196,199,199,0.3);
-    transition: all 0.3s ease;
-  }
-  .cart-item-card:hover {
-    border-color: #715a3e;
-  }
-  .checkout-sidebar {
-    background: #ffffff;
-    border: 1px solid rgba(196,199,199,0.4);
-    position: sticky;
-    top: 100px;
-  }
-  .checkbox-custom {
-    accent-color: #715a3e;
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-  }
-  .qty-btn {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(196,199,199,0.5);
-    background: #ffffff;
-    transition: all 0.2s ease;
-  }
-  .qty-btn:hover:not(:disabled) {
-    background: #715a3e;
-    color: #ffffff;
-    border-color: #715a3e;
-  }
-  .form-input {
-    border: 1px solid rgba(196,199,199,0.5);
-    padding: 10px 14px;
-    width: 100%;
-    background: transparent;
-    transition: border-color 0.3s ease;
-  }
-  .form-input:focus {
-    outline: none;
-    border-color: #715a3e;
-  }
-`;
+import { AuthContext } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const Cart = () => {
-  const { token, user, logout } = useContext(AuthContext);
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [cart, setCart] = useState(null);
+  const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedItems, setSelectedItems] = useState([]); // Array of itemIds
-  const [shippingAddress, setShippingAddress] = useState({
-    fullName: user?.fullName || '',
-    phone: '',
-    address: '',
-  });
-  const [userAddresses, setUserAddresses] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [orders, setOrders] = useState([]);
-  const [showOrders, setShowOrders] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [promoCode, setPromoCode] = useState('');
 
+  const { user, token } = useContext(AuthContext);
+  const navigate = useNavigate();
 
-  // Trạng thái thanh toán từ URL
-  const paymentStatus = searchParams.get('status');
-  const orderCode = searchParams.get('orderCode');
+  useEffect(() => {
+    fetchCart();
+  }, []);
 
-  // Fetch cart data
   const fetchCart = async () => {
     try {
       const res = await api('/cart');
-      setCart(res.data || { items: [] });
+      setCartItems(res.items || []);
     } catch (err) {
-      console.error('Failed to fetch cart:', err);
+      setError('Failed to fetch cart items.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Fetch orders
-  const fetchOrders = async () => {
+  const handleUpdateQuantity = async (itemId, newQuantity) => {
+    if (newQuantity < 1) return;
     try {
-      const res = await api('/payment/orders');
-      setOrders(res.data || []);
+      const res = await api(`/cart/${itemId}`, {
+        method: 'PUT',
+        body: { quantity: newQuantity }
+      });
+      setCartItems(res.items || []);
     } catch (err) {
-      console.error('Failed to fetch orders:', err);
-    }
-  };
-
-  // Fetch user addresses
-  const fetchUserAddresses = async () => {
-    try {
-      const res = await api('/auth/addresses');
-      const list = res.data || [];
-      setUserAddresses(list);
-      
-      // Prefill with default address
-      const defaultAddr = list.find((a) => a.isDefault) || list[0];
-      if (defaultAddr) {
-        setShippingAddress({
-          fullName: defaultAddr.fullName,
-          phone: defaultAddr.phone,
-          address: defaultAddr.address,
-        });
-      }
-    } catch (err) {
-      console.error('Failed to fetch addresses:', err);
-    }
-  };
-
-  useEffect(() => {
-    if (token) {
+      toast.error('Failed to update quantity');
       fetchCart();
-      fetchOrders();
-      fetchUserAddresses();
     }
-  }, [token]);
+  };
 
+  const handleRemove = async (itemId) => {
+    try {
+      const res = await api(`/cart/${itemId}`, { method: 'DELETE' });
+      setCartItems(res.items || []);
+    } catch (err) {
+      toast.error('Failed to remove item');
+    }
+  };
 
-  // Xử lý xác nhận trạng thái thanh toán từ PayOS Redirect
-  useEffect(() => {
-    const confirmPayment = async () => {
-      if (paymentStatus && orderCode) {
-        try {
-          await api('/payment/confirm-payment', {
-            method: 'POST',
-            body: {
-              orderCode: Number(orderCode),
-              status: paymentStatus,
-            },
-          });
-          // Xóa query params để không lặp lại
-          setSearchParams({});
-          fetchCart();
-          fetchOrders();
-          alert(paymentStatus === 'success' ? 'Thanh toán đơn hàng thành công!' : 'Thanh toán đơn hàng đã bị hủy.');
-        } catch (err) {
-          console.error('Error confirming payment:', err);
-        }
-      }
-    };
-    confirmPayment();
-  }, [paymentStatus, orderCode]);
+  const handleCheckout = () => {
+    if (cartItems.length === 0) return;
+    navigate('/checkout');
+  };
 
-  if (!token) {
+  const subtotal = cartItems.reduce((total, cartItem) => {
+    return total + (cartItem.item.price * cartItem.quantity);
+  }, 0);
+
+  const shippingEstimate = cartItems.length > 0 ? 150 : 0;
+  const tax = subtotal * 0.08; // 8% tax
+  const grandTotal = subtotal + shippingEstimate + tax;
+
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-surface px-4 text-center">
-        <span className="material-symbols-outlined text-6xl text-outline mb-4">shopping_cart_checkout</span>
-        <h2 className="font-display-lg text-2xl mb-2 text-primary uppercase">Giỏ hàng của bạn</h2>
-        <p className="text-on-surface-variant mb-6">Vui lòng đăng nhập để xem và quản lý giỏ hàng của bạn.</p>
-        <Link to="/login" className="bg-primary text-on-primary px-8 py-3 hover:bg-secondary transition-colors font-label-caps uppercase tracking-wider">
-          Đăng Nhập Ngay
-        </Link>
+      <div className="min-h-screen flex items-center justify-center bg-surface-bright">
+        <p className="font-label-caps tracking-widest uppercase text-on-surface">Loading Cart...</p>
       </div>
     );
   }
 
-  // Nhóm các mặt hàng theo curator/owner
-  const groupedItems = {};
-  if (cart && cart.items) {
-    cart.items.forEach((cartItem) => {
-      if (!cartItem.item) return;
-      const ownerId = cartItem.item.owner?._id || 'unknown';
-      const ownerName = cartItem.item.owner?.companyName || cartItem.item.owner?.fullName || 'Lumina Curator';
-      if (!groupedItems[ownerId]) {
-        groupedItems[ownerId] = {
-          ownerName,
-          items: [],
-        };
-      }
-      groupedItems[ownerId].items.push(cartItem);
-    });
-  }
-
-  // Checkbox: Chọn toàn bộ giỏ
-  const handleSelectAll = (e) => {
-    if (e.target.checked) {
-      const allIds = cart.items.map((i) => i.item._id);
-      setSelectedItems(allIds);
-    } else {
-      setSelectedItems([]);
-    }
-  };
-
-  // Checkbox: Chọn toàn bộ sản phẩm của 1 store
-  const handleSelectStore = (storeItems, checked) => {
-    const storeItemIds = storeItems.map((i) => i.item._id);
-    if (checked) {
-      setSelectedItems((prev) => [...new Set([...prev, ...storeItemIds])]);
-    } else {
-      setSelectedItems((prev) => prev.filter((id) => !storeItemIds.includes(id)));
-    }
-  };
-
-  // Checkbox: Chọn 1 sản phẩm
-  const handleSelectItem = (itemId, checked) => {
-    if (checked) {
-      setSelectedItems((prev) => [...prev, itemId]);
-    } else {
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
-    }
-  };
-
-  // Cập nhật số lượng
-  const handleQuantityChange = async (itemId, currentQty, amount) => {
-    const newQty = currentQty + amount;
-    if (newQty < 1) return;
-    try {
-      await api('/cart/update', {
-        method: 'POST',
-        body: { itemId, quantity: newQty },
-      });
-      fetchCart();
-    } catch (err) {
-      alert(err.message || 'Lỗi cập nhật số lượng');
-    }
-  };
-
-  // Xóa sản phẩm
-  const handleRemoveItem = async (itemId) => {
-    if (!window.confirm('Bạn muốn xóa sản phẩm này khỏi giỏ hàng?')) return;
-    try {
-      await api('/cart/remove', {
-        method: 'POST',
-        body: { itemId },
-      });
-      setSelectedItems((prev) => prev.filter((id) => id !== itemId));
-      fetchCart();
-    } catch (err) {
-      alert(err.message || 'Lỗi xóa sản phẩm');
-    }
-  };
-
-  // Tính toán tổng tiền cho các sản phẩm đã chọn
-  let totalSelectedAmount = 0;
-  const selectedCheckoutItems = [];
-  if (cart && cart.items) {
-    cart.items.forEach((cartItem) => {
-      if (selectedItems.includes(cartItem.item._id)) {
-        totalSelectedAmount += cartItem.item.price * cartItem.quantity;
-        selectedCheckoutItems.push({
-          itemId: cartItem.item._id,
-          quantity: cartItem.quantity,
-        });
-      }
-    });
-  }
-
-  // Xử lý submit thanh toán
-  const handleCheckout = async (e) => {
-    e.preventDefault();
-    if (selectedCheckoutItems.length === 0) {
-      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán.');
-      return;
-    }
-    if (!shippingAddress.fullName || !shippingAddress.phone || !shippingAddress.address) {
-      alert('Vui lòng nhập đầy đủ thông tin giao hàng.');
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const res = await api('/payment/create-payment-link', {
-        method: 'POST',
-        body: {
-          items: selectedCheckoutItems,
-          shippingAddress,
-        },
-      });
-
-      if (res.checkoutUrl) {
-        window.location.href = res.checkoutUrl;
-      } else {
-        alert('Không tạo được liên kết thanh toán.');
-      }
-    } catch (err) {
-      alert(err.message || 'Lỗi tạo đơn hàng');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
   return (
-    <div className="bg-surface text-on-surface font-body-md min-h-screen pt-28 pb-16">
-      <style dangerouslySetInnerHTML={{ __html: cartStyles }} />
-
-      {/* Header */}
-      <header className="fixed w-full top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-surface-variant py-4">
-        <nav className="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
+    <div className="bg-surface-bright text-on-surface font-body-md min-h-screen flex flex-col">
+      {/* Top Navigation Shell */}
+      <header className="w-full sticky top-0 z-50 bg-surface/80 dark:bg-surface-dim/80 backdrop-blur-xl border-b border-outline-variant/30 transition-all duration-300 ease-in-out">
+        <div className="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-4 w-full max-w-container-max mx-auto">
           <div className="flex items-center gap-8">
-            <Link to="/"><span className="font-display-lg text-lg md:text-xl font-bold tracking-[0.25em] text-primary">LUMINA</span></Link>
-            <div className="hidden md:flex gap-8">
-              <Link className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" to="/">Home</Link>
-              <Link className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps" to="/stores">Curators</Link>
+            <Link to="/" className="font-headline-md text-headline-md tracking-widest text-on-background">Lumina</Link>
+            <nav className="hidden md:flex gap-6">
+              <Link className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" to="/">Dashboard</Link>
+              <Link className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" to="/">Inventory</Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-6">
+            <Link to="/cart" className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:opacity-70 transition-opacity">shopping_cart</Link>
+            <Link to="/settings" className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:opacity-70 transition-opacity">settings</Link>
+            <div className="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex items-center justify-center text-sm font-bold">
+              {user ? user.fullName?.charAt(0).toUpperCase() : 'U'}
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <button onClick={() => setShowOrders(!showOrders)} className="font-label-caps text-label-caps text-secondary hover:text-primary transition-colors">
-              {showOrders ? 'Xem Giỏ Hàng' : 'Đơn Hàng Đã Mua'}
-            </button>
-            <button onClick={logout} className="font-label-caps text-label-caps border border-primary px-4 py-2 hover:bg-primary hover:text-on-primary transition-all uppercase">Logout</button>
-          </div>
-        </nav>
+        </div>
       </header>
 
-      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
-        <div className="mb-8">
-          <h1 className="font-display-lg text-3xl font-light text-primary uppercase tracking-wide">
-            {showOrders ? 'Lịch sử mua hàng' : 'Giỏ hàng của bạn'}
-          </h1>
-          <p className="text-on-surface-variant text-sm mt-1">
-            {showOrders ? 'Theo dõi trạng thái đơn hàng của bạn qua cổng PayOS' : 'Chọn sản phẩm và tiến hành thanh toán giống Shopee Flow.'}
-          </p>
+      <main className="flex-grow w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-12 md:py-20">
+        <div className="mb-12">
+          <h2 className="font-headline-lg text-headline-lg mb-2">Shopping Cart</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant">Review your selection of architectural pieces.</p>
         </div>
 
-        {loading ? (
-          <div className="text-center py-20">
-            <p className="font-light tracking-widest uppercase text-on-surface-variant">Đang tải thông tin...</p>
-          </div>
-        ) : showOrders ? (
-          /* DANH SÁCH ĐƠN HÀNG */
-          <div className="space-y-6">
-            {orders.length === 0 ? (
-              <div className="text-center py-16 bg-white border border-dashed border-outline-variant/60 rounded-sm">
-                <span className="material-symbols-outlined text-5xl text-outline mb-2">receipt_long</span>
-                <p className="text-on-surface-variant">Bạn chưa có đơn hàng nào.</p>
+        {error && <p className="text-error mb-4">{error}</p>}
+
+        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-16 items-start">
+          {/* Cart Items Section */}
+          <div className="lg:col-span-8 w-full space-y-12">
+            {cartItems.length === 0 ? (
+              <div className="text-center py-20 bg-surface-container-low">
+                <p className="font-headline-md mb-6">Your cart is currently empty.</p>
+                <Link to="/" className="bg-primary text-on-primary py-3 px-8 font-label-caps uppercase tracking-widest hover:bg-secondary transition-colors">
+                  Continue Shopping
+                </Link>
               </div>
             ) : (
-              orders.map((order) => (
-                <div key={order._id} className="bg-white border border-outline-variant/30 p-6 rounded-sm space-y-4">
-                  <div className="flex justify-between items-center border-b border-outline-variant/20 pb-3">
-                    <div>
-                      <span className="font-bold text-primary">Mã Đơn Hàng: #{order.orderCode}</span>
-                      <span className="text-xs text-on-surface-variant ml-4">{new Date(order.createdAt).toLocaleString()}</span>
-                    </div>
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-                      order.paymentStatus === 'PAID' ? 'bg-green-100 text-green-800' :
-                      order.paymentStatus === 'CANCELLED' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {order.paymentStatus}
-                    </span>
+              cartItems.map((cartItem) => (
+                <div key={cartItem.item._id} className="group flex flex-col sm:flex-row gap-8 pb-8 border-b border-outline-variant/30 transition-all duration-300">
+                  <div className="w-full sm:w-48 aspect-square bg-surface-container-low overflow-hidden">
+                    <img
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      src={cartItem.item.image || 'https://lh3.googleusercontent.com/aida-public/AB6AXuAl1GXaqF0bq-4NtcLTvEhVfImrFCJvko7FVsjzt8jR5Dx9S07fyuJAFrtZdK3_MADw_dUc6Yc_kAUgdm99HtevAWWm2GjlWobDveKoORvwc281pxGo64mT7brXyQ5cNRvtnIpMfPexGxBgDGXHjcgJHnyu80MDejSci63tlQwjHRBZT32XhBHNwk6UFXJHHc5xevPS03CflIiBy-Vn3fR8vSekKYXFKLi4DFREwRCmFt-15RykOuatjvVjr_cPZaa1cW-fnGkS9WeL'}
+                      alt={cartItem.item.name}
+                    />
                   </div>
-
-                  <div className="divide-y divide-outline-variant/10">
-                    {order.items.map((item) => (
-                      <div key={item._id} className="py-3 flex justify-between items-center">
-                        <div>
-                          <p className="font-medium text-primary">{item.name}</p>
-                          <p className="text-xs text-on-surface-variant">Số lượng: {item.quantity} x ${item.price?.toLocaleString()}</p>
-                        </div>
-                        <span className="font-bold text-primary">${(item.price * item.quantity).toLocaleString()}</span>
+                  <div className="flex-grow flex flex-col justify-between py-2">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="font-headline-md text-headline-md mb-1 tracking-tight">{cartItem.item.name}</h3>
+                        <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">{cartItem.item.category || 'Product'}</p>
                       </div>
-                    ))}
-                  </div>
-
-                  <div className="border-t border-outline-variant/20 pt-4 flex justify-between items-center">
-                    <div>
-                      <p className="text-xs text-on-surface-variant">Người nhận: <strong>{order.shippingAddress?.fullName}</strong> - {order.shippingAddress?.phone}</p>
-                      <p className="text-xs text-on-surface-variant">Địa chỉ: {order.shippingAddress?.address}</p>
+                      <p className="font-headline-md text-headline-md">${cartItem.item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-on-surface-variant">Tổng số tiền</p>
-                      <p className="font-bold text-xl text-primary">${order.totalAmount?.toLocaleString()}</p>
+                    <div className="flex justify-between items-center mt-6 sm:mt-0">
+                      <div className="flex items-center border border-outline-variant px-4 py-2 gap-6 bg-surface-container-lowest">
+                        <button
+                          className="hover:text-secondary transition-colors text-lg"
+                          onClick={() => handleUpdateQuantity(cartItem.item._id, cartItem.quantity - 1)}
+                        >
+                          −
+                        </button>
+                        <span className="font-label-caps text-label-caps w-4 text-center">{cartItem.quantity}</span>
+                        <button
+                          className="hover:text-secondary transition-colors text-lg"
+                          onClick={() => handleUpdateQuantity(cartItem.item._id, cartItem.quantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <button
+                        className="text-on-surface-variant hover:text-error transition-colors flex items-center gap-1"
+                        onClick={() => handleRemove(cartItem.item._id)}
+                      >
+                        <span className="material-symbols-outlined text-sm">close</span>
+                        <span className="font-label-caps text-label-caps uppercase">Remove</span>
+                      </button>
                     </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-        ) : (
-          /* TRANG GIỎ HÀNG CHÍNH (Shopee Flow) */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Danh sách sản phẩm bên trái */}
-            <div className="lg:col-span-8 space-y-6">
-              {cart.items.length === 0 ? (
-                <div className="text-center py-20 bg-white border border-dashed border-outline-variant/60 rounded-sm">
-                  <span className="material-symbols-outlined text-5xl text-outline mb-3 block">shopping_cart</span>
-                  <p className="text-on-surface-variant mb-6">Giỏ hàng của bạn đang trống.</p>
-                  <Link to="/" className="bg-primary text-on-primary px-6 py-2.5 hover:bg-secondary transition-colors uppercase font-label-caps text-xs">
-                    Tiếp tục mua sắm
-                  </Link>
+
+          {/* Summary Sidebar */}
+          {cartItems.length > 0 && (
+            <aside className="lg:col-span-4 w-full sticky top-32">
+              <div className="bg-surface-container-low p-8 lg:p-10 flex flex-col space-y-10">
+                <h3 className="font-headline-md text-headline-md border-b border-outline-variant pb-6">Order Summary</h3>
+                <div className="space-y-4">
+                  <div className="flex justify-between font-body-md text-body-md">
+                    <span className="text-on-surface-variant">Subtotal</span>
+                    <span>${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between font-body-md text-body-md">
+                    <span className="text-on-surface-variant">Shipping Estimate</span>
+                    <span>${shippingEstimate.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
+                  <div className="flex justify-between font-body-md text-body-md">
+                    <span className="text-on-surface-variant">Tax</span>
+                    <span>${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  </div>
                 </div>
-              ) : (
-                <>
-                  {/* Select All Bar */}
-                  <div className="bg-white border border-outline-variant/30 p-4 flex items-center gap-3 rounded-sm">
-                    <input
-                      type="checkbox"
-                      className="checkbox-custom"
-                      onChange={handleSelectAll}
-                      checked={selectedItems.length === cart.items.length && cart.items.length > 0}
-                    />
-                    <span className="font-label-caps text-xs tracking-wider uppercase text-primary">
-                      Chọn tất cả ({cart.items.length} sản phẩm)
-                    </span>
+
+                <div className="pt-6 border-t border-outline-variant">
+                  <div className="flex justify-between items-baseline mb-8">
+                    <span className="font-label-caps text-label-caps text-on-surface">GRAND TOTAL</span>
+                    <span className="font-headline-lg text-headline-lg">${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
 
-                  {/* Group items by Shop */}
-                  {Object.keys(groupedItems).map((ownerId) => {
-                    const shopData = groupedItems[ownerId];
-                    const shopItemIds = shopData.items.map((i) => i.item._id);
-                    const isAllShopSelected = shopItemIds.every((id) => selectedItems.includes(id));
-
-                    return (
-                      <div key={ownerId} className="bg-white border border-outline-variant/30 rounded-sm overflow-hidden">
-                        {/* Shop Header */}
-                        <div className="bg-surface-container/30 px-5 py-3.5 border-b border-outline-variant/20 flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            className="checkbox-custom"
-                            onChange={(e) => handleSelectStore(shopData.items, e.target.checked)}
-                            checked={isAllShopSelected}
-                          />
-                          <span className="material-symbols-outlined text-[18px] text-secondary">store</span>
-                          <span className="font-semibold text-primary text-sm">{shopData.ownerName}</span>
-                        </div>
-
-                        {/* Shop Items */}
-                        <div className="divide-y divide-outline-variant/20">
-                          {shopData.items.map((cartItem) => {
-                            const { item, quantity } = cartItem;
-                            if (!item) return null;
-
-                            return (
-                              <div key={item._id} className="p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                                <div className="flex items-center gap-3">
-                                  <input
-                                    type="checkbox"
-                                    className="checkbox-custom"
-                                    onChange={(e) => handleSelectItem(item._id, e.target.checked)}
-                                    checked={selectedItems.includes(item._id)}
-                                  />
-                                  <div className="w-16 h-16 bg-surface-container/60 flex-shrink-0 rounded-sm overflow-hidden border border-outline-variant/20">
-                                    <span className="material-symbols-outlined text-3xl text-outline w-full h-full flex items-center justify-center bg-gray-100">
-                                      image
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="font-medium text-primary text-sm truncate">{item.name}</h4>
-                                  <p className="text-xs text-on-surface-variant mt-1 line-clamp-1">{item.description || 'Premium curator piece.'}</p>
-                                  <p className="text-sm font-semibold text-primary mt-1.5">${item.price?.toLocaleString()}</p>
-                                </div>
-
-                                <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-start">
-                                  {/* Tăng giảm số lượng */}
-                                  <div className="flex items-center border border-outline-variant/35">
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuantityChange(item._id, quantity, -1)}
-                                      disabled={quantity <= 1}
-                                      className="qty-btn"
-                                    >
-                                      -
-                                    </button>
-                                    <span className="w-10 text-center text-xs font-semibold text-primary">{quantity}</span>
-                                    <button
-                                      type="button"
-                                      onClick={() => handleQuantityChange(item._id, quantity, 1)}
-                                      className="qty-btn"
-                                    >
-                                      +
-                                    </button>
-                                  </div>
-
-                                  {/* Delete button */}
-                                  <button
-                                    type="button"
-                                    onClick={() => handleRemoveItem(item._id)}
-                                    className="text-on-surface-variant hover:text-error transition-colors p-1"
-                                    title="Xóa sản phẩm"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">delete</span>
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
+                  <div className="space-y-6">
+                    <div className="group">
+                      <label className="font-label-caps text-label-caps block mb-2">PROMO CODE</label>
+                      <div className="flex bg-surface-container-low border border-outline-variant/30 p-1">
+                        <input className="bg-transparent border-none focus:ring-0 text-body-md flex-grow px-3 uppercase outline-none" placeholder="Enter code" type="text" value={promoCode} onChange={(e) => setPromoCode(e.target.value)} />
+                        <button className="font-label-caps text-label-caps text-primary hover:text-secondary transition-colors" onClick={() => toast.success('Promo code applied!')}>APPLY</button>
                       </div>
-                    );
-                  })}
-                </>
-              )}
-            </div>
-
-            {/* Sidebar thông tin thanh toán bên phải */}
-            <div className="lg:col-span-4 space-y-6">
-              <div className="checkout-sidebar p-6 rounded-sm space-y-6">
-                <div>
-                  <h3 className="font-label-caps text-xs tracking-wider uppercase text-primary border-b border-outline-variant/30 pb-3 font-bold mb-4">
-                    Thông tin giao hàng
-                  </h3>
-                  <form className="space-y-4" onSubmit={handleCheckout}>
-                    {userAddresses.length > 0 && (
-                      <div>
-                        <label className="text-xs font-semibold text-primary uppercase block mb-1">Chọn địa chỉ đã lưu</label>
-                        <select
-                          className="form-input text-sm cursor-pointer"
-                          onChange={(e) => {
-                            const selected = userAddresses.find((a) => a._id === e.target.value);
-                            if (selected) {
-                              setShippingAddress({
-                                fullName: selected.fullName,
-                                phone: selected.phone,
-                                address: selected.address,
-                              });
-                            }
-                          }}
-                          defaultValue=""
-                        >
-                          <option value="" disabled>-- Chọn địa chỉ --</option>
-                          {userAddresses.map((addr) => (
-                            <option key={addr._id} value={addr._id}>
-                              {addr.fullName} - {addr.phone} ({addr.address.slice(0, 25)}...)
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-
-                    <div>
-
-                      <label className="text-xs font-semibold text-primary uppercase block mb-1">Họ và tên người nhận</label>
-                      <input
-                        type="text"
-                        required
-                        className="form-input text-sm"
-                        value={shippingAddress.fullName}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, fullName: e.target.value })}
-                        placeholder="Nguyễn Văn A"
-                      />
                     </div>
-                    <div>
-                      <label className="text-xs font-semibold text-primary uppercase block mb-1">Số điện thoại</label>
-                      <input
-                        type="tel"
-                        required
-                        className="form-input text-sm"
-                        value={shippingAddress.phone}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, phone: e.target.value })}
-                        placeholder="09XXXXXXXX"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-semibold text-primary uppercase block mb-1">Địa chỉ giao hàng</label>
-                      <textarea
-                        required
-                        rows="3"
-                        className="form-input text-sm"
-                        value={shippingAddress.address}
-                        onChange={(e) => setShippingAddress({ ...shippingAddress, address: e.target.value })}
-                        placeholder="Số nhà, Tên đường, Phường/Xã, Quận/Huyện..."
-                      />
-                    </div>
-
-
-
-
-                    <div className="border-t border-outline-variant/30 pt-4 mt-6">
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-xs text-on-surface-variant font-medium">Đã chọn ({selectedItems.length}) sản phẩm:</span>
-                        <span className="font-bold text-lg text-primary">${totalSelectedAmount.toLocaleString()}</span>
-                      </div>
-
-                      <button
-                        type="submit"
-                        disabled={submitting || selectedCheckoutItems.length === 0}
-                        className="w-full bg-primary text-on-primary py-3 hover:bg-secondary disabled:bg-gray-300 disabled:text-gray-500 transition-colors font-label-caps uppercase tracking-wider text-xs font-bold"
-                      >
-                        {submitting ? 'Đang xử lý...' : 'Thanh toán'}
-                      </button>
-                    </div>
-                  </form>
+                    <button
+                      onClick={handleCheckout}
+                      className="w-full bg-primary text-on-primary py-5 font-label-caps text-label-caps tracking-widest hover:bg-secondary transition-all duration-300 active:scale-[0.98] font-semibold"
+                    >
+                      PROCEED TO CHECKOUT
+                    </button>
+                  </div>
+                  <div className="mt-8 flex items-center justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
+                    <span className="material-symbols-outlined">payments</span>
+                    <span className="material-symbols-outlined">lock</span>
+                    <span className="material-symbols-outlined">verified_user</span>
+                  </div>
                 </div>
               </div>
+
+              <div className="mt-8 p-6 border border-outline-variant flex items-center gap-4 cursor-pointer hover:bg-surface-container-lowest transition-colors group">
+                <span className="material-symbols-outlined text-secondary group-hover:translate-x-1 transition-transform">help</span>
+                <div>
+                  <p className="font-label-caps text-label-caps">NEED ASSISTANCE?</p>
+                  <p className="font-body-md text-body-md text-on-surface-variant">Contact our concierge team</p>
+                </div>
+              </div>
+            </aside>
+          )}
+        </div>
+      </main>
+
+      {/* Recommended Products Section */}
+      <section className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pb-20">
+        <div className="mb-12">
+          <h2 className="font-headline-md text-headline-md mb-2 tracking-widest uppercase text-sm">Architectural Pairings</h2>
+          <p className="font-body-md text-body-md text-on-surface-variant text-secondary font-semibold">Curated additions for your space.</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="group cursor-pointer">
+            <div className="aspect-square bg-surface-container-low overflow-hidden mb-4">
+              <img alt="Aura Floor Lamp" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AP1WRLvQj2xYFfDrJxlkhbG1ZbMtFAhixaFi-l5sV_jr-Cw_7-CbGA9z46DXDODoKT-R7wXWLHz3eHWVENaiCIiPHGcIcxEL6kuwXckA2ogKf_vwj2g2DmPA2q7N8yvNV1cTTW34UbnwbZFSYa0ialhx51N1u5UGwIGqDClwBllTPI54FUdlz7pqAgIWJushZk5d5_K8lIPIUahvHytiqgq7F4d2QNwtEtJK5LGzg2B2vrHmU1huHBtWn5fRPBlW" />
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-label-caps text-label-caps mb-1">Aura Floor Lamp</h4>
+                <p className="font-label-caps text-label-caps text-on-surface-variant">LIGHTING</p>
+              </div>
+              <p className="font-body-md text-secondary font-semibold">$850.00</p>
             </div>
           </div>
-        )}
-      </div>
+
+          <div className="group cursor-pointer">
+            <div className="aspect-square bg-surface-container-low overflow-hidden mb-4">
+              <img alt="Executive Zenith Chair" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/AP1WRLuntKoR50sZ5jRweXpEWaGWFD6nFJw2RYj4er8-rE_QWGZOKlLpKkb1L3VJpKe5z0ulgnI9GN1e49miEPw3vbpl8gZ1w5b45uUkfYY_CZAOpDDHN3YEMlZT74e3sYb4TQgVZqqltqX3eTJqepyNVo7PmZ3iLF0gu8P5KPoMjE8VThKr82Uz8CA_lCACdyNEpBt2lbpabnSIJ_iikJ2nv3QzfjUX0KZ0CQu1Sgn32kCy1wTJf3_kfW56rPUr" />
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-label-caps text-label-caps mb-1">Zenith Chair</h4>
+                <p className="font-label-caps text-label-caps text-on-surface-variant">OFFICE</p>
+              </div>
+              <p className="font-body-md text-secondary font-semibold">$1,800.00</p>
+            </div>
+          </div>
+
+          <div className="group cursor-pointer">
+            <div className="aspect-square bg-surface-container-low overflow-hidden mb-4">
+              <img alt="Lunar Lounge" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI_gX5g5jnW6cj3bx65pkU3tUmOYydUmEf1mdRixqTYylhPwYxydGprPcFzignbkD2DMrT14Y_M4jQ_dKnhnUQ7_JarKqC9RpjnL4WC2u_SuvhqmI9cJu_hawjn5wlPZng6Fzy9bqm8lVo4868x4VFU55DqnBbhcRV4bQdl7ZsthTfrUOpmVeQCNrch5LXXzLGDYMG0nGei6V26VKivwBxkT53UR2GtTVxcbNyRH-llgVwvQdNfj4ZyLW8FXYIrsiJ6Nnfn4-O4Gjp" />
+            </div>
+            <div className="flex justify-between items-start">
+              <div>
+                <h4 className="font-label-caps text-label-caps mb-1">Lunar Ottoman</h4>
+                <p className="font-label-caps text-label-caps text-on-surface-variant">LIVING</p>
+              </div>
+              <p className="font-body-md text-secondary font-semibold">$450.00</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer Shell */}
+      <footer className="w-full mt-auto bg-surface border-t border-outline-variant transition-opacity duration-300">
+        <div className="flex flex-col md:flex-row justify-between items-center px-margin-mobile md:px-margin-desktop py-12 w-full max-w-container-max mx-auto">
+          <div className="flex flex-col items-center md:items-start mb-8 md:mb-0">
+            <h2 className="font-headline-md text-headline-md text-primary mb-2">Lumina</h2>
+            <p className="font-body-md text-body-md text-on-surface-variant">© 2024 Lumina Atelier. All rights reserved.</p>
+          </div>
+          <nav className="flex flex-wrap justify-center gap-8">
+            <a className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Privacy Policy</a>
+            <a className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Terms of Service</a>
+            <a className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Shipping Info</a>
+            <a className="font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors" href="#">Contact Support</a>
+          </nav>
+        </div>
+      </footer>
     </div>
   );
 };

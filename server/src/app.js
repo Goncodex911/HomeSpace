@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.js';
 import storeRoutes from './routes/stores.js';
 import cartRoutes from './routes/cart.js';
 import paymentRoutes from './routes/payment.js';
+import orderRoutes from './routes/orders.js';
 import { protect } from './middlewares/auth.js';
 
 const app = express();
@@ -26,6 +27,8 @@ app.use('/api/items', itemRoutes);
 app.use('/api/stores', storeRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/orders', orderRoutes);
+
 
 export default app;
 

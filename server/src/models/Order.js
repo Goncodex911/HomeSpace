@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const orderSchema = new mongoose.Schema(
   {
-    user: {
+    customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
@@ -14,23 +14,18 @@ const orderSchema = new mongoose.Schema(
           ref: 'Item',
           required: true,
         },
-        name: {
-          type: String,
-          required: true,
-        },
         quantity: {
           type: Number,
           required: true,
-          min: 1,
         },
         price: {
           type: Number,
           required: true,
         },
-        owner: {
+        store: {
           type: mongoose.Schema.Types.ObjectId,
           ref: 'User',
-          required: true,
+          required: false,
         },
       },
     ],
@@ -39,26 +34,49 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     shippingAddress: {
-      fullName: { type: String, required: true },
-      phone: { type: String, required: true },
-      address: { type: String, required: true },
+      streetAddress: { type: String, required: true },
+      city: { type: String, required: true },
+      state: { type: String, required: true },
+      zipCode: { type: String, required: false, default: '' },
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+      default: 'pending',
+    },
+    paymentStatus: {
+      type: String,
+      enum: ['pending', 'paid', 'failed'],
+      default: 'pending',
+    },
+    cancellationReason: {
+      type: String,
+      default: '',
+    },
+    cancellationDetails: {
+      type: String,
+      default: '',
+    },
+    returnRequest: {
+      isRequested: { type: Boolean, default: false },
+      reason: { type: String, default: '' },
+      comments: { type: String, default: '' },
+      method: { type: String, default: '' },
+      itemsToReturn: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Item' }],
+      status: { type: String, enum: ['pending', 'approved', 'rejected', 'completed'], default: 'pending' }
     },
     orderCode: {
       type: Number,
       required: true,
       unique: true,
     },
-    paymentStatus: {
-      type: String,
-      enum: ['PENDING', 'PAID', 'CANCELLED'],
-      default: 'PENDING',
-    },
     paymentLinkId: {
       type: String,
-    },
+    }
   },
   { timestamps: true }
 );
 
 const Order = mongoose.model('Order', orderSchema);
+
 export default Order;

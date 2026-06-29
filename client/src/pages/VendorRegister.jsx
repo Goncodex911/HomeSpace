@@ -115,7 +115,7 @@ const VendorRegister = () => {
       } else {
         // Guest: Register account first, save business details in localStorage, verify OTP, then submit
         await register(fullName, email, password);
-        
+
         // Save business info to apply post-OTP verification
         const businessData = {
           companyName,
@@ -254,7 +254,7 @@ const VendorRegister = () => {
                   {step === 1 && (
                     <div className="space-y-8 animate-fade-in">
                       <h2 className="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Personal Information</h2>
-                      
+
                       {user ? (
                         <div className="bg-surface-container-low p-6 border border-outline-variant/30 space-y-2 mb-6">
                           <p className="font-label-caps text-xs text-on-surface-variant uppercase tracking-wider">APPLICANT PROFILE</p>
@@ -266,24 +266,24 @@ const VendorRegister = () => {
                         <div className="grid grid-cols-1 gap-8">
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="fullName">FULL NAME</label>
-                            <input 
+                            <input
                               id="fullName"
-                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                              placeholder="Alexandre Moreau" 
+                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                              placeholder="Alexandre Moreau"
                               type="text"
                               value={fullName}
                               onChange={(e) => setFullName(e.target.value)}
                               required
                             />
                           </div>
-                          
+
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="group">
                               <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="email">PROFESSIONAL EMAIL</label>
-                              <input 
+                              <input
                                 id="email"
-                                className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                                placeholder="atelier@lumina.com" 
+                                className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                                placeholder="atelier@lumina.com"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
@@ -292,10 +292,10 @@ const VendorRegister = () => {
                             </div>
                             <div className="group">
                               <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="phone">PHONE NUMBER</label>
-                              <input 
+                              <input
                                 id="phone"
-                                className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                                placeholder="+84 912 345 678" 
+                                className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                                placeholder="+84 912 345 678"
                                 type="tel"
                                 value={phone}
                                 onChange={(e) => setPhone(e.target.value)}
@@ -306,10 +306,10 @@ const VendorRegister = () => {
 
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="password">ACCOUNT PASSWORD</label>
-                            <input 
+                            <input
                               id="password"
-                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                              placeholder="Choose password for your vendor account" 
+                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                              placeholder="Choose password for your vendor account"
                               type="password"
                               value={password}
                               onChange={(e) => setPassword(e.target.value)}
@@ -320,8 +320,8 @@ const VendorRegister = () => {
                       )}
 
                       <div className="flex items-center gap-6 pt-6">
-                        <button 
-                          className="flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300 uppercase tracking-widest" 
+                        <button
+                          className="flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300 uppercase tracking-widest"
                           type="button"
                           onClick={handleNextStep}
                         >
@@ -336,14 +336,14 @@ const VendorRegister = () => {
                     <div className="space-y-10 animate-fade-in">
                       <div className="space-y-8">
                         <h2 className="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Business Specifics</h2>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="companyName">COMPANY / ATELIER NAME</label>
-                            <input 
+                            <input
                               id="companyName"
-                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                              placeholder="Moreau Architecture & Design" 
+                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                              placeholder="Moreau Architecture & Design"
                               type="text"
                               value={companyName}
                               onChange={(e) => setCompanyName(e.target.value)}
@@ -352,7 +352,7 @@ const VendorRegister = () => {
                           </div>
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="businessType">BUSINESS TYPE</label>
-                            <select 
+                            <select
                               id="businessType"
                               className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary appearance-none cursor-pointer"
                               value={businessType}
@@ -369,10 +369,10 @@ const VendorRegister = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="taxId">TAX ID / VAT NUMBER</label>
-                            <input 
+                            <input
                               id="taxId"
-                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                              placeholder="VAT123456789" 
+                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                              placeholder="VAT123456789"
                               type="text"
                               value={taxId}
                               onChange={(e) => setTaxId(e.target.value)}
@@ -381,10 +381,10 @@ const VendorRegister = () => {
                           </div>
                           <div className="group">
                             <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="yearsInIndustry">YEARS IN INDUSTRY</label>
-                            <input 
+                            <input
                               id="yearsInIndustry"
-                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50" 
-                              placeholder="5" 
+                              className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary placeholder:text-outline-variant/50"
+                              placeholder="5"
                               type="number"
                               min="0"
                               value={yearsInIndustry}
@@ -399,10 +399,10 @@ const VendorRegister = () => {
                         <h2 className="font-headline-md text-headline-md border-b border-outline-variant/20 pb-4">Ethos & Philosophy</h2>
                         <div className="group">
                           <label className="font-label-caps text-label-caps text-on-surface-variant block mb-2" htmlFor="philosophy">BRAND PHILOSOPHY</label>
-                          <textarea 
+                          <textarea
                             id="philosophy"
-                            className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary resize-none placeholder:text-outline-variant/50" 
-                            placeholder="Tell us about your design approach, sustainability commitments, and artisanal focus..." 
+                            className="w-full bg-transparent border-0 border-b border-outline-variant py-3 px-0 font-body-md text-on-surface focus:outline-none focus:ring-0 focus:border-primary resize-none placeholder:text-outline-variant/50"
+                            placeholder="Tell us about your design approach, sustainability commitments, and artisanal focus..."
                             rows="4"
                             value={philosophy}
                             onChange={(e) => setPhilosophy(e.target.value)}
@@ -413,15 +413,15 @@ const VendorRegister = () => {
 
                       {/* Actions */}
                       <div className="flex items-center gap-6 pt-12">
-                        <button 
-                          className="px-8 py-4 border border-outline-variant font-label-caps text-label-caps text-primary hover:bg-surface-container-high transition-colors duration-300 uppercase tracking-widest" 
+                        <button
+                          className="px-8 py-4 border border-outline-variant font-label-caps text-label-caps text-primary hover:bg-surface-container-high transition-colors duration-300 uppercase tracking-widest"
                           type="button"
                           onClick={handlePrevStep}
                         >
                           PREVIOUS
                         </button>
-                        <button 
-                          className={`flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300 uppercase tracking-widest ${loading ? 'opacity-70 cursor-not-allowed' : ''}`} 
+                        <button
+                          className={`flex-1 md:flex-none px-12 py-4 bg-primary text-on-primary font-label-caps text-label-caps hover:bg-secondary transition-all duration-300 uppercase tracking-widest ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
                           type="submit"
                           disabled={loading}
                         >
@@ -439,9 +439,9 @@ const VendorRegister = () => {
         {/* Right: Architectural Image Split */}
         <section className="hidden md:block w-1/2 relative overflow-hidden bg-surface-container">
           <div className="absolute inset-0 bg-black/10 z-10"></div>
-          <img 
-            className="w-full h-full object-cover transition-transform duration-[2000ms] hover:scale-105" 
-            alt="Lumina Architectural Interior" 
+          <img
+            className="w-full h-full object-cover transition-transform duration-[2000ms] hover:scale-105"
+            alt="Lumina Architectural Interior"
             src="https://lh3.googleusercontent.com/aida-public/AB6AXuDYuvbpZPvoXKcF6R9Zj7kcN3jl5vj_DElsGbfqAjkbsbMy4nwEtLZT-lpe5kpeYbT6hPWZjhbaqsPIAw3zpGHDvWoaaS9DGH6V1dGQTJSh2l-R2XEgbc7OJsVPFhr7vjD_t2s8ZvjKjTwUkoR1GN14_2dIaX8CeSkv_UxXqKVHCGHtwc2IoNP8KNMYGkXVjIEkz3_cDyWP_GjpdAVTEbGTnzq76xDBlJ69_CtjrPsztSOJKFZssPN1mXXVg28c9o8SJ54eS9jh9WTq"
           />
           {/* Floating Decorative Glass Card */}

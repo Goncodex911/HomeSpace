@@ -12,11 +12,14 @@ import VendorRegister from './pages/VendorRegister';
 import AdminDashboard from './pages/AdminDashboard';
 import Stores from './pages/Stores';
 import StoreProfile from './pages/StoreProfile';
+import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
+import CancelOrder from './pages/CancelOrder';
+import ReturnOrder from './pages/ReturnOrder';
+import OrderDetail from './pages/OrderDetail';
 import MockPayment from './pages/MockPayment';
-
-
-
+import { Toaster } from 'react-hot-toast';
 
 // Role-based Private Route Wrapper
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
@@ -76,16 +79,29 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-center" toastOptions={{
+        style: {
+          borderRadius: '0',
+          background: '#faf9f5',
+          color: '#1a1c1a',
+          border: '1px solid #c4c7c7',
+          fontFamily: 'Inter, sans-serif',
+          fontSize: '14px',
+          padding: '16px',
+        },
+      }} />
       <Router>
-        <Routes>
-          {/* Public Customer Homepage */}
-          <Route path="/" element={<Home />} />
+        <div className="flex flex-col min-h-screen">
+          <Routes>
+            {/* Public Customer Homepage */}
+            <Route path="/" element={<Home />} />
 
-          {/* Public Store Pages */}
-          <Route path="/stores" element={<Stores />} />
-          <Route path="/stores/:id" element={<StoreProfile />} />
+            {/* Public Store Pages */}
+            <Route path="/stores" element={<Stores />} />
+            <Route path="/stores/:id" element={<StoreProfile />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
 
-          {/* Public Authentication Pages */}
+            {/* Public Authentication Pages */}
           <Route
             path="/login"
             element={
@@ -149,10 +165,6 @@ function App() {
             }
           />
 
-          {/* Vendor Registration Page */}
-          <Route path="/vendor-register" element={<VendorRegister />} />
-
-          {/* Cart Page */}
           <Route
             path="/cart"
             element={
@@ -161,8 +173,38 @@ function App() {
               </PrivateRoute>
             }
           />
-
-          {/* Mock Payment Page */}
+          <Route
+            path="/checkout"
+            element={
+              <PrivateRoute>
+                <Checkout />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders/:id"
+            element={
+              <PrivateRoute>
+                <OrderDetail />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders/:id/cancel"
+            element={
+              <PrivateRoute>
+                <CancelOrder />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/orders/:id/return"
+            element={
+              <PrivateRoute>
+                <ReturnOrder />
+              </PrivateRoute>
+            }
+          />
           <Route
             path="/mock-payment"
             element={
@@ -172,11 +214,13 @@ function App() {
             }
           />
 
-
+          {/* Vendor Registration Page */}
+          <Route path="/vendor-register" element={<VendorRegister />} />
 
           {/* Fallback Redirection */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        </div>
       </Router>
     </AuthProvider>
   );
