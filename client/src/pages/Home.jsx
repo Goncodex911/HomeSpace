@@ -108,40 +108,80 @@ const Home = () => {
   }, [loading]);
 
   // Standard premium placeholders in case DB is empty
+  // Standard premium placeholders in case DB is empty
   const defaultProducts = [
     {
       _id: 'default-1',
       name: 'Ether Arc Lounge Chair',
-      price: 1240,
+      price: 24800000,
       description: 'Close up product shot of a minimalist wooden chair with sharp architectural lines.',
       image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDyqhinz1WRpRywtmtoOJl-Xjnv3ZbvvTm2JmT-zPfqdWGUzbgVFW3SuEYFW0ePw7PVS5vIYE_7VQNTj3c6aHRykSS0VW_UsqvEEpGUdASGaUd7L-M6e5YH9inLvruE5x1kjWYNWl0iQ5F79sK_-V5BlV6sQG86UWSsMTyCor4_AxC_C2ByrHcb2UIE6WuvBD88KEASLN3SCe4fJDlQK1KneVSBlqKwy78y896DRnsdyEoj5WkUghaOTPykAgZSg3yGgOVN1AhlEPEm'
     },
     {
       _id: 'default-2',
       name: 'Orbital Sphere Lamp',
-      price: 450,
+      price: 9000000,
       description: 'A modern minimalist floor lamp with a thin black metal stem and a spherical frosted glass shade.',
       image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCfcBqkWM3r21aDql5wiXK8r1kXDdZYe864IbIjJUXSGVCHKjEyK_UBES8bQM_fStWpzy37DyBN79HsugLf9B74NUc32hFtDivnF4iQMcvK3uAyLhTkfa5JTJ73f2Zl0izH8djHjzV7QHwEJY5FiyxH7sZZhYcBNYlrmU0soGLsyb0lHojl7T_fTfpRH8t9ZuqVqKfuRvXVSRhS2eeStyQk38lfXm3E1M5AxcxbYSvo2Bx9iiENsY4KqiVu2HFJIEq6gf4tU4SySm1k'
     },
     {
       _id: 'default-3',
       name: 'Monolith Travertine Table',
-      price: 3800,
+      price: 76000000,
       description: 'A heavy travertine marble dining table with thick cylindrical legs.',
       image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAXTVBsxtaabBH2J27cPb743kO_wPxof7yVDuNbR2VmrU1aQwAPxJt05kRu9X5kYNSfHznuKJ2MD2J38XPhwutH9eSDBmXVp3AsoxlmWUVBuywXJt8kDR5nWsPIGUKYRpiV2JdRzf8o5BlHknMcoNjfPBYefT04tn-l_wLr50QqMb2Hny0fwWR3euuGWGI1hu8QkPJHdt6bfwxVo98uI0PicozHCn0Hrct2nr2T5VIVJ_cb6W9sVlVwKY0nihRf6ycr4MUW_ejNTZb7'
     },
     {
       _id: 'default-4',
       name: 'Stratus Modular Sofa',
-      price: 5600,
+      price: 112000000,
       description: 'A contemporary modular sofa system in a light pebble grey bouclé fabric.',
       image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAo0TFeq2XW3kTWiVvdUs-6HkTCbtUDvNOShLeF_DrVZPK_L7-f7WGbvvIW5c26zkOkQXCmTD2xHwFZjtwhpNI-aH8vPQ8sORWWRW-ml8W4S4cVHwKzxgJEBOZT2rIl8742AjVzhJwzDD34k7WqMkN-CGxwKshpuodtVVOHe9htIoY46E3UM9Ge257eymDu9vyHgn8Wc3M3M9RUaTnNhW7KUPz3LfQ85fMQZvr92C6skzsJnq4-CJALH2GMUyyNCA5zAT-K20qVLp_R'
     }
   ];
 
-  const displayProducts = items.length > 0 ? items : defaultProducts;
+  const [filterCategory, setFilterCategory] = useState('All');
+
+  // Đọc tham số filter từ URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const catParam = params.get('category');
+    if (catParam) {
+      setFilterCategory(catParam);
+    } else {
+      setFilterCategory('All');
+    }
+  }, [window.location.search]);
+
+  // Đọc danh sách sản phẩm hiển thị và lọc theo danh mục tab
+  const getDisplayProducts = () => {
+    let list = items.length > 0 ? items : defaultProducts;
+    
+    // Nếu đang chọn một danh mục cụ thể (ví dụ Living Room, Bedroom...)
+    if (filterCategory !== 'All') {
+      list = list.filter(item => {
+        const itemCat = (item.category || '').toLowerCase().replace(/\s+/g, '');
+        const filterCat = filterCategory.toLowerCase().replace(/\s+/g, '');
+        return itemCat.includes(filterCat) || filterCat.includes(itemCat);
+      });
+    }
+
+    if (activeCategory === 'Best Sellers') {
+      // Giả lập/sắp xếp sản phẩm bán chạy theo số lượng trong kho giảm dần (bán chạy)
+      return [...list].sort((a, b) => (a.quantity || 0) - (b.quantity || 0)).slice(0, 8);
+    }
+    // New Arrivals: Sắp xếp theo ngày tạo giảm dần
+    return [...list].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).slice(0, 8);
+  };
+
+  const displayProducts = getDisplayProducts();
 
   const isStoreOrAdmin = user && (user.role === 'store' || user.role === 'admin');
+
+  // Hàm chuyển hướng lọc sản phẩm theo Environment sang trang Catalog mới
+  const handleEnvironmentClick = (envName) => {
+    navigate(`/catalog?category=${envName}`);
+  };
 
   return (
     <div className="bg-surface text-on-surface font-body-md overflow-x-hidden min-h-screen">
@@ -157,17 +197,26 @@ const Home = () => {
               />
             </Link>
             <div className="hidden md:flex gap-5">
-              <a className="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" href="#collection">Living Room</a>
-              <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Bedroom</a>
-              <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Kitchen</a>
-              <a className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" href="#collection">Office</a>
-              <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" to="/stores">Curators</Link>
+              <button onClick={() => handleEnvironmentClick('Living Room')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Living Room' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Living Room</button>
+              <button onClick={() => handleEnvironmentClick('Bedroom')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Bedroom' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Bedroom</button>
+              <button onClick={() => handleEnvironmentClick('Kitchen')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Kitchen' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Kitchen</button>
+              <button onClick={() => handleEnvironmentClick('Office')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Office' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Office</button>
+              <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps pt-0.5" to="/stores">Curators</Link>
             </div>
           </div>
           <div className="flex items-center gap-4">
             <div className="hidden lg:flex items-center bg-surface-container/50 px-3 py-2 rounded-full transition-shadow hover:shadow-sm">
               <span className="material-symbols-outlined text-on-surface-variant mr-2">search</span>
-              <input className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-36 focus:outline-none" placeholder="Search..." type="text" />
+              <input 
+                className="bg-transparent border-none focus:ring-0 text-body-md p-0 w-36 focus:outline-none" 
+                placeholder="Search..." 
+                type="text" 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && e.target.value.trim() !== '') {
+                    navigate(`/catalog?search=${e.target.value.trim()}`);
+                  }
+                }}
+              />
             </div>
 
 
@@ -250,30 +299,39 @@ const Home = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter h-auto md:h-[800px]">
           {/* Living */}
-          <div className="md:col-span-8 relative group overflow-hidden bg-surface-container h-96 md:h-full stagger-item card-hover cursor-pointer">
+          <div 
+            onClick={() => handleEnvironmentClick('Living Room')}
+            className="md:col-span-8 relative group overflow-hidden bg-surface-container h-96 md:h-full stagger-item card-hover cursor-pointer"
+          >
             <img alt="Living Room" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB6y8H-1FldXO_a1GP28ldBv-CKe6H6uj0yXn0kzpdAi7kaCTWhF2f7VzfFTvktIKRY0feUHZUABw50yMb2L7IDpepIkAC70-iKlgbxe8-Qbzx0nG5DijFk3mT5oPD--poV0aXgybrRiCBVu6rzlCMtZ5QfAeNfyAh6Sx_Gz5os0yCh6ws-xEPnsPkG_w22NfcbB95eQVcINk4tAWyXg5CJrcd2M3ryi-ABr-GtoF_-mOi3LX8z6E_C1LId4z7iYF8Rhk9q912_8DGa" />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
             <div className="absolute bottom-10 left-10 text-white transform transition-all duration-500 group-hover:-translate-y-2">
               <h3 className="font-headline-md text-headline-md mb-2">Living Room</h3>
-              <p className="font-label-caps text-label-caps opacity-80">124 Items</p>
+              <p className="font-label-caps text-label-caps opacity-80">Explore collection</p>
             </div>
           </div>
           {/* Column */}
           <div className="md:col-span-4 grid grid-rows-2 gap-gutter">
-            <div className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer">
+            <div 
+              onClick={() => handleEnvironmentClick('Bedroom')}
+              className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer"
+            >
               <img alt="Bedroom" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDv8Sw7SWaAYxVJnlU6H8WzXNpWZJ0lMaUSUY6Be6un3ToFCvIOCU1gxsC8GK73RdI5-TSgxbqmynn2qvoi6s03rHWzh1lR_9P25gWTExY5lG_w9XDm3qaKEQIleeoxbDSLPupKbtDMEKOvJy6mkVtcdPU96BhxF59hfw3E_oZUikatfDEdmQ7ixLZOw5TO8RD7DPo4VcTmkRMhtSqsjrPFpWolXCQCdCZafV7c9FnlJxOUImIf9lTy_jA8lm4XVBRkAX64XZ4UPxWD" />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
                 <h3 className="font-headline-md text-headline-md mb-2">Bedroom</h3>
-                <p className="font-label-caps text-label-caps opacity-80">86 Items</p>
+                <p className="font-label-caps text-label-caps opacity-80">Explore collection</p>
               </div>
             </div>
-            <div className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer">
+            <div 
+              onClick={() => handleEnvironmentClick('Office')}
+              className="relative group overflow-hidden bg-surface-container h-80 md:h-full stagger-item card-hover cursor-pointer"
+            >
               <img alt="Office" className="w-full h-full object-cover transition-transform duration-1000 ease-out group-hover:scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnyYkAa3MYuMkb-k37jNtFIp6xcaCs35PeelFquLdfc-jGDuedIW6ZziDMwce-s2ZoOhqZ7f02FuumGYurzCEQXSZH5-c7CdvxNQKlyIHno9PKCi1eGdTQ15zUkz2H1CWHbZoyGECNa4MZP2E1V3E95_KhbFvgZj1LUOevbmp-J51EWIB1h8ge-nr3s1V6LHDOEGnFWje3Yk43rjuMZpdxZU0BX-H5cCXMJpjoFxrUydNdEuxEkEaPQx6JA7C1zHiXi8zlliw4fgjp" />
               <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors duration-500"></div>
               <div className="absolute bottom-8 left-8 text-white transform transition-all duration-500 group-hover:-translate-y-2">
                 <h3 className="font-headline-md text-headline-md mb-2">Office</h3>
-                <p className="font-label-caps text-label-caps opacity-80">42 Items</p>
+                <p className="font-label-caps text-label-caps opacity-80">Explore collection</p>
               </div>
             </div>
           </div>
@@ -284,7 +342,20 @@ const Home = () => {
       <section id="collection" className="py-32 bg-surface-container-low reveal">
         <div className="px-margin-mobile md:px-margin-desktop max-w-container-max mx-auto">
           <div className="flex flex-col items-center mb-16">
-            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-8">Seasonal Selection</h2>
+            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-2">
+              Seasonal Selection {filterCategory !== 'All' ? `— ${filterCategory}` : ''}
+            </h2>
+            {filterCategory !== 'All' && (
+              <button 
+                onClick={() => {
+                  setFilterCategory('All');
+                  navigate('/');
+                }}
+                className="text-xs text-error font-semibold hover:underline mb-6 flex items-center gap-1 uppercase tracking-wider"
+              >
+                <span className="material-symbols-outlined text-[14px]">close</span> Clear Filter
+              </button>
+            )}
             <div className="flex gap-12 border-b border-surface-variant w-full md:w-auto justify-center">
               <button
                 onClick={() => setActiveCategory('New Arrivals')}
@@ -320,7 +391,7 @@ const Home = () => {
                   </div>
                 </div>
                 <h4 className="font-headline-md text-[18px] mb-1">{product.name}</h4>
-                <p className="text-on-surface-variant font-body-md">${product.price?.toLocaleString() || '0.00'}</p>
+                <p className="text-on-surface-variant font-body-md">{product.price?.toLocaleString() || '0'} đ</p>
               </Link>
             ))}
           </div>
@@ -343,9 +414,9 @@ const Home = () => {
             <span className="font-label-caps text-label-caps text-on-primary-container tracking-widest block mb-6">AURA STUDIO</span>
             <h2 className="font-display-lg text-display-lg-mobile md:text-headline-lg mb-8 leading-tight font-light">Visualize your future space in high-fidelity 3D.</h2>
             <p className="font-body-lg text-on-primary-container mb-12 max-w-lg">Our interactive room builder allows you to drag, drop, and configure any piece from our collection directly into your own architecture.</p>
-            <button className="magnetic-btn bg-white text-primary px-10 py-4 font-label-caps text-label-caps hover:bg-secondary-fixed transition-all">
+            <Link to="/room-builder" className="magnetic-btn inline-block bg-white text-primary px-10 py-4 font-label-caps text-label-caps hover:bg-secondary-fixed transition-all text-center">
               START DESIGNING
-            </button>
+            </Link>
           </div>
         </div>
       </section>

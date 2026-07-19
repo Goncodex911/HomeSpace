@@ -10,7 +10,7 @@ import { protect } from './middlewares/auth.js';
 
 const app = express();
 app.use(cors({
-  origin: ['https://localhost:5173', 'http://localhost:5173'],
+  origin: true,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']

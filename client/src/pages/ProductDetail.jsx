@@ -98,10 +98,10 @@ const ProductDetail = () => {
             <img
               alt={product.name}
               className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
-              src="https://lh3.googleusercontent.com/aida/AP1WRLtsYoBL8I3wlWpyJs7mzVkJF5uWuIogTZzMFwjPHN3p8eddEFRSQsVWacYL7xIGegczapJYU5PT4GzJGeZMOUR8TPi0A7cDRmo2GG2C2ICILZ-xogzEmkrR5eVL39T-cncCM9fILsX1JmYNy2Uzpz-I0Qz3DCWNxuOor6Ox9z7DcvY5JadAfdM64phEvKOwXqmwasL5E25Y7FbCF58c-_ZGT48imlkvXggXomTBK-sMVqUlI4wQC1q25QQX"
+              src={product.image || "https://lh3.googleusercontent.com/aida/AP1WRLtsYoBL8I3wlWpyJs7mzVkJF5uWuIogTZzMFwjPHN3p8eddEFRSQsVWacYL7xIGegczapJYU5PT4GzJGeZMOUR8TPi0A7cDRmo2GG2C2ICILZ-xogzEmkrR5eVL39T-cncCM9fILsX1JmYNy2Uzpz-I0Qz3DCWNxuOor6Ox9z7DcvY5JadAfdM64phEvKOwXqmwasL5E25Y7FbCF58c-_ZGT48imlkvXggXomTBK-sMVqUlI4wQC1q25QQX"}
             />
             <div className="absolute bottom-10 left-10 hidden lg:block">
-              <span className="font-label-caps text-label-caps text-on-surface/40">FIG. 01 — {product.category.toUpperCase()}</span>
+              <span className="font-label-caps text-label-caps text-on-surface/40">FIG. 01 — {(product.category || '').toUpperCase()}</span>
             </div>
           </div>
           {/* Product Info */}
@@ -112,7 +112,7 @@ const ProductDetail = () => {
               <span>{product.category}</span>
             </nav>
             <h1 className="font-display-lg text-display-lg mb-4 text-primary">{product.name}</h1>
-            <p className="font-headline-md text-headline-md text-secondary mb-8">${product.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+            <p className="font-headline-md text-headline-md text-secondary mb-8">{product.price.toLocaleString()} đ</p>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-md leading-relaxed whitespace-pre-wrap">
               {product.description}
             </p>
@@ -136,9 +136,11 @@ const ProductDetail = () => {
               >
                 {adding ? 'Adding...' : 'Add to Cart'}
               </button>
-              <button className="border border-outline py-4 px-12 font-label-caps text-label-caps uppercase tracking-widest hover:bg-surface-container transition-colors flex-1">
-                View Showroom
-              </button>
+              {product.model3d && (
+                <Link to={`/room-builder?productId=${product._id}`} className="border border-outline py-4 px-12 font-label-caps text-label-caps uppercase tracking-widest hover:bg-surface-container transition-colors flex-1 text-center">
+                  View Showroom
+                </Link>
+              )}
             </div>
             <div className="border-t border-outline-variant pt-8">
               <div className="flex items-center gap-4 text-on-surface-variant">

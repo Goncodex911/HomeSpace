@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "Lumina HomeSpace Fullstack Workspace",
   "scripts": {
-    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
-    "start": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
+    "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\" \"npm run web --prefix mobile\"",
+    "start": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\" \"npm run web --prefix mobile\"",
     "server": "npm run dev --prefix server",
-    "client": "npm run dev --prefix client"
+    "client": "npm run dev --prefix client",
+    "mobile": "npm run web --prefix mobile"
   },
   "dependencies": {
     "cors": "^2.8.6",

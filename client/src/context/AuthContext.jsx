@@ -121,6 +121,41 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const loginWithGoogle = async (credentialToken) => {
+    // Để lấy thông tin email, name từ credential token của Google (JWT), ta cần decode nó
+    try {
+      const base64Url = credentialToken.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      const { email, name } = JSON.parse(jsonPayload);
+
+      const res = await api('/auth/social-login', {
+        method: 'POST',
+        body: {
+          email,
+          fullName: name,
+          provider: 'google',
+        },
+      });
+
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        setToken(res.token);
+        setUser(res.user);
+      }
+      return res;
+    } catch (error) {
+      console.error('Error decoding/sending Google token:', error);
+      throw new Error('Google authentication failed');
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -131,6 +166,7 @@ export const AuthProvider = ({ children }) => {
         verifyOtp,
         resendOtp,
         login,
+        loginWithGoogle,
         forgotPassword,
         resetPassword,
         logout,

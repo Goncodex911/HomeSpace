@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import SocialLoginButtons from '../components/SocialLoginButtons';
 
 const SignIn = () => {
   const [email, setEmail] = useState('');
@@ -139,6 +140,7 @@ const SignIn = () => {
               <span className="font-label-caps text-label-caps">or continue with</span>
               <hr className="flex-grow border-outline-variant/30" />
             </div>
+            <SocialLoginButtons onError={(msg) => setError(msg)} />
             <div className="mt-8 flex gap-4">
               <button className="flex-1 flex items-center justify-center gap-2 border border-outline-variant/30 py-3 hover:bg-surface-container-low transition-colors">
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'opsz' 18" }}>fingerprint</span>

@@ -25,6 +25,14 @@ const itemSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    image: {
+      type: String,
+      default: '',
+    },
+    model3d: {
+      type: String,
+      default: '',
+    },
     createdAt: {
       type: Date,
       default: Date.now,

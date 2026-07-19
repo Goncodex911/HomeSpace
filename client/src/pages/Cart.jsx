@@ -129,7 +129,7 @@ const Cart = () => {
                         <h3 className="font-headline-md text-headline-md mb-1 tracking-tight">{cartItem.item.name}</h3>
                         <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">{cartItem.item.category || 'Product'}</p>
                       </div>
-                      <p className="font-headline-md text-headline-md">${cartItem.item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="font-headline-md text-headline-md">{cartItem.item.price.toLocaleString()} đ</p>
                     </div>
                     <div className="flex justify-between items-center mt-6 sm:mt-0">
                       <div className="flex items-center border border-outline-variant px-4 py-2 gap-6 bg-surface-container-lowest">
@@ -169,22 +169,22 @@ const Cart = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Subtotal</span>
-                    <span>${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span>{subtotal.toLocaleString()} đ</span>
                   </div>
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Shipping Estimate</span>
-                    <span>${shippingEstimate.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span>{shippingEstimate.toLocaleString()} đ</span>
                   </div>
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Tax</span>
-                    <span>${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span>{tax.toLocaleString()} đ</span>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-outline-variant">
                   <div className="flex justify-between items-baseline mb-8">
                     <span className="font-label-caps text-label-caps text-on-surface">GRAND TOTAL</span>
-                    <span className="font-headline-lg text-headline-lg">${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-headline-lg text-headline-lg">{grandTotal.toLocaleString()} đ</span>
                   </div>
 
                   <div className="space-y-6">

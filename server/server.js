@@ -65,12 +65,17 @@ mongoose.connect(process.env.MONGO_URI)
 
         if (credentials.key && credentials.cert) {
             const httpsServer = https.createServer(credentials, app);
-            httpsServer.listen(PORT, () => {
-                console.log(`HTTPS Server running on port ${PORT}`);
+            httpsServer.listen(PORT, '0.0.0.0', () => {
+                console.log(`HTTPS Server running on https://0.0.0.0:${PORT}`);
+            });
+            // Extra HTTP port for Expo / React Native (avoids self-signed SSL issues)
+            const httpPort = Number(PORT) + 1;
+            app.listen(httpPort, '0.0.0.0', () => {
+                console.log(`HTTP Server (Expo) running on http://0.0.0.0:${httpPort}`);
             });
         } else {
-            app.listen(PORT, () => {
-                console.log(`HTTP Server running on port ${PORT}`);
+            app.listen(PORT, '0.0.0.0', () => {
+                console.log(`HTTP Server running on http://0.0.0.0:${PORT}`);
             });
         }
     })

@@ -105,6 +105,14 @@ const Dashboard = () => {
   const [depth, setDepth] = useState('');
   const [availability, setAvailability] = useState('In Stock');
   const [editingId, setEditingId] = useState(null);
+  
+  // Image & 3D Model states
+  const [image, setImage] = useState('');
+  const [model3d, setModel3d] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [generating3d, setGenerating3d] = useState(false);
+  const [syncTaskId, setSyncTaskId] = useState('');
+  const [syncingTaskId, setSyncingTaskId] = useState(false);
 
   const fetchItems = async () => {
     try {
@@ -167,6 +175,17 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchItems();
+    
+    // Nạp thư viện Google Model Viewer hỗ trợ render 3D
+    const scriptId = 'google-model-viewer';
+    let script = document.getElementById(scriptId);
+    if (!script) {
+      script = document.createElement('script');
+      script.id = scriptId;
+      script.type = 'module';
+      script.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/4.0.0/model-viewer.min.js';
+      document.head.appendChild(script);
+    }
   }, []);
 
   useEffect(() => {
@@ -185,6 +204,12 @@ const Dashboard = () => {
     setDepth('');
     setAvailability('In Stock');
     setEditingId(null);
+    setImage('');
+    setModel3d('');
+    setUploading(false);
+    setGenerating3d(false);
+    setSyncTaskId('');
+    setSyncingTaskId(false);
   };
 
   const handleEdit = (item) => {
@@ -229,6 +254,8 @@ const Dashboard = () => {
     setHeight(itemHeight);
     setDepth(itemDepth);
     setAvailability(itemAvailability);
+    setImage(item.image || '');
+    setModel3d(item.model3d || '');
     setView('add_product');
   };
 
@@ -272,7 +299,9 @@ const Dashboard = () => {
             name,
             description: finalDescription,
             price: parseFloat(price),
-            quantity: parseInt(quantity)
+            quantity: parseInt(quantity),
+            image,
+            model3d
           }
         });
         setSuccess('Product updated successfully.');
@@ -283,7 +312,9 @@ const Dashboard = () => {
             name,
             description: finalDescription,
             price: parseFloat(price),
-            quantity: parseInt(quantity)
+            quantity: parseInt(quantity),
+            image,
+            model3d
           }
         });
         setSuccess('Product published successfully to catalog.');
@@ -294,6 +325,107 @@ const Dashboard = () => {
       fetchItems();
     } catch (err) {
       setError(err.message || 'Failed to save product details.');
+    }
+  };
+
+  // Hàm upload ảnh lên Cloudinary thông qua server api
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setError('');
+    setSuccess('');
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      // Vì fetch thông thường không tự parse Form Data, ta gọi trực tiếp
+      const token = localStorage.getItem('token');
+      const response = await fetch('https://localhost:5000/api/items/upload-image', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Image upload failed');
+      }
+
+      setImage(resData.imageUrl);
+      setSuccess('Image uploaded to Cloudinary successfully.');
+    } catch (err) {
+      setError(err.message || 'Failed to upload image.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Hàm gọi AI tạo mô hình 3D từ ảnh
+  const handleGenerate3D = async () => {
+    if (!image) {
+      setError('Please upload a product image first.');
+      return;
+    }
+
+    if (!editingId) {
+      setError('Please save the product first to generate a 3D model.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setGenerating3d(true);
+
+    try {
+      const res = await api(`/items/generate-3d/${editingId}`, {
+        method: 'POST',
+        body: { imageUrl: image }
+      });
+
+      setModel3d(res.model3d);
+      setSuccess(res.message || '3D Model generated successfully!');
+      fetchItems();
+    } catch (err) {
+      setError(err.message || 'Failed to generate 3D model.');
+    } finally {
+      setGenerating3d(false);
+    }
+  };
+
+  // Hàm đồng bộ Task ID cũ
+  const handleSyncTripo = async () => {
+    if (!syncTaskId.trim()) {
+      setError('Please enter a Tripo3D Task ID.');
+      return;
+    }
+
+    if (!editingId) {
+      setError('Please save the product first to sync the 3D model.');
+      return;
+    }
+
+    setError('');
+    setSuccess('');
+    setSyncingTaskId(true);
+
+    try {
+      const res = await api(`/items/tripo-sync/${editingId}`, {
+        method: 'POST',
+        body: { taskId: syncTaskId.trim() }
+      });
+
+      setModel3d(res.model3d);
+      setSuccess(res.message || '3D Model synchronized successfully!');
+      fetchItems();
+    } catch (err) {
+      setError(err.message || 'Sync failed: Make sure the Task ID is correct and belongs to this API Key.');
+    } finally {
+      setSyncingTaskId(false);
     }
   };
 
@@ -769,21 +901,126 @@ const Dashboard = () => {
                   <div className="bg-white p-8 border border-outline-variant/30">
                     <div className="flex justify-between items-end mb-6">
                       <div>
-                        <span className="font-label-caps text-xs text-secondary mb-1 block">Visuals</span>
-                        <h4 className="font-headline-md text-lg text-primary">Product Gallery</h4>
+                        <span className="font-label-caps text-xs text-secondary mb-1 block">Visuals &amp; 3D</span>
+                        <h4 className="font-headline-md text-lg text-primary">Product Media &amp; AI 3D</h4>
                       </div>
-                      <span className="font-label-caps text-[9px] text-on-surface-variant italic">Required: 1 image min.</span>
+                      <span className="font-label-caps text-[9px] text-on-surface-variant italic">Cloudinary &amp; Tripo3D Integration</span>
                     </div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="col-span-3 aspect-[21/9] image-dropzone flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden bg-surface-container-low">
-                        <img 
-                          className="absolute inset-0 w-full h-full object-cover opacity-10 group-hover:opacity-25 transition-opacity" 
-                          alt="Woodgrain placeholder"
-                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuADD_Mwm9Uv_NdYY-hdZAKVYVewBOuvjMYLR8hGb4PF9EKFrC140cA8E_OlUVqYia2oct4sJeow7jGNZ9g47IvFCU28v9o9NthRSHqHUMkOqWtKIZFvX25xBH8bDC_idPR23YiR4DqQRW03V_E7jxRQqhMR4AUkYws8iQ2gLq_hIQJek8CxBSDZcFRAGA2vJ6Qk1Wr2_VgokkM-X1KFdrnXuu_5vrzrmlxhjZKPT809m-i7bIbHmtxySnFjjb11hrTo3KwnG3pPAGm8"
+                    <div className="space-y-6">
+                      {/* Upload block */}
+                      <label className="aspect-[21/9] image-dropzone flex flex-col items-center justify-center cursor-pointer group relative overflow-hidden bg-surface-container-low block border border-dashed border-outline-variant">
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={handleImageUpload} 
+                          className="hidden" 
                         />
-                        <span className="material-symbols-outlined text-3xl mb-1 text-on-surface-variant group-hover:text-primary transition-colors">upload_file</span>
-                        <p className="font-label-caps text-[10px] text-on-surface-variant">Gallery Image Linked</p>
-                      </div>
+                        {image ? (
+                          <img 
+                            className="absolute inset-0 w-full h-full object-cover transition-opacity duration-300" 
+                            alt="Uploaded product preview" 
+                            src={image}
+                          />
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-3xl mb-1 text-on-surface-variant group-hover:text-primary transition-colors">
+                              {uploading ? 'sync' : 'upload_file'}
+                            </span>
+                            <p className="font-label-caps text-[10px] text-on-surface-variant">
+                              {uploading ? 'Uploading image to Cloudinary...' : 'Upload product image (Cloudinary)'}
+                            </p>
+                          </>
+                        )}
+                      </label>
+
+                      {/* AI 3D Generation Section */}
+                      {image && (
+                        <div className="bg-surface-container-low p-4 border border-outline-variant/30 space-y-4">
+                          <div className="flex justify-between items-center">
+                            <div>
+                              <p className="font-bold text-sm">AI Image-to-3D Generator</p>
+                              <p className="text-[11px] text-on-surface-variant">Convert this photo into a 3D model (.glb)</p>
+                            </div>
+                            {model3d && (
+                              <span className="bg-green-100 text-green-800 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
+                                3D Available
+                              </span>
+                            )}
+                          </div>
+
+                          {model3d && (
+                            <div className="space-y-3">
+                              {/* 3D Viewer container */}
+                              <div className="w-full h-64 bg-[#eeeeea] border border-outline-variant/50 relative flex items-center justify-center overflow-hidden">
+                                <model-viewer
+                                  src={model3d}
+                                  alt="Preview 3D model"
+                                  camera-controls
+                                  auto-rotate
+                                  style={{ width: '100%', height: '100%' }}
+                                />
+                              </div>
+                              <div className="text-xs text-on-surface-variant break-all bg-white p-3 border border-outline-variant/50 flex justify-between items-center">
+                                <span className="truncate max-w-[250px]"><strong>File:</strong> {model3d}</span>
+                                <a href={model3d} target="_blank" rel="noreferrer" className="text-secondary underline shrink-0">Open GLB</a>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Manual GLB URL input */}
+                          <div className="relative pt-2">
+                            <label className="font-label-caps text-[9px] uppercase tracking-widest text-on-surface-variant absolute -top-1 left-2 bg-[#f8f9fa] px-1 font-bold">Manual 3D GLB URL (Optional)</label>
+                            <input 
+                              type="text"
+                              value={model3d}
+                              onChange={(e) => setModel3d(e.target.value)}
+                              placeholder="Paste a direct .glb model URL here (e.g. from Google Cloud, AWS, Tripo...)"
+                              className="w-full bg-white border border-outline-variant/50 px-3 py-3 text-xs focus:ring-0 focus:border-primary placeholder:opacity-50"
+                            />
+                          </div>
+
+                          {!editingId ? (
+                            <p className="text-xs text-secondary italic">
+                              * Please save this new product first before generating or syncing the 3D model.
+                            </p>
+                          ) : (
+                            <div className="space-y-4 pt-4 border-t border-outline-variant/20">
+                              <button
+                                type="button"
+                                onClick={handleGenerate3D}
+                                disabled={generating3d}
+                                className="w-full bg-[#1a1c1a] text-white py-3 font-semibold uppercase tracking-widest text-[10px] hover:bg-[#006a50] transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                              >
+                                <span className={`material-symbols-outlined text-[16px] ${generating3d ? 'animate-spin' : ''}`}>
+                                  {generating3d ? 'sync' : 'view_in_ar'}
+                                </span>
+                                {generating3d ? 'AI is generating 3D model... (take up to 1m)' : 'GENERATE 3D MODEL FROM PHOTO'}
+                              </button>
+
+                              <div className="flex gap-2">
+                                <input 
+                                  type="text"
+                                  value={syncTaskId}
+                                  onChange={(e) => setSyncTaskId(e.target.value)}
+                                  placeholder="Or paste Tripo Task ID (e.g. cf9b2346...)"
+                                  className="flex-1 bg-white border border-outline-variant/50 px-3 text-xs focus:ring-0 placeholder:opacity-40"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleSyncTripo}
+                                  disabled={syncingTaskId}
+                                  className="bg-secondary text-on-secondary px-4 text-[10px] font-semibold uppercase tracking-wider hover:bg-primary transition-colors disabled:opacity-50 flex items-center gap-1"
+                                >
+                                  <span className={`material-symbols-outlined text-sm ${syncingTaskId ? 'animate-spin' : ''}`}>
+                                    sync
+                                  </span>
+                                  {syncingTaskId ? 'Syncing...' : 'Sync'}
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 

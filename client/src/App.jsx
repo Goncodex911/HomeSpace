@@ -19,6 +19,8 @@ import CancelOrder from './pages/CancelOrder';
 import ReturnOrder from './pages/ReturnOrder';
 import OrderDetail from './pages/OrderDetail';
 import MockPayment from './pages/MockPayment';
+import RoomBuilder from './pages/RoomBuilder';
+import Catalog from './pages/Catalog';
 import { Toaster } from 'react-hot-toast';
 
 // Role-based Private Route Wrapper
@@ -65,7 +67,7 @@ const PublicRoute = ({ children }) => {
     if (!currentUser && localUserStr) {
       try {
         currentUser = JSON.parse(localUserStr);
-      } catch (e) {}
+      } catch (e) { }
     }
     if (currentUser && currentUser.role === 'admin') {
       return <Navigate to="/admin" replace />;
@@ -95,6 +97,7 @@ function App() {
           <Routes>
             {/* Public Customer Homepage */}
             <Route path="/" element={<Home />} />
+            <Route path="/catalog" element={<Catalog />} />
 
             {/* Public Store Pages */}
             <Route path="/stores" element={<Stores />} />
@@ -102,124 +105,127 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
 
             {/* Public Authentication Pages */}
-          <Route
-            path="/login"
-            element={
-              <PublicRoute>
-                <SignIn />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/register"
-            element={
-              <PublicRoute>
-                <SignUp />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/verify-otp"
-            element={
-              <PublicRoute>
-                <VerifyOtp />
-              </PublicRoute>
-            }
-          />
-          <Route
-            path="/reset-password"
-            element={
-              <PublicRoute>
-                <ResetPassword />
-              </PublicRoute>
-            }
-          />
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <SignIn />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <SignUp />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/verify-otp"
+              element={
+                <PublicRoute>
+                  <VerifyOtp />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/reset-password"
+              element={
+                <PublicRoute>
+                  <ResetPassword />
+                </PublicRoute>
+              }
+            />
 
-          {/* Protected Store Management Dashboard (Only for store/admin roles) */}
-          <Route
-            path="/store"
-            element={
-              <PrivateRoute allowedRoles={['store', 'admin']}>
-                <Dashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* Protected Store Management Dashboard (Only for store/admin roles) */}
+            <Route
+              path="/store"
+              element={
+                <PrivateRoute allowedRoles={['store', 'admin']}>
+                  <Dashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Protected Admin Dashboard Console */}
-          <Route
-            path="/admin"
-            element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <AdminDashboard />
-              </PrivateRoute>
-            }
-          />
+            {/* Protected Admin Dashboard Console */}
+            <Route
+              path="/admin"
+              element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <AdminDashboard />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Protected Account Settings Page */}
-          <Route
-            path="/settings"
-            element={
-              <PrivateRoute>
-                <Settings />
-              </PrivateRoute>
-            }
-          />
+            {/* Protected Account Settings Page */}
+            <Route
+              path="/settings"
+              element={
+                <PrivateRoute>
+                  <Settings />
+                </PrivateRoute>
+              }
+            />
 
-          <Route
-            path="/cart"
-            element={
-              <PrivateRoute>
-                <Cart />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/checkout"
-            element={
-              <PrivateRoute>
-                <Checkout />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/orders/:id"
-            element={
-              <PrivateRoute>
-                <OrderDetail />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/orders/:id/cancel"
-            element={
-              <PrivateRoute>
-                <CancelOrder />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/orders/:id/return"
-            element={
-              <PrivateRoute>
-                <ReturnOrder />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/mock-payment"
-            element={
-              <PrivateRoute>
-                <MockPayment />
-              </PrivateRoute>
-            }
-          />
+            <Route
+              path="/cart"
+              element={
+                <PrivateRoute>
+                  <Cart />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/checkout"
+              element={
+                <PrivateRoute>
+                  <Checkout />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/orders/:id"
+              element={
+                <PrivateRoute>
+                  <OrderDetail />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/orders/:id/cancel"
+              element={
+                <PrivateRoute>
+                  <CancelOrder />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/orders/:id/return"
+              element={
+                <PrivateRoute>
+                  <ReturnOrder />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/mock-payment"
+              element={
+                <PrivateRoute>
+                  <MockPayment />
+                </PrivateRoute>
+              }
+            />
 
-          {/* Vendor Registration Page */}
-          <Route path="/vendor-register" element={<VendorRegister />} />
+            {/* 3D Room Builder Page */}
+            <Route path="/room-builder" element={<RoomBuilder />} />
 
-          {/* Fallback Redirection */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+            {/* Vendor Registration Page */}
+            <Route path="/vendor-register" element={<VendorRegister />} />
+
+            {/* Fallback Redirection */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
         </div>
       </Router>
     </AuthProvider>
