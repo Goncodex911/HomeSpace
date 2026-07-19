@@ -87,11 +87,12 @@ const Checkout = () => {
   const fetchCart = async () => {
     try {
       const res = await api('/cart');
-      if (!res.items || res.items.length === 0) {
+      const validItems = (res.items || []).filter(item => item && item.item);
+      if (validItems.length === 0) {
         navigate('/cart'); // Redirect to cart if empty
         return;
       }
-      setCartItems(res.items);
+      setCartItems(validItems);
     } catch (err) {
       setError('Failed to fetch cart items.');
     } finally {

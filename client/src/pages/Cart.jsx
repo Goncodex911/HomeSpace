@@ -21,7 +21,8 @@ const Cart = () => {
   const fetchCart = async () => {
     try {
       const res = await api('/cart');
-      setCartItems(res.items || []);
+      const validItems = (res.items || []).filter(item => item && item.item);
+      setCartItems(validItems);
     } catch (err) {
       setError('Failed to fetch cart items.');
     } finally {
@@ -36,7 +37,8 @@ const Cart = () => {
         method: 'PUT',
         body: { quantity: newQuantity }
       });
-      setCartItems(res.items || []);
+      const validItems = (res.items || []).filter(item => item && item.item);
+      setCartItems(validItems);
     } catch (err) {
       toast.error('Failed to update quantity');
       fetchCart();
@@ -46,7 +48,8 @@ const Cart = () => {
   const handleRemove = async (itemId) => {
     try {
       const res = await api(`/cart/${itemId}`, { method: 'DELETE' });
-      setCartItems(res.items || []);
+      const validItems = (res.items || []).filter(item => item && item.item);
+      setCartItems(validItems);
     } catch (err) {
       toast.error('Failed to remove item');
     }

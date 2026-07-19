@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 import { protect } from '../middlewares/auth.js';
+import { auth } from '../firebase/firebaseAdmin.js';
 
 const router = express.Router();
 
@@ -823,6 +824,75 @@ router.post('/social-login', async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   POST /api/auth/firebase-login
+// @desc    Verify Firebase ID Token and sign in/up user
+// @access  Public
+router.post('/firebase-login', async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({ message: 'ID Token is required' });
+    }
+
+    // Verify token with Firebase Admin
+    const decodedToken = await auth.verifyIdToken(idToken);
+    const { email, name, picture } = decodedToken;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email not provided by Google' });
+    }
+
+    let user = await User.findOne({ email: email.toLowerCase() });
+
+    if (user) {
+      if (!user.isVerified) {
+        user.isVerified = true;
+        await user.save();
+      }
+    } else {
+      // Create a new user
+      const randomPassword = Math.random().toString(36).slice(-10);
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(randomPassword, salt);
+
+      user = new User({
+        fullName: name || 'Google User',
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        isVerified: true,
+        role: 'customer',
+        avatar: picture || '',
+        vendorStatus: 'none',
+      });
+      await user.save();
+    }
+
+    // Generate JWT Token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET || 'homespace_secret',
+      { expiresIn: '30d' }
+    );
+
+    res.status(200).json({
+      message: 'Firebase Google login successful',
+      token,
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        role: user.role,
+        vendorStatus: user.vendorStatus,
+        avatar: user.avatar
+      }
+    });
+
+  } catch (error) {
+    console.error('Firebase Verification Error:', error);
+    res.status(401).json({ message: 'Invalid Firebase ID Token', error: error.message });
   }
 });
 

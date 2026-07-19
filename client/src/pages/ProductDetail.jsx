@@ -13,7 +13,13 @@ const ProductDetail = () => {
   const [activeSwatch, setActiveSwatch] = useState('Cream');
   const [adding, setAdding] = useState(false);
 
-  const { token } = useContext(AuthContext);
+  // Review states
+  const [reviews, setReviews] = useState([]);
+  const [userRating, setUserRating] = useState(5);
+  const [userComment, setUserComment] = useState('');
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  const { token, user } = useContext(AuthContext);
 
   const handleAddToCart = async () => {
     if (!token) {
@@ -35,6 +41,46 @@ const ProductDetail = () => {
     }
   };
 
+  const fetchReviews = async () => {
+    try {
+      const response = await api(`/reviews/product/${id}`);
+      setReviews(response.data || []);
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+    }
+  };
+
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    if (!token) {
+      toast.error('Please log in to submit a review');
+      return;
+    }
+    if (!userComment.trim()) {
+      toast.error('Please write a comment');
+      return;
+    }
+    setSubmittingReview(true);
+    try {
+      await api('/reviews', {
+        method: 'POST',
+        body: { productId: id, rating: userRating, comment: userComment }
+      });
+      toast.success('Thank you for your review!');
+      setUserComment('');
+      setUserRating(5);
+      
+      // Refresh reviews & product data (to update averageRating/numReviews)
+      fetchReviews();
+      const productRes = await api(`/items/${id}`);
+      setProduct(productRes.data);
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit review. You may have already reviewed this product.');
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -49,6 +95,7 @@ const ProductDetail = () => {
 
     if (id) {
       fetchProduct();
+      fetchReviews();
     }
   }, [id]);
 
@@ -111,7 +158,15 @@ const ProductDetail = () => {
               <span>/</span>
               <span>{product.category}</span>
             </nav>
-            <h1 className="font-display-lg text-display-lg mb-4 text-primary">{product.name}</h1>
+            <h1 className="font-display-lg text-display-lg mb-2 text-primary">{product.name}</h1>
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-amber-500 text-lg">
+                {"★".repeat(Math.round(product.averageRating || 0)) + "☆".repeat(5 - Math.round(product.averageRating || 0))}
+              </span>
+              <span className="font-body-md text-body-md text-on-surface-variant font-medium">
+                {product.averageRating ? `${product.averageRating} / 5.0 (${product.numReviews} đánh giá)` : 'Chưa có đánh giá'}
+              </span>
+            </div>
             <p className="font-headline-md text-headline-md text-secondary mb-8">{product.price.toLocaleString()} đ</p>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-md leading-relaxed whitespace-pre-wrap">
               {product.description}
@@ -206,6 +261,108 @@ const ProductDetail = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Reviews and Ratings Section */}
+        <section className="py-32 px-margin-mobile md:px-margin-desktop border-t border-outline-variant bg-surface-cream">
+          <div className="max-w-container-max mx-auto">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+              
+              {/* Left Column: Review Lists */}
+              <div className="lg:col-span-7">
+                <h2 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-4">Đánh giá từ khách hàng</h2>
+                <h3 className="font-display-lg text-headline-lg mb-12">Đánh giá sản phẩm ({reviews.length})</h3>
+                
+                {reviews.length === 0 ? (
+                  <div className="border border-dashed border-outline-variant/60 rounded p-8 text-center text-on-surface-variant">
+                    <span className="material-symbols-outlined text-3xl opacity-40 mb-2 block">rate_review</span>
+                    <p className="font-body-md text-sm">Chưa có đánh giá nào cho sản phẩm này. Hãy là người đầu tiên chia sẻ cảm nghĩ!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-8 max-h-[600px] overflow-y-auto pr-4">
+                    {reviews.map((rev) => (
+                      <div key={rev._id} className="border-b border-outline-variant/30 pb-6">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <span className="font-body-lg font-bold text-primary block">
+                              {rev.user?.fullName || 'Người dùng ẩn danh'}
+                            </span>
+                            <span className="text-[10px] text-on-surface-variant uppercase tracking-wider">
+                              {new Date(rev.createdAt).toLocaleDateString('vi-VN')}
+                            </span>
+                          </div>
+                          <span className="text-amber-500 text-sm">
+                            {"★".repeat(rev.rating) + "☆".repeat(5 - rev.rating)}
+                          </span>
+                        </div>
+                        <p className="font-body-md text-on-surface-variant leading-relaxed">
+                          {rev.comment}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Right Column: Submission Form */}
+              <div className="lg:col-span-5 bg-surface-container-lowest p-8 border border-outline-variant rounded-lg">
+                <h4 className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest mb-6">Viết Đánh Giá</h4>
+                
+                {token ? (
+                  <form onSubmit={handleReviewSubmit} className="space-y-6">
+                    <div>
+                      <label className="block font-label-caps text-xs text-on-surface-variant uppercase tracking-wider mb-3">Số sao đánh giá</label>
+                      <div className="flex gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="button"
+                            onClick={() => setUserRating(star)}
+                            className="text-2xl transition-transform hover:scale-125 focus:outline-none"
+                          >
+                            <span className={star <= userRating ? "text-amber-500" : "text-gray-300"}>
+                              ★
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="review-comment" className="block font-label-caps text-xs text-on-surface-variant uppercase tracking-wider mb-2">Nội dung nhận xét</label>
+                      <textarea
+                        id="review-comment"
+                        rows="4"
+                        placeholder="Hãy chia sẻ trải nghiệm thực tế của bạn về chất liệu, kiểu dáng sản phẩm..."
+                        value={userComment}
+                        onChange={(e) => setUserComment(e.target.value)}
+                        className="w-full bg-transparent border border-outline-variant p-4 text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all rounded"
+                      ></textarea>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={submittingReview}
+                      className="w-full bg-primary text-on-primary py-3 font-label-caps text-label-caps uppercase tracking-widest hover:bg-on-surface-variant transition-colors disabled:opacity-50"
+                    >
+                      {submittingReview ? 'Đang gửi...' : 'Gửi Đánh Giá'}
+                    </button>
+                  </form>
+                ) : (
+                  <div className="text-center py-6">
+                    <p className="font-body-md text-on-surface-variant mb-6 text-sm">Vui lòng đăng nhập để gửi đánh giá và nhận xét cho sản phẩm này.</p>
+                    <Link
+                      to="/login"
+                      className="inline-block bg-primary text-on-primary py-3 px-8 font-label-caps text-label-caps uppercase tracking-widest hover:bg-on-surface-variant transition-colors"
+                    >
+                      Đăng Nhập Ngay
+                    </Link>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
         </section>

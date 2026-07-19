@@ -53,6 +53,11 @@ const StoreProfile = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('collection');
 
+  // Search, Filter, and Sort states for store items
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterCategory, setFilterCategory] = useState('All');
+  const [sortBy, setSortBy] = useState('newest');
+
   useEffect(() => {
     const fetchStore = async () => {
       try {
@@ -68,7 +73,7 @@ const StoreProfile = () => {
   }, [id]);
 
   const displayStore = store || defaultStore;
-  const displayItems = items.length > 0 ? items : defaultItems;
+  const rawItems = items.length > 0 ? items : defaultItems;
   const getInitials = (n) => n ? n.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2) : '?';
 
   const getCategory = (item) => {
@@ -77,7 +82,41 @@ const StoreProfile = () => {
     return match ? match[1].trim() : 'Uncategorized';
   };
 
-  const categories = [...new Set(displayItems.map(i => getCategory(i)))];
+  const getFilteredAndSortedItems = () => {
+    let result = [...rawItems];
+
+    // 1. Search Filter
+    if (searchTerm.trim() !== '') {
+      const term = searchTerm.toLowerCase().trim();
+      result = result.filter(
+        item =>
+          item.name.toLowerCase().includes(term) ||
+          (item.description || '').toLowerCase().includes(term)
+      );
+    }
+
+    // 2. Category Filter
+    if (filterCategory !== 'All') {
+      result = result.filter(item => getCategory(item) === filterCategory);
+    }
+
+    // 3. Sorting
+    if (sortBy === 'price-low') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'price-high') {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sortBy === 'name-asc') {
+      result.sort((a, b) => a.name.localeCompare(b.name));
+    } else {
+      // newest
+      result.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    }
+
+    return result;
+  };
+
+  const displayItems = getFilteredAndSortedItems();
+  const categories = [...new Set(rawItems.map(i => getCategory(i)))];
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-surface">
@@ -159,19 +198,19 @@ const StoreProfile = () => {
               <h2 className="font-headline-lg text-headline-lg text-primary mb-2">Featured Collection</h2>
               <p className="text-on-surface-variant">A visual gallery of {displayStore.companyName || displayStore.fullName}'s finest creations.</p>
             </div>
-            {displayItems.length === 0 ? (
+            {rawItems.length === 0 ? (
               <div className="text-center py-20 border border-dashed border-outline-variant/60"><span className="material-symbols-outlined text-5xl text-outline mb-3 block">collections</span><p className="text-on-surface-variant">No collection items yet.</p></div>
             ) : (
               <>
                 {/* Hero grid */}
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-gutter">
                   <div className="md:col-span-8 collection-item h-[500px] bg-surface-container group">
-                    <img className="w-full h-full object-cover" src={placeholderImages[0]} alt={displayItems[0]?.name} />
+                    <img className="w-full h-full object-cover" src={placeholderImages[0]} alt={rawItems[0]?.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-8 left-8 text-white"><h3 className="font-headline-md text-headline-md mb-1">{displayItems[0]?.name}</h3><p className="font-label-caps text-label-caps opacity-70">${displayItems[0]?.price?.toLocaleString()}</p></div>
+                    <div className="absolute bottom-8 left-8 text-white"><h3 className="font-headline-md text-headline-md mb-1">{rawItems[0]?.name}</h3><p className="font-label-caps text-label-caps opacity-70">${rawItems[0]?.price?.toLocaleString()}</p></div>
                   </div>
                   <div className="md:col-span-4 grid grid-rows-2 gap-gutter">
-                    {displayItems.slice(1, 3).map((item, i) => (
+                    {rawItems.slice(1, 3).map((item, i) => (
                       <div key={item._id} className="collection-item h-[238px] bg-surface-container group">
                         <img className="w-full h-full object-cover" src={placeholderImages[i + 1]} alt={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
@@ -181,9 +220,9 @@ const StoreProfile = () => {
                   </div>
                 </div>
                 {/* More items */}
-                {displayItems.length > 3 && (
+                {rawItems.length > 3 && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter">
-                    {displayItems.slice(3).map((item, i) => (
+                    {rawItems.slice(3).map((item, i) => (
                       <div key={item._id} className="collection-item aspect-square bg-surface-container group">
                         <img className="w-full h-full object-cover" src={placeholderImages[(i + 3) % placeholderImages.length]} alt={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
@@ -200,12 +239,64 @@ const StoreProfile = () => {
         {/* PRODUCTS TAB */}
         {activeTab === 'product' && (
           <div className="fade-in space-y-10">
-            <div className="flex justify-between items-end">
+            <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-end border-b border-outline-variant/30 pb-6">
               <div>
                 <span className="font-label-caps text-label-caps text-secondary uppercase tracking-widest block mb-2">Catalog</span>
                 <h2 className="font-headline-lg text-headline-lg text-primary">All Products</h2>
               </div>
-              <span className="font-label-caps text-label-caps text-on-surface-variant">{displayItems.length} items</span>
+              <span className="font-label-caps text-label-caps text-on-surface-variant font-medium">{displayItems.length} items</span>
+            </div>
+
+            {/* Filter, Search and Sort Panel */}
+            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-surface-container-lowest p-6 border border-outline-variant rounded-sm">
+              <div className="flex flex-col sm:flex-row flex-1 gap-4 items-stretch sm:items-center">
+                {/* Search */}
+                <div className="relative flex-1 max-w-sm">
+                  <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-sm">search</span>
+                  <input
+                    type="text"
+                    placeholder="Search product name or details..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-transparent border border-outline-variant/60 rounded px-9 py-2 text-xs outline-none focus:border-primary transition-all font-body-md"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={() => setSearchTerm('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-error font-bold uppercase tracking-wider"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {/* Category filter */}
+                <div>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    className="bg-transparent border border-outline-variant/60 rounded px-3 py-2 text-xs font-label-caps uppercase tracking-wider outline-none cursor-pointer focus:border-primary transition-all"
+                  >
+                    <option value="All">All Categories</option>
+                    {categories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Sort */}
+              <div>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="bg-transparent border border-outline-variant/60 rounded px-3 py-2 text-xs font-label-caps uppercase tracking-wider outline-none cursor-pointer focus:border-primary transition-all"
+                >
+                  <option value="newest">Newest</option>
+                  <option value="name-asc">Name (A-Z)</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
+              </div>
             </div>
             {displayItems.length === 0 ? (
               <div className="text-center py-20 border border-dashed border-outline-variant/60"><span className="material-symbols-outlined text-5xl text-outline mb-3 block">inventory_2</span><p className="text-on-surface-variant">No products listed yet.</p></div>
@@ -214,7 +305,7 @@ const StoreProfile = () => {
                 {displayItems.map((item, i) => {
                   const baseDesc = (item.description || '').split('\n\n---\n')[0];
                   return (
-                    <div key={item._id} className="product-card group">
+                    <Link to={`/product/${item._id}`} key={item._id} className="product-card group block no-underline text-inherit">
                       <div className="relative aspect-[3/4] overflow-hidden bg-surface-container">
                         <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={placeholderImages[i % placeholderImages.length]} alt={item.name} />
                         <div className="absolute top-3 right-3">
@@ -223,14 +314,14 @@ const StoreProfile = () => {
                       </div>
                       <div className="p-5">
                         <span className="font-label-caps text-[9px] text-secondary uppercase tracking-widest">{getCategory(item)}</span>
-                        <h4 className="font-headline-md text-[16px] text-primary mt-1 mb-2 truncate">{item.name}</h4>
+                        <h4 className="font-headline-md text-[16px] text-primary mt-1 mb-2 truncate group-hover:text-secondary transition-colors">{item.name}</h4>
                         <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Premium artisan piece.'}</p>
                         <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
                           <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
                           <span className="text-[10px] text-on-surface-variant">Qty: {item.quantity}</span>
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   );
                 })}
               </div>
@@ -263,19 +354,19 @@ const StoreProfile = () => {
                         {catItems.map((item, i) => {
                           const baseDesc = (item.description || '').split('\n\n---\n')[0];
                           return (
-                            <div key={item._id} className="product-card group">
+                            <Link to={`/product/${item._id}`} key={item._id} className="product-card group block no-underline text-inherit">
                               <div className="relative aspect-[4/3] overflow-hidden bg-surface-container">
                                 <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" src={placeholderImages[i % placeholderImages.length]} alt={item.name} />
                               </div>
                               <div className="p-5">
-                                <h4 className="font-headline-md text-[16px] text-primary mb-1 truncate">{item.name}</h4>
+                                <h4 className="font-headline-md text-[16px] text-primary mb-1 truncate group-hover:text-secondary transition-colors">{item.name}</h4>
                                 <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Artisan crafted piece.'}</p>
                                 <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
                                   <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
                                   <span className={`text-[10px] font-bold uppercase ${item.quantity > 0 ? 'text-green-600' : 'text-error'}`}>{item.quantity > 0 ? 'Available' : 'Sold Out'}</span>
                                 </div>
                               </div>
-                            </div>
+                            </Link>
                           );
                         })}
                       </div>

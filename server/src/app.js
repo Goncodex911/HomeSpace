@@ -6,6 +6,7 @@ import storeRoutes from './routes/stores.js';
 import cartRoutes from './routes/cart.js';
 import paymentRoutes from './routes/payment.js';
 import orderRoutes from './routes/orders.js';
+import reviewRoutes from './routes/reviews.js';
 import { protect } from './middlewares/auth.js';
 
 const app = express();
@@ -28,6 +29,7 @@ app.use('/api/stores', storeRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 
 export default app;

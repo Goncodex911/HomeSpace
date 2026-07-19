@@ -120,6 +120,7 @@ const Stores = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState('All');
+  const [sortBy, setSortBy] = useState('name-asc');
 
   useEffect(() => {
     const fetchStores = async () => {
@@ -163,7 +164,17 @@ const Stores = () => {
     { _id: 'demo-6', companyName: 'Weave Collective', fullName: 'Anika Patel', businessType: 'Textile Art', philosophy: 'Handwoven traditions meeting contemporary design. Each thread is a bridge between cultures and eras.', city: 'Jaipur', state: 'Rajasthan', yearsInIndustry: 10 },
   ];
 
-  const displayStores = stores.length > 0 ? filteredStores : defaultStores;
+  const displayStoresRaw = stores.length > 0 ? filteredStores : defaultStores;
+  const displayStores = [...displayStoresRaw].sort((a, b) => {
+    if (sortBy === 'name-asc') {
+      return (a.companyName || a.fullName || '').localeCompare(b.companyName || b.fullName || '');
+    } else if (sortBy === 'name-desc') {
+      return (b.companyName || b.fullName || '').localeCompare(a.companyName || a.fullName || '');
+    } else if (sortBy === 'experience-high') {
+      return (b.yearsInIndustry || 0) - (a.yearsInIndustry || 0);
+    }
+    return 0;
+  });
 
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen">
@@ -212,7 +223,7 @@ const Stores = () => {
             <p className="font-body-lg text-body-lg text-white/60 max-w-2xl mb-10">Explore the finest artisans, designers, and studios behind our curated collection. Each curator brings a unique vision to the world of refined living.</p>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center fade-up fade-up-delay-1">
+          <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center fade-up fade-up-delay-1">
             <div className="search-container flex-1 w-full md:w-auto">
               <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant z-10">search</span>
               <input
@@ -223,19 +234,31 @@ const Stores = () => {
                 className="font-body-md"
               />
             </div>
-            {businessTypes.length > 1 && (
-              <div className="flex gap-2 flex-wrap">
-                {businessTypes.map(type => (
-                  <button
-                    key={type}
-                    onClick={() => setFilterType(type)}
-                    className={`px-4 py-2 text-xs font-label-caps uppercase tracking-wider transition-all ${filterType === type ? 'bg-white text-primary' : 'border border-white/20 text-white/70 hover:border-white/50 hover:text-white'}`}
-                  >
-                    {type}
-                  </button>
-                ))}
-              </div>
-            )}
+            <div className="flex gap-4 items-center flex-wrap md:flex-nowrap">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="bg-transparent border border-white/20 text-white text-xs font-label-caps uppercase tracking-wider px-4 py-3.5 outline-none cursor-pointer focus:border-white hover:border-white/50 transition-colors"
+              >
+                <option value="name-asc" className="bg-[#1a1c1a] text-white">Name (A-Z)</option>
+                <option value="name-desc" className="bg-[#1a1c1a] text-white">Name (Z-A)</option>
+                <option value="experience-high" className="bg-[#1a1c1a] text-white">Most Experienced</option>
+              </select>
+
+              {businessTypes.length > 1 && (
+                <div className="flex gap-2 flex-wrap">
+                  {businessTypes.map(type => (
+                    <button
+                      key={type}
+                      onClick={() => setFilterType(type)}
+                      className={`px-4 py-2 text-xs font-label-caps uppercase tracking-wider transition-all ${filterType === type ? 'bg-white text-primary' : 'border border-white/20 text-white/70 hover:border-white/50 hover:text-white'}`}
+                    >
+                      {type}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </section>

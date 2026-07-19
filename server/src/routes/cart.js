@@ -5,15 +5,26 @@ import { protect } from '../middlewares/auth.js';
 
 const router = express.Router();
 
+const cleanAndPopulateCart = async (cart) => {
+  await cart.populate('items.item');
+  const originalLength = cart.items.length;
+  cart.items = cart.items.filter(itemGroup => itemGroup.item !== null);
+  if (cart.items.length !== originalLength) {
+    await cart.save();
+  }
+  return cart;
+};
+
 // @route   GET /api/cart
 // @desc    Get current user's cart
 // @access  Private
 router.get('/', protect, async (req, res) => {
   try {
-    let cart = await Cart.findOne({ user: req.user._id }).populate('items.item');
+    let cart = await Cart.findOne({ user: req.user._id });
     if (!cart) {
       cart = await Cart.create({ user: req.user._id, items: [] });
     }
+    cart = await cleanAndPopulateCart(cart);
     res.json(cart);
   } catch (error) {
     console.error(error);
@@ -51,7 +62,7 @@ router.post('/', protect, async (req, res) => {
     await cart.save();
     
     // Return populated cart
-    cart = await cart.populate('items.item');
+    cart = await cleanAndPopulateCart(cart);
     res.json(cart);
   } catch (error) {
     console.error(error);
@@ -79,8 +90,7 @@ router.put('/:itemId', protect, async (req, res) => {
       }
       await cart.save();
     }
-
-    cart = await cart.populate('items.item');
+    cart = await cleanAndPopulateCart(cart);
     res.json(cart);
   } catch (error) {
     console.error(error);
@@ -102,7 +112,7 @@ router.delete('/:itemId', protect, async (req, res) => {
     cart.items = cart.items.filter(p => p.item.toString() !== req.params.itemId);
     await cart.save();
 
-    cart = await cart.populate('items.item');
+    cart = await cleanAndPopulateCart(cart);
     res.json(cart);
   } catch (error) {
     console.error(error);

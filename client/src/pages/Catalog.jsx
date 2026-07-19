@@ -224,6 +224,14 @@ const Catalog = () => {
                   <h4 className="font-headline-md text-[16px] mb-1 font-semibold text-[#1a1c1a] group-hover:text-[#006a50] transition-colors truncate">
                     {product.name}
                   </h4>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <span className="text-amber-500 text-xs">
+                      {"★".repeat(Math.round(product.averageRating || 0)) + "☆".repeat(5 - Math.round(product.averageRating || 0))}
+                    </span>
+                    <span className="text-[10px] text-[#707973] font-medium">
+                      {product.averageRating ? `${product.averageRating} (${product.numReviews})` : '0 đánh giá'}
+                    </span>
+                  </div>
                   <p className="text-xs text-[#707973] mb-2 uppercase tracking-widest">{product.category}</p>
                   <p className="text-[#1a1c1a] font-bold text-sm">{product.price?.toLocaleString() || '0'} đ</p>
                 </Link>

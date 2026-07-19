@@ -1,5 +1,7 @@
 import { createContext, useState, useEffect } from 'react';
 import api from '../api/api';
+import { auth, googleProvider } from '../firebase/config';
+import { signInWithPopup } from 'firebase/auth';
 
 export const AuthContext = createContext();
 
@@ -156,6 +158,29 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogleFirebase = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const idToken = await result.user.getIdToken();
+
+      const res = await api('/auth/firebase-login', {
+        method: 'POST',
+        body: { idToken },
+      });
+
+      if (res.token) {
+        localStorage.setItem('token', res.token);
+        localStorage.setItem('user', JSON.stringify(res.user));
+        setToken(res.token);
+        setUser(res.user);
+      }
+      return res;
+    } catch (error) {
+      console.error('Firebase Google Login Error:', error.message);
+      throw error;
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -167,6 +192,7 @@ export const AuthProvider = ({ children }) => {
         resendOtp,
         login,
         loginWithGoogle,
+        loginWithGoogleFirebase,
         forgotPassword,
         resetPassword,
         logout,

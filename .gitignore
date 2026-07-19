@@ -41,3 +41,5 @@ yarn-error.log*
 **/.agents/
 skills/
 **/skills/
+
+server/homespace-dcded-firebase-adminsdk-fbsvc-8152ade140.json
