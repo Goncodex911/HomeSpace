@@ -61,6 +61,16 @@ const Navbar = ({ transparentOnScroll = false, showSearch = false, onSearchChang
               Home
             </Link>
             <Link
+              to="/catalog"
+              className={`font-label-caps text-label-caps transition-colors duration-300 ${
+                isActive('/catalog') 
+                  ? "text-primary border-b border-primary pb-1" 
+                  : "text-on-surface-variant hover:text-primary"
+              }`}
+            >
+              Catalog
+            </Link>
+            <Link
               to="/stores"
               className={`font-label-caps text-label-caps transition-colors duration-300 ${
                 isActive('/stores') 

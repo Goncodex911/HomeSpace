@@ -197,10 +197,7 @@ const Home = () => {
               />
             </Link>
             <div className="hidden md:flex gap-5">
-              <button onClick={() => handleEnvironmentClick('Living Room')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Living Room' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Living Room</button>
-              <button onClick={() => handleEnvironmentClick('Bedroom')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Bedroom' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Bedroom</button>
-              <button onClick={() => handleEnvironmentClick('Kitchen')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Kitchen' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Kitchen</button>
-              <button onClick={() => handleEnvironmentClick('Office')} className={`font-label-caps text-label-caps pb-1 transition-all ${filterCategory === 'Office' ? 'text-primary border-b border-primary' : 'text-on-surface-variant hover:text-primary'}`}>Office</button>
+              <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps pt-0.5" to="/catalog">Catalog</Link>
               <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps pt-0.5" to="/stores">Curators</Link>
             </div>
           </div>

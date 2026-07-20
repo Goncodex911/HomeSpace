@@ -55,6 +55,10 @@ const AdminDashboard = () => {
   const [rejectWithdrawNote, setRejectWithdrawNote] = useState('');
   const [withdrawActionLoading, setWithdrawActionLoading] = useState(false);
 
+  // Users state
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+
   const fetchApplications = async () => {
     try {
       setLoading(true);
@@ -88,6 +92,49 @@ const AdminDashboard = () => {
     }
   };
 
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const res = await api('/auth/admin/users');
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch users:', err.message);
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const handleUpdateRole = async (userId, role) => {
+    if (!window.confirm(`Are you sure you want to change this user's role to ${role}?`)) return;
+    setError('');
+    setSuccess('');
+    try {
+      await api(`/auth/admin/users/${userId}/role`, {
+        method: 'PUT',
+        body: { role }
+      });
+      setSuccess('User role updated successfully.');
+      fetchUsers();
+    } catch (err) {
+      setError(err.message || 'Failed to update user role.');
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm('Are you sure you want to delete this user? This action is permanent!')) return;
+    setError('');
+    setSuccess('');
+    try {
+      await api(`/auth/admin/users/${userId}`, {
+        method: 'DELETE'
+      });
+      setSuccess('User deleted successfully.');
+      fetchUsers();
+    } catch (err) {
+      setError(err.message || 'Failed to delete user.');
+    }
+  };
+
   const handleWithdrawalAction = async (id, action, note = '') => {
     setWithdrawActionLoading(true);
     setError('');
@@ -115,6 +162,7 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     if (activeTab === 'withdrawals') fetchWithdrawals();
+    if (activeTab === 'users') fetchUsers();
   }, [activeTab]);
 
   const handleApprove = async (id) => {
@@ -203,10 +251,13 @@ const AdminDashboard = () => {
               </span>
             )}
           </button>
-          <a href="#" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'users' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
+          >
             <span className="material-symbols-outlined mr-3">group</span>
-            <span className="font-label-caps text-label-caps">Users</span>
-          </a>
+            <span className="font-label-caps text-label-caps text-left">Users</span>
+          </button>
           <Link to="/" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
             <span className="material-symbols-outlined mr-3">home</span>
             <span className="font-label-caps text-label-caps">Marketplace Home</span>
@@ -244,7 +295,7 @@ const AdminDashboard = () => {
               <p className="text-[10px] text-on-surface-variant">System Admin</p>
             </div>
             <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
-              <img alt="Admin Avatar" className="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHZ8wJXVTHoyhIs8znunaiBu_OQBusEr3N3zsgqwx1daCKXWqNQh7_Gt4Lb6ksW6aZ_QX7JdZawurc0VUmyBjuwaiiVAV2LcWLcmTDPRfOAvyJoE_HNONZOsfQ6h0zSPFpm05CKGsSDPeCBXXne--oYJjmPg5VC4NtiDVVuVdJNrybdLtb6u4t_s4AcNTQnx3VN8KCY6oNcJy-vMxN_8uoec87hZucdvwanT7xzrf5rkCXjQEKTpKDwsCO1XgTk_FXfJnGC2djECz3" />
+              <img alt="Admin Avatar" className="w-full h-full object-cover" src={user?.avatar || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"} />
             </div>
           </div>
         </header>
@@ -630,8 +681,94 @@ const AdminDashboard = () => {
             </div>
           </div>
         )}
-        </div>
+
+        {/* ── USERS TAB ── */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="flex justify-between items-end">
+              <div>
+                <nav className="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
+                  <span>Administration</span>
+                  <span>/</span>
+                  <span className="text-primary font-bold">User Management</span>
+                </nav>
+                <h2 className="font-headline-md text-3xl text-primary font-light">User Management</h2>
+              </div>
+              <span className="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider">{users.length} registered users</span>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-error-container text-on-error-container border border-error/20 text-sm">
+                {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm">
+                {success}
+              </div>
+            )}
+
+            {usersLoading ? (
+              <div className="text-center py-12 text-sm text-outline">Loading users...</div>
+            ) : (
+              <div className="bg-white border border-outline-variant/30 overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-outline-variant/30 bg-surface-container-low font-label-caps text-[10px] uppercase tracking-wider text-on-surface-variant">
+                        <th className="p-4 pl-6">Avatar</th>
+                        <th className="p-4">Name</th>
+                        <th className="p-4">Email</th>
+                        <th className="p-4">Role</th>
+                        <th className="p-4">Vendor Status</th>
+                        <th className="p-4 pr-6 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/20 text-sm">
+                      {users.map((u) => (
+                        <tr key={u._id} className="hover:bg-surface-container-lowest transition-colors">
+                          <td className="p-4 pl-6">
+                            <div className="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+                              <img src={u.avatar || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"} alt="Avatar" className="w-full h-full object-cover" />
+                            </div>
+                          </td>
+                          <td className="p-4 font-medium text-primary">{u.fullName}</td>
+                          <td className="p-4 text-on-surface-variant">{u.email}</td>
+                          <td className="p-4">
+                            <span className="capitalize px-2.5 py-1 bg-surface-container-high text-primary text-xs font-semibold rounded">
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className={`font-label-caps text-[9px] px-2 py-0.5 rounded capitalize ${
+                              u.vendorStatus === 'pending' ? 'bg-secondary-container text-on-secondary-container' :
+                              u.vendorStatus === 'approved' ? 'bg-emerald-100 text-emerald-800' : 
+                              u.vendorStatus === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-surface-container-high text-on-surface-variant'
+                            }`}>
+                              {u.vendorStatus || 'none'}
+                            </span>
+                          </td>
+                          <td className="p-4 pr-6 text-right">
+                            {u._id !== user.id && (
+                              <button
+                                onClick={() => handleDeleteUser(u._id)}
+                                className="text-red-600 hover:text-red-800 font-label-caps text-[10px] uppercase tracking-wider transition-colors"
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+    </div>
 
       {/* Reject Modal Overlay */}
       {rejectModalOpen && (

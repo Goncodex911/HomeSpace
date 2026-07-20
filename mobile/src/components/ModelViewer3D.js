@@ -11,6 +11,7 @@ import {
 import { WebView } from 'react-native-webview';
 import { Image } from 'expo-image';
 import { colors, typography } from '../theme';
+import { getApiBaseUrl } from '../config';
 
 /**
  * Build inline HTML that loads a GLB with Three.js (classic scripts — works in RN WebView).
@@ -161,9 +162,10 @@ export default function ModelViewer3D({
   const [status, setStatus] = useState('loading'); // loading | ready | error
   const [errorMsg, setErrorMsg] = useState('');
 
-  const html = useMemo(() => {
-    if (!modelUrl) return null;
-    return buildViewerHtml(modelUrl, background);
+  const viewerUrl = useMemo(() => {
+    if (!modelUrl) return '';
+    const baseUrl = getApiBaseUrl().replace(/\/$/, ''); // Remove trailing slash if any
+    return `${baseUrl}/model-viewer?modelUrl=${encodeURIComponent(modelUrl)}&bg=${encodeURIComponent(background)}`;
   }, [modelUrl, background]);
 
   const onMessage = useCallback((event) => {
@@ -177,7 +179,7 @@ export default function ModelViewer3D({
     } catch (_) {}
   }, []);
 
-  if (!modelUrl || !html) {
+  if (!modelUrl) {
     return (
       <View style={[styles.wrap, style]}>
         {posterUrl ? (
@@ -193,7 +195,7 @@ export default function ModelViewer3D({
       <View style={[styles.wrap, style]}>
         <iframe
           title="3D Model"
-          srcDoc={html}
+          src={viewerUrl}
           style={{ width: '100%', height: '100%', border: 'none', background }}
           allow="xr-spatial-tracking; fullscreen"
         />
@@ -209,10 +211,12 @@ export default function ModelViewer3D({
 
       <WebView
         originWhitelist={['*']}
-        source={{ html }}
+        source={{ uri: viewerUrl }}
         style={styles.webview}
         javaScriptEnabled
         domStorageEnabled
+        allowFileAccessFromFileURLs={true}
+        allowUniversalAccessFromFileURLs={true}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
         mixedContentMode="always"
@@ -221,7 +225,7 @@ export default function ModelViewer3D({
         allowsFullscreenVideo
         onMessage={onMessage}
         onLoadEnd={() => {
-          // keep loading until three.js posts ready/error
+          setStatus('ready');
         }}
         onError={() => {
           setStatus('error');

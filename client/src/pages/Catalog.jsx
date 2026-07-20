@@ -53,18 +53,18 @@ const Catalog = () => {
   }, [loading, filterCategory, searchQuery, sortBy, items]);
 
   // Bộ lọc danh mục tĩnh trong thiết kế của Aura Studio
-  const CATEGORIES = ['All', 'Living Room', 'Bedroom', 'Office', 'Kitchen', 'Seating', 'Lighting', 'Tables'];
+  const CATEGORIES = ['All', 'Living Room', 'Bedroom', 'Office', 'Kitchen', 'Seating', 'Lighting', 'Tables', 'Textiles', 'Storage'];
 
   // Logic lọc và sắp xếp
   const getFilteredItems = () => {
     let result = [...items];
 
     // 1. Lọc theo Category
-    if (filterCategory !== 'All') {
+    if (filterCategory && filterCategory.toLowerCase() !== 'all') {
       result = result.filter((item) => {
-        const itemCat = (item.category || '').toLowerCase().replace(/\s+/g, '');
-        const targetCat = filterCategory.toLowerCase().replace(/\s+/g, '');
-        return itemCat.includes(targetCat) || targetCat.includes(itemCat);
+        const itemCat = (item.category || '').toLowerCase().trim();
+        const targetCat = filterCategory.toLowerCase().trim();
+        return itemCat === targetCat;
       });
     }
 
@@ -144,9 +144,9 @@ const Catalog = () => {
                     setFilterCategory(cat);
                     navigate(`/catalog?category=${cat}`);
                   }}
-                  className={`text-left text-xs uppercase tracking-wider py-1 hover:text-[#006a50] transition-colors ${filterCategory === cat ? 'text-[#006a50] font-bold border-b border-[#006a50] md:border-b-0' : 'text-[#707973]'}`}
+                  className={`text-left text-xs uppercase tracking-wider py-1 hover:text-[#006a50] transition-colors ${filterCategory?.toLowerCase() === cat?.toLowerCase() ? 'text-[#006a50] font-bold border-b border-[#006a50] md:border-b-0' : 'text-[#707973]'}`}
                 >
-                  {cat === 'All' ? 'Tất cả sản phẩm' : cat}
+                  {cat?.toLowerCase() === 'all' ? 'Tất cả sản phẩm' : cat}
                 </button>
               ))}
             </div>
@@ -171,7 +171,7 @@ const Catalog = () => {
         <section className="col-span-12 md:col-span-9">
           <div className="flex justify-between items-baseline border-b border-[#e5e5e1] pb-6 mb-10">
             <h1 className="font-display-lg text-3xl font-light tracking-tight">
-              {filterCategory === 'All' ? 'Bộ sưu tập Aura' : filterCategory}
+              {filterCategory?.toLowerCase() === 'all' ? 'Bộ sưu tập Aura' : filterCategory}
             </h1>
             <p className="text-xs text-[#707973] uppercase tracking-wider font-semibold">
               Hiển thị {filteredItems.length} kết quả

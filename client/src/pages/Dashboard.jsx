@@ -93,6 +93,11 @@ const Dashboard = () => {
   const [withdrawSuccess, setWithdrawSuccess] = useState('');
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
 
+  // Store Orders & Customers state
+  const [storeOrders, setStoreOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [statusActionLoading, setStatusActionLoading] = useState(false);
+
   // Form states
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -144,6 +149,38 @@ const Dashboard = () => {
     }
   };
 
+  const fetchStoreOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      setError('');
+      const res = await api('/orders');
+      setStoreOrders(res || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch store orders.');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const handleUpdateOrderStatus = async (orderId, status) => {
+    if (!window.confirm(`Are you sure you want to update this order's status to ${status}?`)) return;
+    setStatusActionLoading(true);
+    setError('');
+    setSuccess('');
+    try {
+      await api(`/orders/${orderId}/status`, {
+        method: 'PUT',
+        body: { status }
+      });
+      setSuccess('Order status updated successfully.');
+      fetchStoreOrders();
+    } catch (err) {
+      setError(err.message || 'Failed to update order status.');
+    } finally {
+      setStatusActionLoading(false);
+    }
+  };
+
   const handleWithdrawSubmit = async (e) => {
     e.preventDefault();
     setWithdrawError('');
@@ -190,6 +227,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (view === 'wallet') fetchWallet();
+    if (view === 'orders' || view === 'customers') fetchStoreOrders();
   }, [view]);
 
   const resetForm = () => {
@@ -300,6 +338,7 @@ const Dashboard = () => {
             description: finalDescription,
             price: parseFloat(price),
             quantity: parseInt(quantity),
+            category,
             image,
             model3d
           }
@@ -313,6 +352,7 @@ const Dashboard = () => {
             description: finalDescription,
             price: parseFloat(price),
             quantity: parseInt(quantity),
+            category,
             image,
             model3d
           }
@@ -503,23 +543,21 @@ const Dashboard = () => {
             <span className="font-label-caps text-label-caps">Wallet</span>
           </button>
 
-          <a 
-            href="/orders" 
-            onClick={(e) => { e.preventDefault(); alert('Orders panel integration coming soon.'); }}
-            className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
+          <button 
+            onClick={() => { setView('orders'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-4 pl-5 py-3 nav-link ${view === 'orders' ? 'nav-link-active' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
           >
             <span className="material-symbols-outlined">shopping_bag</span>
             <span className="font-label-caps text-label-caps">Orders</span>
-          </a>
+          </button>
 
-          <a 
-            href="/customers" 
-            onClick={(e) => { e.preventDefault(); alert('Customers feed coming soon.'); }}
-            className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
+          <button 
+            onClick={() => { setView('customers'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-4 pl-5 py-3 nav-link ${view === 'customers' ? 'nav-link-active' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
           >
             <span className="material-symbols-outlined">group</span>
             <span className="font-label-caps text-label-caps">Customers</span>
-          </a>
+          </button>
         </nav>
 
         <div className="mt-auto px-6 pt-8 border-t border-outline-variant/30">
@@ -585,7 +623,7 @@ const Dashboard = () => {
                 <img 
                   alt="Admin Profile Avatar" 
                   className="w-full h-full object-cover" 
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIw47cnP26s6sA2rw6KSRaMIV6KzjQqdj5IEyBh8ZJVZCJjNHXH1_fAbLhmqHcgsfb5iYcUwOzSgf7xvQJhPOpGZi45BZQkf3omG39mAObKscJpllQBps3DQeBsiDMHOWepvivWNwkvhWblXP5E7nJiM4uKAVS2BF2KO839R9uDkZX5TIi_BLAIoaJ5EfQreiWn4753MvC3EOtqNn6BKAbRHQe4B5FJwWbd2nOS2tBxiLS4mFvGQRJlZDI0x0Els2Z_wSTp7_sYa_G"
+                  src={user?.avatar || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"}
                 />
               </div>
             </div>
@@ -1068,31 +1106,33 @@ const Dashboard = () => {
                     <div className="grid grid-cols-2 gap-8">
                       <div className="col-span-2 relative">
                         <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-surface-container px-1">Category</label>
-                        <input 
-                          list="category-options"
+                        <select 
                           value={category}
                           onChange={(e) => setCategory(e.target.value)}
-                          placeholder="Select or type a category..."
-                          className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-body-md text-sm text-primary focus:outline-none focus:border-primary transition-colors"
-                        />
-                        <datalist id="category-options">
-                          <option value="Seating" />
-                          <option value="Tables" />
-                          <option value="Lighting" />
-                          <option value="Textiles" />
-                          <option value="Storage" />
-                        </datalist>
+                          className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-body-md text-sm text-primary appearance-none cursor-pointer focus:outline-none focus:border-primary transition-colors"
+                        >
+                          <option value="Living Room">Living Room</option>
+                          <option value="Bedroom">Bedroom</option>
+                          <option value="Office">Office</option>
+                          <option value="Kitchen">Kitchen</option>
+                          <option value="Seating">Seating</option>
+                          <option value="Lighting">Lighting</option>
+                          <option value="Tables">Tables</option>
+                          <option value="Textiles">Textiles</option>
+                          <option value="Storage">Storage</option>
+                        </select>
+                        <span className="material-symbols-outlined absolute right-0 bottom-4 text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
                       </div>
                       
                       <div className="relative">
-                        <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-surface-container px-1">Price (USD)</label>
+                        <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-surface-container px-1">Price (VND)</label>
                         <input 
                           className="w-full bg-transparent border-0 border-b border-outline-variant py-4 font-body-md text-sm text-primary" 
-                          placeholder="0.00" 
+                          placeholder="0" 
                           type="number"
                           required
                           min="0"
-                          step="0.01"
+                          step="1"
                           value={price}
                           onChange={(e) => setPrice(e.target.value)}
                         />
@@ -1318,6 +1358,158 @@ const Dashboard = () => {
                   </div>
                 )}
               </section>
+            </div>
+          )}
+
+          {/* VIEW: ORDERS */}
+          {view === 'orders' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex justify-between items-center pb-4 border-b border-outline-variant/30">
+                <div>
+                  <h3 className="font-headline-md text-xl text-primary font-medium">Store Sales Orders</h3>
+                  <p className="text-xs text-on-surface-variant mt-1">Manage client orders and update shipping states.</p>
+                </div>
+              </div>
+
+              {ordersLoading ? (
+                <div className="text-center py-12 text-sm text-outline">Loading store orders...</div>
+              ) : storeOrders.length === 0 ? (
+                <div className="bg-white border border-outline-variant/30 p-12 text-center text-outline">
+                  <span className="material-symbols-outlined text-5xl mb-4 opacity-55">shopping_bag</span>
+                  <p>No sales orders received yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {storeOrders.map((order) => {
+                    const storeItems = order.items.filter(i => i.store === user.id);
+                    const storeTotal = storeItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+
+                    return (
+                      <div key={order._id} className="bg-white border border-outline-variant/30 p-6 md:p-8 shadow-sm rounded-sm space-y-6">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-outline-variant/20 pb-4 gap-4">
+                          <div>
+                            <span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Mã đơn hàng</span>
+                            <span className="font-headline-md text-base text-primary font-semibold">{order._id}</span>
+                          </div>
+                          <div>
+                            <span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Ngày đặt</span>
+                            <span className="text-sm font-medium text-primary">{new Date(order.createdAt).toLocaleDateString('vi-VN')}</span>
+                          </div>
+                          <div>
+                            <span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Khách hàng</span>
+                            <span className="text-sm font-semibold text-primary">{order.customer?.fullName}</span>
+                            <span className="text-xs text-on-surface-variant block">{order.customer?.email}</span>
+                          </div>
+                          <div>
+                            <span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Tổng tiền của Store</span>
+                            <span className="text-sm font-bold text-[#006a50]">{storeTotal.toLocaleString()} đ</span>
+                          </div>
+                          <div>
+                            <span className="font-label-caps text-[10px] text-on-surface-variant block mb-1">Trạng thái</span>
+                            <select
+                              value={order.status}
+                              disabled={statusActionLoading}
+                              onChange={(e) => handleUpdateOrderStatus(order._id, e.target.value)}
+                              className="bg-transparent border border-outline-variant/60 px-2.5 py-1 text-xs outline-none focus:border-primary font-semibold capitalize"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Processing">Processing</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="divide-y divide-outline-variant/10">
+                          {storeItems.map((item, idx) => (
+                            <div key={idx} className="flex gap-6 py-4 first:pt-0 last:pb-0 items-center">
+                              <div className="w-16 h-16 bg-surface-container overflow-hidden border border-outline-variant/30 flex-shrink-0">
+                                <img src={item.item?.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'} alt="Item" className="w-full h-full object-cover" />
+                              </div>
+                              <div className="flex-grow">
+                                <h4 className="font-headline-md text-sm text-primary font-medium">{item.item?.name || 'Unknown Item'}</h4>
+                                <p className="text-xs text-on-surface-variant mt-1">Số lượng: {item.quantity} &bull; Đơn giá: {item.price.toLocaleString()} đ</p>
+                              </div>
+                              <span className="text-sm font-bold text-primary">{(item.price * item.quantity).toLocaleString()} đ</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* VIEW: CUSTOMERS */}
+          {view === 'customers' && (
+            <div className="space-y-8 animate-fade-in">
+              <div>
+                <h3 className="font-headline-md text-xl text-primary font-medium">Customer List</h3>
+                <p className="text-xs text-on-surface-variant mt-1">Directory of customers who placed orders containing your items.</p>
+              </div>
+
+              {ordersLoading ? (
+                <div className="text-center py-12 text-sm text-outline">Loading customers...</div>
+              ) : storeOrders.length === 0 ? (
+                <div className="bg-white border border-outline-variant/30 p-12 text-center text-outline">
+                  <span className="material-symbols-outlined text-5xl mb-4 opacity-55">group</span>
+                  <p>No customers database generated yet.</p>
+                </div>
+              ) : (
+                <div className="bg-white border border-outline-variant/30 overflow-hidden shadow-sm">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-outline-variant/30 bg-surface-container-low font-label-caps text-[10px] uppercase tracking-wider text-on-surface-variant">
+                          <th className="p-4 pl-6">Tên Khách Hàng</th>
+                          <th className="p-4">Email</th>
+                          <th className="p-4">Số Đơn Đã Đặt</th>
+                          <th className="p-4 pr-6 text-right">Tổng Tiền Đã Mua</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/20 text-sm">
+                        {(() => {
+                          const uniqueCustomers = [];
+                          const seenCustomerIds = new Set();
+
+                          storeOrders.forEach(order => {
+                            if (order.customer && !seenCustomerIds.has(order.customer._id)) {
+                              seenCustomerIds.add(order.customer._id);
+                              
+                              const customerOrders = storeOrders.filter(o => o.customer?._id === order.customer._id);
+                              let totalSpent = 0;
+                              customerOrders.forEach(o => {
+                                const storeItems = o.items.filter(i => i.store === user.id);
+                                totalSpent += storeItems.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+                              });
+
+                              uniqueCustomers.push({
+                                id: order.customer._id,
+                                fullName: order.customer.fullName,
+                                email: order.customer.email,
+                                totalOrders: customerOrders.length,
+                                totalSpent
+                              });
+                            }
+                          });
+
+                          return uniqueCustomers.map((cust) => (
+                            <tr key={cust.id} className="hover:bg-surface-container-lowest transition-colors">
+                              <td className="p-4 pl-6 font-medium text-primary">{cust.fullName}</td>
+                              <td className="p-4 text-on-surface-variant">{cust.email}</td>
+                              <td className="p-4 font-mono">{cust.totalOrders} đơn hàng</td>
+                              <td className="p-4 pr-6 text-right font-bold text-primary">{cust.totalSpent.toLocaleString()} đ</td>
+                            </tr>
+                          ));
+                        })()}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -80,7 +80,7 @@ router.get('/:id', async (req, res) => {
 // Cập nhật item - Chỉ dành cho store (chủ sở hữu) và admin
 router.put('/update/:id', protect, authorize(['store', 'admin']), async (req, res) => {
   try {
-    const { name, description, quantity, price, image, model3d } = req.body;
+    const { name, description, quantity, price, category, image, model3d } = req.body;
 
     const item = await Item.findById(req.params.id);
     if (!item) {
@@ -94,7 +94,7 @@ router.put('/update/:id', protect, authorize(['store', 'admin']), async (req, re
 
     const updatedItem = await Item.findByIdAndUpdate(
       req.params.id,
-      { name, description, quantity, price, image, model3d },
+      { name, description, quantity, price, category, image, model3d },
       { new: true }
     );
 

@@ -167,7 +167,7 @@ const ReturnOrder = () => {
                         </div>
                         <div className="mt-4 flex items-center justify-between">
                           <span className="font-body-md text-on-surface-variant">Qty: {orderItem.quantity}</span>
-                          <span className="font-headline-md text-base">${orderItem.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                          <span className="font-headline-md text-base">{orderItem.price.toLocaleString()} đ</span>
                         </div>
                       </div>
                     </div>
@@ -267,7 +267,7 @@ const ReturnOrder = () => {
                 <div className="space-y-6">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Selected Items ({selectedItemCount})</span>
-                    <span className="font-bold">${estimatedRefund.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold">{estimatedRefund.toLocaleString()} đ</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Return Fee</span>
@@ -275,7 +275,7 @@ const ReturnOrder = () => {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Estimated Refund</span>
-                    <span className="font-bold text-primary">${estimatedRefund.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="font-bold text-primary">{estimatedRefund.toLocaleString()} đ</span>
                   </div>
 
                   <div className="pt-6 border-t border-outline-variant/30">

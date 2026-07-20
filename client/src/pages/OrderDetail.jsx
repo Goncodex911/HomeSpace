@@ -250,11 +250,11 @@ const OrderDetail = () => {
                         <h4 className="font-headline-md text-headline-md text-primary">{orderItem.item?.name}</h4>
                         {orderItem.item?.store && <p className="text-on-surface-variant text-sm mt-1">Sold by Store</p>}
                       </div>
-                      <p className="font-body-lg text-body-lg text-primary font-semibold">${orderItem.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                      <p className="font-body-lg text-body-lg text-primary font-semibold">{orderItem.price.toLocaleString()} đ</p>
                     </div>
                     <div className="flex items-center justify-between text-on-surface-variant pt-4 border-t border-outline-variant/30">
                       <span className="font-label-caps text-label-caps uppercase">Qty: {orderItem.quantity}</span>
-                      <span className="font-label-caps text-label-caps uppercase">Subtotal: ${(orderItem.price * orderItem.quantity).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                      <span className="font-label-caps text-label-caps uppercase">Subtotal: {(orderItem.price * orderItem.quantity).toLocaleString()} đ</span>
                     </div>
                   </div>
                 </div>
@@ -298,20 +298,20 @@ const OrderDetail = () => {
                 <div className="space-y-4 mb-8">
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Subtotal</span>
-                    <span className="text-primary">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                    <span className="text-primary">{order.totalAmount.toLocaleString()} đ</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Shipping</span>
-                    <span className="text-primary">$0.00</span>
+                    <span className="text-primary">0 đ</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-on-surface-variant">Estimated Tax (0%)</span>
-                    <span className="text-primary">$0.00</span>
+                    <span className="text-primary">0 đ</span>
                   </div>
                 </div>
                 <div className="pt-6 border-t-2 border-primary flex justify-between items-baseline">
                   <span className="font-headline-md text-headline-md text-primary uppercase">Total</span>
-                  <span className="font-display-lg text-display-lg text-primary">${order.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                  <span className="font-display-lg text-display-lg text-primary">{order.totalAmount.toLocaleString()} đ</span>
                 </div>
               </div>
 

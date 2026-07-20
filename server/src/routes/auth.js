@@ -4,8 +4,12 @@ import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import sendEmail from '../utils/sendEmail.js';
 import { protect } from '../middlewares/auth.js';
+import multer from 'multer';
+import cloudinary from '../utils/cloudinary.js';
+import fs from 'fs';
 
 const router = express.Router();
+const upload = multer({ dest: 'uploads/' });
 
 // Generate 6-digit OTP
 const generateOTP = () => {
@@ -359,6 +363,36 @@ router.post('/reset-password', async (req, res) => {
   }
 });
 
+// @route   POST /api/auth/upload-avatar
+// @desc    Upload profile picture (avatar) to Cloudinary
+// @access  Private
+router.post('/upload-avatar', protect, upload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    // Upload to Cloudinary
+    const result = await cloudinary.uploader.upload(req.file.path, {
+      folder: 'homespace_avatars',
+    });
+
+    // Delete temp file
+    fs.unlinkSync(req.file.path);
+
+    res.status(200).json({
+      message: 'Upload avatar successfully',
+      imageUrl: result.secure_url,
+    });
+  } catch (error) {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error('Avatar Upload Error:', error);
+    res.status(500).json({ message: error.message || 'Failed to upload avatar' });
+  }
+});
+
 // @route   GET /api/auth/profile
 // @desc    Get user profile
 router.get('/profile', protect, async (req, res) => {
@@ -374,7 +408,7 @@ router.get('/profile', protect, async (req, res) => {
 // @desc    Update user profile
 router.put('/profile', protect, async (req, res) => {
   try {
-    const { fullName, email, phone, occupation, streetAddress, city, state, zipCode } = req.body;
+    const { fullName, email, phone, occupation, streetAddress, city, state, zipCode, avatar } = req.body;
 
     const user = await User.findById(req.user.id);
     if (!user) {
@@ -396,6 +430,7 @@ router.put('/profile', protect, async (req, res) => {
     user.city = city !== undefined ? city : user.city;
     user.state = state !== undefined ? state : user.state;
     user.zipCode = zipCode !== undefined ? zipCode : user.zipCode;
+    if (avatar !== undefined) user.avatar = avatar;
 
     await user.save();
 
@@ -419,6 +454,7 @@ router.put('/profile', protect, async (req, res) => {
         taxId: user.taxId,
         yearsInIndustry: user.yearsInIndustry,
         philosophy: user.philosophy,
+        avatar: user.avatar,
       },
     });
   } catch (error) {
@@ -609,6 +645,63 @@ router.put('/admin/reject-vendor/:id', protect, async (req, res) => {
         vendorStatus: user.vendorStatus,
       },
     });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   GET /api/auth/admin/users
+// @desc    Get all users (Admin only)
+// @access  Private
+router.get('/admin/users', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+    const users = await User.find({}).select('-password');
+    res.status(200).json({ data: users });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   PUT /api/auth/admin/users/:id/role
+// @desc    Update user role (Admin only)
+// @access  Private
+router.put('/admin/users/:id/role', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+    const { role } = req.body;
+    if (!['customer', 'store', 'admin'].includes(role)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    user.role = role;
+    await user.save();
+    res.status(200).json({ message: 'User role updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   DELETE /api/auth/admin/users/:id
+// @desc    Delete user (Admin only)
+// @access  Private
+router.delete('/admin/users/:id', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+    const user = await User.findByIdAndDelete(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

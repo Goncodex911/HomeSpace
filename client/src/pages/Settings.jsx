@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { vietnamAddressData } from '../services/vietnamAddressData';
@@ -8,6 +8,9 @@ const Settings = () => {
   const { user, logout, updateProfile, token } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+
+  const fileInputRef = useRef(null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Tab State
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
@@ -119,10 +122,10 @@ const Settings = () => {
         statusColor: o.status === 'Pending' ? 'bg-yellow-500' : (o.status === 'Cancelled' ? 'bg-red-500' : 'bg-emerald-500'),
         total: o.totalAmount,
         items: o.items.map(i => ({
-          name: i.item.name || 'Unknown Item',
+          name: i.item ? (i.item.name || 'Unknown Item') : 'Unknown Item',
           price: i.price,
           quantity: i.quantity,
-          image: i.item.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'
+          image: (i.item && i.item.image) || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'
         }))
       }));
       setOrders(formattedOrders);
@@ -164,12 +167,71 @@ const Settings = () => {
         phone: user.phone || '',
         occupation: user.occupation || '',
         streetAddress: user.streetAddress || '',
-        city: user.city || '',
+         city: user.city || '',
         state: user.state || '',
         zipCode: user.zipCode || '',
       });
       setSuccessMsg('');
       setErrorMsg('');
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setUploadingAvatar(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const data = new FormData();
+      data.append('avatar', file);
+
+      const tokenVal = token || localStorage.getItem('token');
+      const response = await fetch('https://localhost:5000/api/auth/upload-avatar', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${tokenVal}`
+        },
+        body: data
+      });
+
+      const resData = await response.json();
+      if (!response.ok) {
+        throw new Error(resData.message || 'Avatar upload failed');
+      }
+
+      await updateProfile({
+        ...formData,
+        avatar: resData.imageUrl
+      });
+
+      setSuccessMsg('Profile picture updated successfully.');
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message || 'Failed to upload profile picture.');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    setUploadingAvatar(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      await updateProfile({
+        ...formData,
+        avatar: ''
+      });
+      setSuccessMsg('Profile picture removed.');
+    } catch (err) {
+      console.error(err);
+      setErrorMsg(err.message || 'Failed to remove profile picture.');
+    } finally {
+      setUploadingAvatar(false);
     }
   };
 
@@ -260,10 +322,8 @@ const Settings = () => {
               Lumina
             </Link>
             <div className="hidden md:flex gap-8">
-              <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Living Room</Link>
-              <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Bedroom</Link>
-              <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Kitchen</Link>
-              <Link to="/" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Office</Link>
+              <Link to="/catalog" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Catalog</Link>
+              <Link to="/stores" className="text-on-surface-variant hover:text-primary transition-colors font-label-caps text-label-caps cursor-pointer">Curators</Link>
             </div>
           </div>
 
@@ -378,12 +438,19 @@ const Settings = () => {
               <div className="space-y-12">
                 {/* Profile Header Block */}
                 <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-lg shadow-[0px_10px_30px_rgba(0,0,0,0.04)] border border-surface-variant/20">
-                  <div className="relative group cursor-pointer">
+                  <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    onChange={handleAvatarUpload} 
+                    className="hidden" 
+                    accept="image/*" 
+                  />
+                  <div className="relative group cursor-pointer" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
                     <div className="w-32 h-32 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-surface-variant">
                       <img
                         alt="Profile Avatar"
                         className="w-full h-full object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf8Y2YMjKNpq7_6wEW8rITB7ya93v-jWc_NSAp2zQkzdKcJxn3ZVucYxKSpmqaOzBqWNI-z4Qb-llBOxAjnqlvuu3J7V4kS8YPRdcphOxld2Duy_1QD6BSdpqBSK033x0YoYxiTLDCAm_VkHNC64XancrLlP-SqA8cfXw2VgpRGmSrp_M5GaUvwtimJJoOHie72PfTUAvZSVkj-5DgHp5D0GtasfHqa1DloP2keyPb8KgRl7Lc3UzoP6LmaAMaWAvNsbD_uABo8gsD"
+                        src={user?.avatar || "https://upload.wikimedia.org/wikipedia/commons/7/7c/Profile_avatar_placeholder_large.png"}
                       />
                       <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                         <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
@@ -391,11 +458,27 @@ const Settings = () => {
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-headline-md text-headline-md text-primary mb-2">Profile Photo</h3>
+                    <h3 className="font-headline-md text-headline-md text-primary mb-2">
+                      {uploadingAvatar ? 'Uploading...' : 'Profile Photo'}
+                    </h3>
                     <p className="font-body-md text-body-md text-on-surface-variant mb-4">Upload a high-resolution image. Recommended size 400x400px.</p>
                     <div className="flex gap-4">
-                      <button className="px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-secondary transition-colors duration-300">Upload New</button>
-                      <button className="px-6 py-2 border border-outline-variant text-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-surface-container-low transition-colors duration-300">Remove</button>
+                      <button 
+                        type="button"
+                        disabled={uploadingAvatar}
+                        onClick={() => fileInputRef.current && fileInputRef.current.click()}
+                        className="px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-secondary transition-colors duration-300 disabled:opacity-50"
+                      >
+                        Upload New
+                      </button>
+                      <button 
+                        type="button"
+                        disabled={uploadingAvatar}
+                        onClick={handleAvatarRemove}
+                        className="px-6 py-2 border border-outline-variant text-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-surface-container-low transition-colors duration-300 disabled:opacity-50"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -522,7 +605,7 @@ const Settings = () => {
                         </div>
                         <div>
                           <span className="font-label-caps text-xs text-on-surface-variant block mb-1">Tổng tiền</span>
-                          <span className="text-body-md font-bold text-primary">${order.total.toLocaleString()}</span>
+                          <span className="text-body-md font-bold text-primary">{order.total.toLocaleString()} đ</span>
                         </div>
                       </div>
 
@@ -534,7 +617,7 @@ const Settings = () => {
                             </div>
                             <div className="flex-grow flex flex-col justify-center">
                               <h4 className="font-headline-md text-base text-primary mb-1">{item.name}</h4>
-                              <p className="text-on-surface-variant text-sm">Số lượng: {item.quantity} &nbsp;&bull;&nbsp; Giá: ${item.price.toLocaleString()}</p>
+                              <p className="text-on-surface-variant text-sm">Số lượng: {item.quantity} &nbsp;&bull;&nbsp; Giá: {item.price.toLocaleString()} đ</p>
                             </div>
                           </div>
                         ))}

@@ -178,6 +178,7 @@ const Stores = () => {
             </Link>
             <div className="hidden md:flex gap-8">
               <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" to="/">Home</Link>
+              <Link className="text-on-surface-variant hover:text-primary transition-colors duration-300 font-label-caps text-label-caps" to="/catalog">Catalog</Link>
               <Link className="text-primary border-b border-primary pb-1 font-label-caps text-label-caps" to="/stores">Curators</Link>
             </div>
           </div>
