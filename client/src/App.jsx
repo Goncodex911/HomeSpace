@@ -23,6 +23,7 @@ import OrderDetail from './pages/OrderDetail';
 import MockPayment from './pages/MockPayment';
 import RoomBuilder from './pages/RoomBuilder';
 import Catalog from './pages/Catalog';
+import ChatWidget from './components/ChatWidget';
 import { Toaster } from 'react-hot-toast';
 
 // Role-based Private Route Wrapper
@@ -230,6 +231,7 @@ function App() {
             {/* Fallback Redirection */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <ChatWidget />
         </div>
       </Router>
       </CartProvider>

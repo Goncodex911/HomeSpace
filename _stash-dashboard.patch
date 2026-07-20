@@ -1,0 +1,7 @@
+﻿git : Too many revisions specified: 'stash@{0}' 'client/src/pages/Dashboard.jsx'
+At C:\Users\ADMIN\AppData\Local\Temp\ps-script-0fabdd51-25b2-4f93-a03f-33f25d9e6e79.ps1:109 char:29
++ ... HomeSpace"; git stash show -p "stash@{0}" -- "client/src/pages/Dashbo ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Too many revisi.../Dashboard.jsx':String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
