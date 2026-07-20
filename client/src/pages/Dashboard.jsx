@@ -1,7 +1,20 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useMemo, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import api from '../api/api';
+import api, { resolveImageUrl } from '../api/api';
+import AdminStatsChart from '../components/AdminStatsChart';
+import { formatUSD } from '../utils/currency';
+import {
+  filterInventoryItems,
+  getUniqueCategories,
+  hasActiveInventoryFilters,
+} from '../utils/inventoryFilters';
+import {
+  filterOrders,
+  getOrderItemsLabel,
+  getOrderStoreTotal,
+  hasActiveOrderFilters,
+} from '../utils/orderFilters';
 
 const dashboardStyles = `
   .material-symbols-outlined {
@@ -79,6 +92,12 @@ const Dashboard = () => {
 
   // Search filter
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [stockFilter, setStockFilter] = useState('all');
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [sortBy, setSortBy] = useState('newest');
+  const [showInventoryFilters, setShowInventoryFilters] = useState(true);
 
   // Wallet & Withdrawal states
   const [walletBalance, setWalletBalance] = useState(0);
@@ -90,8 +109,25 @@ const Dashboard = () => {
   const [withdrawAccount, setWithdrawAccount] = useState('');
   const [withdrawHolder, setWithdrawHolder] = useState('');
   const [withdrawError, setWithdrawError] = useState('');
-  const [withdrawSuccess, setWithdrawSuccess] = useState('');
   const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
+  const [withdrawModalSuccess, setWithdrawModalSuccess] = useState(false);
+  const withdrawCloseTimerRef = useRef(null);
+
+  const closeWithdrawModal = () => {
+    if (withdrawCloseTimerRef.current) {
+      window.clearTimeout(withdrawCloseTimerRef.current);
+      withdrawCloseTimerRef.current = null;
+    }
+    setShowWithdrawModal(false);
+    setWithdrawModalSuccess(false);
+    setWithdrawError('');
+  };
+
+  const openWithdrawModal = () => {
+    setWithdrawError('');
+    setWithdrawModalSuccess(false);
+    setShowWithdrawModal(true);
+  };
 
   // Form states
   const [name, setName] = useState('');
@@ -114,6 +150,33 @@ const Dashboard = () => {
   const [syncTaskId, setSyncTaskId] = useState('');
   const [syncingTaskId, setSyncingTaskId] = useState(false);
 
+  // Orders & Customers
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [orderStatusFilter, setOrderStatusFilter] = useState('all');
+  const [orderPaymentFilter, setOrderPaymentFilter] = useState('all');
+  const [orderMinAmount, setOrderMinAmount] = useState('');
+  const [orderMaxAmount, setOrderMaxAmount] = useState('');
+  const [orderSortBy, setOrderSortBy] = useState('newest');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [showOrderFilters, setShowOrderFilters] = useState(true);
+  const [customers, setCustomers] = useState([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [statsPeriod, setStatsPeriod] = useState('month');
+  const [storeStats, setStoreStats] = useState(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+
+  const statsPeriodLabels = { month: 'Month', quarter: 'Quarter', year: 'Year' };
+
+  const ORDER_STATUSES = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
+
+  const storeUserId = user?.id || user?._id;
+  const isStoreAdmin = user?.role === 'admin';
+
+  const getStoreOrderTotal = (order) => getOrderStoreTotal(order, storeUserId, isStoreAdmin);
+  const formatOrderItems = (order) => getOrderItemsLabel(order, storeUserId, isStoreAdmin);
+
   const fetchItems = async () => {
     try {
       setLoading(true);
@@ -124,6 +187,59 @@ const Dashboard = () => {
       setError(err.message || 'Failed to fetch inventory items');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      setError('');
+      const data = await api('/orders');
+      setOrders(Array.isArray(data) ? data : data.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const fetchCustomers = async () => {
+    try {
+      setCustomersLoading(true);
+      setError('');
+      const res = await api('/orders/customers');
+      setCustomers(res.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch customers');
+    } finally {
+      setCustomersLoading(false);
+    }
+  };
+
+  const fetchStoreStats = async (period = statsPeriod) => {
+    try {
+      setStatsLoading(true);
+      const res = await api(`/orders/store/stats?period=${period}`);
+      setStoreStats(res);
+    } catch (err) {
+      console.error('Failed to fetch store stats:', err.message);
+      setStoreStats(null);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const handleOrderStatusChange = async (orderId, status) => {
+    try {
+      setError('');
+      await api(`/orders/${orderId}/status`, {
+        method: 'PUT',
+        body: { status },
+      });
+      setSuccess('Order status updated successfully.');
+      fetchOrders();
+    } catch (err) {
+      setError(err.message || 'Failed to update order status');
     }
   };
 
@@ -147,7 +263,7 @@ const Dashboard = () => {
   const handleWithdrawSubmit = async (e) => {
     e.preventDefault();
     setWithdrawError('');
-    setWithdrawSuccess('');
+    setWithdrawModalSuccess(false);
     setWithdrawSubmitting(true);
     try {
       await api('/payment/withdraw', {
@@ -159,15 +275,19 @@ const Dashboard = () => {
           accountHolder: withdrawHolder,
         },
       });
-      setWithdrawSuccess('Yêu cầu rút tiền đã được gửi thành công! Admin sẽ xét duyệt sớm.');
       setWithdrawAmount('');
       setWithdrawBank('');
       setWithdrawAccount('');
       setWithdrawHolder('');
-      setShowWithdrawModal(false);
-      fetchWallet();
+      setWithdrawSubmitting(false);
+      setWithdrawModalSuccess(true);
+      withdrawCloseTimerRef.current = window.setTimeout(() => {
+        closeWithdrawModal();
+        fetchWallet();
+      }, 2000);
     } catch (err) {
-      setWithdrawError(err.message || 'Gửi yêu cầu thất bại.');
+      const message = err.message || 'Failed to submit withdrawal request.';
+      setWithdrawError(message);
     } finally {
       setWithdrawSubmitting(false);
     }
@@ -190,7 +310,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (view === 'wallet') fetchWallet();
-  }, [view]);
+    if (view === 'orders') fetchOrders();
+    if (view === 'customers') fetchCustomers();
+    if (view === 'overview') fetchStoreStats(statsPeriod);
+  }, [view, statsPeriod]);
 
   const resetForm = () => {
     setName('');
@@ -343,7 +466,7 @@ const Dashboard = () => {
     try {
       // Vì fetch thông thường không tự parse Form Data, ta gọi trực tiếp
       const token = localStorage.getItem('token');
-      const response = await fetch('https://localhost:5000/api/items/upload-image', {
+      const response = await fetch('/api/items/upload-image', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -436,25 +559,97 @@ const Dashboard = () => {
 
   // Helper calculations for Overview tab
   const lowStockCount = items.filter(item => item.quantity < 5).length;
-  
-  // Format to standard items list or mock defaults if none
-  const defaultItems = [
-    { name: 'Ether Arc Lounge Chair', price: 1240, quantity: 12, description: 'Velvet' },
-    { name: 'Orbital Sphere Lamp', price: 450, quantity: 2, description: 'Brass' },
-    { name: 'Monolith Travertine Table', price: 3800, quantity: 4, description: 'Marble' },
-    { name: 'Stratus Modular Sofa', price: 5600, quantity: 1, description: 'Wool' },
-    { name: 'Velvet Dining Chair', price: 850, quantity: 0, description: 'Velvet' },
-    { name: 'Brass Lamp', price: 320, quantity: 8, description: 'Brass' }
-  ];
+  const formatMoney = (value) => Number(value || 0).toLocaleString(undefined, { maximumFractionDigits: 0 });
+  const todayRevenue = storeStats?.today?.revenue || 0;
+  const todayChange = storeStats?.today?.changePercent || 0;
+  const categoryOptions = useMemo(() => getUniqueCategories(items), [items]);
 
-  const displayItems = items.length > 0 ? items : defaultItems;
-  const maxPrice = Math.max(...displayItems.map(i => i.price || 1));
-
-  // Search logic
-  const filteredItems = items.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase()))
+  const filteredItems = useMemo(
+    () =>
+      filterInventoryItems(items, {
+        searchTerm,
+        categoryFilter,
+        stockFilter,
+        minPrice,
+        maxPrice,
+        sortBy,
+      }),
+    [items, searchTerm, categoryFilter, stockFilter, minPrice, maxPrice, sortBy]
   );
+
+  const inventoryFiltersActive = hasActiveInventoryFilters({
+    searchTerm,
+    categoryFilter,
+    stockFilter,
+    minPrice,
+    maxPrice,
+    sortBy,
+  });
+
+  const clearInventoryFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('all');
+    setStockFilter('all');
+    setMinPrice('');
+    setMaxPrice('');
+    setSortBy('newest');
+  };
+
+  const filteredOrders = useMemo(
+    () =>
+      filterOrders(
+        orders,
+        {
+          searchTerm: orderSearch,
+          statusFilter: orderStatusFilter,
+          paymentFilter: orderPaymentFilter,
+          minAmount: orderMinAmount,
+          maxAmount: orderMaxAmount,
+          sortBy: orderSortBy,
+        },
+        storeUserId,
+        isStoreAdmin
+      ),
+    [
+      orders,
+      orderSearch,
+      orderStatusFilter,
+      orderPaymentFilter,
+      orderMinAmount,
+      orderMaxAmount,
+      orderSortBy,
+      storeUserId,
+      isStoreAdmin,
+    ]
+  );
+
+  const orderFiltersActive = hasActiveOrderFilters({
+    searchTerm: orderSearch,
+    statusFilter: orderStatusFilter,
+    paymentFilter: orderPaymentFilter,
+    minAmount: orderMinAmount,
+    maxAmount: orderMaxAmount,
+    sortBy: orderSortBy,
+  });
+
+  const clearOrderFilters = () => {
+    setOrderSearch('');
+    setOrderStatusFilter('all');
+    setOrderPaymentFilter('all');
+    setOrderMinAmount('');
+    setOrderMaxAmount('');
+    setOrderSortBy('newest');
+  };
+
+  const filteredCustomers = useMemo(() => {
+    const term = customerSearch.trim().toLowerCase();
+    if (!term) return customers;
+    return customers.filter((entry) => {
+      const name = entry.customer?.fullName?.toLowerCase() || '';
+      const email = entry.customer?.email?.toLowerCase() || '';
+      return name.includes(term) || email.includes(term);
+    });
+  }, [customers, customerSearch]);
 
   return (
     <div className="bg-surface text-on-surface font-body-md min-h-screen flex flex-col md:flex-row relative">
@@ -503,23 +698,21 @@ const Dashboard = () => {
             <span className="font-label-caps text-label-caps">Wallet</span>
           </button>
 
-          <a 
-            href="/orders" 
-            onClick={(e) => { e.preventDefault(); alert('Orders panel integration coming soon.'); }}
-            className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
+          <button 
+            onClick={() => { setView('orders'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-4 pl-5 py-3 nav-link ${view === 'orders' ? 'nav-link-active' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
           >
             <span className="material-symbols-outlined">shopping_bag</span>
             <span className="font-label-caps text-label-caps">Orders</span>
-          </a>
+          </button>
 
-          <a 
-            href="/customers" 
-            onClick={(e) => { e.preventDefault(); alert('Customers feed coming soon.'); }}
-            className="w-full flex items-center gap-4 pl-5 py-3 text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-colors"
+          <button 
+            onClick={() => { setView('customers'); setIsMobileMenuOpen(false); }}
+            className={`w-full flex items-center gap-4 pl-5 py-3 nav-link ${view === 'customers' ? 'nav-link-active' : 'text-on-surface-variant hover:text-primary hover:bg-surface-container-high'}`}
           >
             <span className="material-symbols-outlined">group</span>
             <span className="font-label-caps text-label-caps">Customers</span>
-          </a>
+          </button>
         </nav>
 
         <div className="mt-auto px-6 pt-8 border-t border-outline-variant/30">
@@ -558,24 +751,13 @@ const Dashboard = () => {
             <h2 className="font-headline-md text-headline-md tracking-widest text-on-background capitalize">
               {view === 'overview' && 'Store Overview'}
               {view === 'inventory' && 'Inventory Catalog'}
+              {view === 'orders' && 'Store Orders'}
+              {view === 'customers' && 'Customer Directory'}
               {view === 'add_product' && (editingId ? 'Edit Product' : 'New Catalog Item')}
               {view === 'wallet' && 'Wallet & Withdrawals'}
             </h2>
           </div>
           <div className="flex items-center gap-6">
-            {view === 'inventory' && (
-              <div className="relative hidden lg:block">
-                <input 
-                  className="bg-surface-container-low border-none focus:ring-1 focus:ring-primary py-2 px-10 rounded-sm w-64 text-sm font-body-md transition-all duration-300" 
-                  placeholder="Search products..." 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
-              </div>
-            )}
-
             <div className="flex items-center gap-4">
               <div className="text-right hidden sm:block">
                 <p className="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-wider">CURATOR PROFILE</p>
@@ -629,9 +811,14 @@ const Dashboard = () => {
                       <span className="material-symbols-outlined text-secondary">trending_up</span>
                     </div>
                     <div>
-                      <span className="font-display-lg text-4xl leading-none font-light text-primary">$12,480</span>
+                      <span className="font-display-lg text-4xl leading-none font-light text-primary">${formatMoney(todayRevenue)}</span>
                       <p className="text-xs text-on-surface-variant mt-2">
-                        <span className="text-green-600 font-semibold">+12%</span> from yesterday
+                        {todayChange >= 0 ? (
+                          <span className="text-green-600 font-semibold">+{todayChange}%</span>
+                        ) : (
+                          <span className="text-red-600 font-semibold">{todayChange}%</span>
+                        )}{' '}
+                        from yesterday
                       </p>
                     </div>
                   </div>
@@ -668,32 +855,39 @@ const Dashboard = () => {
 
               {/* Performance Section */}
               <section className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
-                {/* Bar Chart representing relative pricing scale of items */}
-                <div className="lg:col-span-2 bento-card p-8 border border-outline-variant/30 flex flex-col justify-between">
-                  <div className="flex justify-between items-center mb-6">
+                <div className="lg:col-span-2 bento-card p-8 border border-outline-variant/30 flex flex-col">
+                  <div className="flex flex-wrap justify-between items-center gap-4 mb-4">
                     <div>
                       <span className="font-label-caps text-xs text-secondary uppercase tracking-widest mb-1 block">Analytics</span>
-                      <h4 className="font-headline-md text-headline-md">Inventory Pricing Scale</h4>
+                      <h4 className="font-headline-md text-headline-md">Sales Statistics</h4>
+                      <p className="text-xs text-on-surface-variant mt-1">
+                        ${formatMoney(storeStats?.totals?.revenue)} · {storeStats?.totals?.orders || 0} paid orders
+                      </p>
                     </div>
-                    <span className="material-symbols-outlined text-on-surface-variant">equalizer</span>
+                    <div className="flex gap-2">
+                      {['month', 'quarter', 'year'].map((period) => (
+                        <button
+                          key={period}
+                          type="button"
+                          onClick={() => setStatsPeriod(period)}
+                          className={`px-3 py-1.5 font-label-caps text-[10px] uppercase tracking-wider border transition-all ${
+                            statsPeriod === period
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary'
+                          }`}
+                        >
+                          {statsPeriodLabels[period]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
-                  <div className="h-64 flex items-end justify-between gap-4 px-4 pt-8 border-b border-outline-variant/20 pb-2">
-                    {displayItems.slice(0, 6).map((item, index) => {
-                      const heightPercent = maxPrice > 0 ? Math.round(((item.price || 0) / maxPrice) * 100) : 40;
-                      return (
-                        <div key={item._id || index} className="flex flex-col items-center gap-4 flex-1 group h-full justify-end">
-                          <div 
-                            className="w-full bg-surface-container-highest group-hover:bg-primary transition-all duration-500 rounded-t-sm"
-                            style={{ height: `${Math.max(heightPercent, 10)}%` }}
-                          ></div>
-                          <span className="font-label-caps text-[10px] text-center opacity-60 truncate w-16" title={item.name}>
-                            {item.name}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
+                  <AdminStatsChart
+                    data={storeStats}
+                    chartType={storeStats?.chartType || (statsPeriod === 'month' ? 'bar' : 'line')}
+                    loading={statsLoading}
+                    period={statsPeriod}
+                  />
                 </div>
 
                 {/* Feedback Widget */}
@@ -804,16 +998,131 @@ const Dashboard = () => {
                 </button>
               </div>
 
-              {/* Search bar on smaller screens */}
-              <div className="relative block lg:hidden w-full">
-                <input 
-                  className="w-full bg-surface-container-low border-none focus:ring-1 focus:ring-primary py-2 px-10 rounded-sm text-sm font-body-md" 
-                  placeholder="Search products..." 
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+              <div className="bento-card border border-outline-variant/30 p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary text-xl">tune</span>
+                    <div>
+                      <p className="font-label-caps text-xs uppercase tracking-widest text-primary">Smart Filters</p>
+                      <p className="text-xs text-on-surface-variant">
+                        Showing {filteredItems.length} of {items.length} products
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {inventoryFiltersActive && (
+                      <button
+                        type="button"
+                        onClick={clearInventoryFilters}
+                        className="text-xs font-label-caps uppercase tracking-wider text-secondary hover:text-primary transition-colors"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowInventoryFilters((prev) => !prev)}
+                      className="text-xs font-label-caps uppercase tracking-wider border border-outline-variant px-3 py-2 hover:border-primary transition-colors"
+                    >
+                      {showInventoryFilters ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/30 focus:ring-1 focus:ring-primary py-3 px-10 text-sm rounded-full"
+                    placeholder="Smart search: marble, #Seating, low stock, >5000000..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                </div>
+
+                {showInventoryFilters && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 pt-2 border-t border-outline-variant/20">
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Category</label>
+                      <select
+                        value={categoryFilter}
+                        onChange={(e) => setCategoryFilter(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      >
+                        <option value="all">All categories</option>
+                        {categoryOptions.map((cat) => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Stock</label>
+                      <select
+                        value={stockFilter}
+                        onChange={(e) => setStockFilter(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      >
+                        <option value="all">All stock</option>
+                        <option value="in_stock">In stock</option>
+                        <option value="low_stock">Low stock (&lt;5)</option>
+                        <option value="out_of_stock">Out of stock</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Min price ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Max price ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        placeholder="Any"
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Sort by</label>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="price_desc">Price: high to low</option>
+                        <option value="price_asc">Price: low to high</option>
+                        <option value="name_asc">Name A to Z</option>
+                        <option value="stock_asc">Stock: low to high</option>
+                        <option value="stock_desc">Stock: high to low</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {(categoryFilter !== 'all' || stockFilter !== 'all' || minPrice || maxPrice) && (
+                  <div className="flex flex-wrap gap-2 text-[10px] font-label-caps uppercase tracking-wider">
+                    {categoryFilter !== 'all' && (
+                      <span className="px-2 py-1 bg-secondary-container/30 text-secondary">{categoryFilter}</span>
+                    )}
+                    {stockFilter !== 'all' && (
+                      <span className="px-2 py-1 bg-secondary-container/30 text-secondary">{stockFilter.replace('_', ' ')}</span>
+                    )}
+                    {(minPrice || maxPrice) && (
+                      <span className="px-2 py-1 bg-secondary-container/30 text-secondary">
+                        {formatUSD(minPrice || 0)} – {maxPrice ? formatUSD(maxPrice) : '∞'}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
 
               {loading ? (
@@ -822,57 +1131,370 @@ const Dashboard = () => {
                 </div>
               ) : filteredItems.length === 0 ? (
                 <div className="text-center py-20 border border-dashed border-outline-variant/60 text-on-surface-variant">
-                  {searchTerm ? 'No matches found for your search query.' : 'Your atelier catalog is empty. Create your first product to get started.'}
+                  {inventoryFiltersActive ? 'No products match your search or filters.' : 'Your atelier catalog is empty. Create your first product to get started.'}
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {filteredItems.map((item) => {
-                    // Strip the spec details from visual description
-                    const rawDesc = item.description || '';
-                    const baseDesc = rawDesc.split('\n\n---\n')[0];
+                <section className="bento-card border border-outline-variant/30 overflow-hidden">
+                  <div className="divide-y divide-outline-variant/20">
+                    {filteredItems.map((item) => {
+                      const rawDesc = item.description || '';
+                      const baseDesc = rawDesc.split('\n\n---\n')[0];
+                      const imageUrl =
+                        resolveImageUrl(item.image) ||
+                        'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=400&q=80';
 
-                    return (
-                      <div 
-                        key={item._id} 
-                        className="bento-card border border-outline-variant/40 p-6 flex flex-col justify-between h-72 shadow-sm"
-                      >
-                        <div>
-                          <div className="flex justify-between items-start mb-4">
-                            <h4 className="font-headline-md text-lg text-primary font-medium tracking-tight truncate w-44">{item.name}</h4>
-                            <span className={`font-label-caps text-[10px] px-2.5 py-1 uppercase font-bold rounded-sm ${item.quantity < 5 ? 'bg-red-100 text-red-700' : 'bg-surface-container text-on-surface-variant'}`}>
-                              Qty: {item.quantity}
+                      return (
+                        <div
+                          key={item._id}
+                          className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 md:p-5 hover:bg-surface-container-lowest transition-colors"
+                        >
+                          <div className="w-full sm:w-24 md:w-28 h-24 md:h-28 flex-shrink-0 bg-surface-container-low overflow-hidden border border-outline-variant/20">
+                            <img
+                              src={imageUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <h4 className="font-headline-md text-base text-primary font-medium truncate">
+                                {item.name}
+                              </h4>
+                              <span className="font-label-caps text-[10px] px-2 py-0.5 uppercase tracking-wider bg-surface-container text-on-surface-variant rounded-sm">
+                                {item.category || 'Uncategorized'}
+                              </span>
+                              <span
+                                className={`font-label-caps text-[10px] px-2 py-0.5 uppercase font-bold rounded-sm ${
+                                  item.quantity < 5
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-surface-container text-on-surface-variant'
+                                }`}
+                              >
+                                Qty: {item.quantity}
+                              </span>
+                            </div>
+                            <p className="text-sm text-on-surface-variant font-light line-clamp-2">
+                              {baseDesc || 'No product narrative available.'}
+                            </p>
+                          </div>
+
+                          <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-3 sm:min-w-[140px] sm:text-right border-t sm:border-t-0 border-outline-variant/20 pt-3 sm:pt-0">
+                            <span className="font-bold text-lg text-primary whitespace-nowrap">
+                              {formatUSD(item.price || 0)}
                             </span>
-                          </div>
-                          <p className="text-sm text-on-surface-variant font-light mb-6 line-clamp-4">
-                            {baseDesc || 'No product narrative available.'}
-                          </p>
-                        </div>
-                        
-                        <div className="flex justify-between items-center pt-4 border-t border-outline-variant/20">
-                          <span className="font-bold text-lg text-primary">
-                            ${(item.price || 0).toLocaleString()}
-                          </span>
-                          <div className="flex gap-4">
-                            <button
-                              onClick={() => handleEdit(item)}
-                              className="text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors flex items-center gap-1"
-                            >
-                              <span className="material-symbols-outlined text-sm">edit</span>
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => handleDelete(item._id)}
-                              className="text-xs font-semibold uppercase tracking-wider text-error hover:opacity-80 transition-colors flex items-center gap-1"
-                            >
-                              <span className="material-symbols-outlined text-sm">delete</span>
-                              Delete
-                            </button>
+                            <div className="flex gap-4">
+                              <button
+                                type="button"
+                                onClick={() => handleEdit(item)}
+                                className="text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">edit</span>
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(item._id)}
+                                className="text-xs font-semibold uppercase tracking-wider text-error hover:opacity-80 transition-colors flex items-center gap-1"
+                              >
+                                <span className="material-symbols-outlined text-sm">delete</span>
+                                Delete
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* VIEW: ORDERS */}
+          {view === 'orders' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex flex-wrap justify-between items-end gap-4">
+                <div>
+                  <h3 className="font-display-lg text-3xl font-light text-primary">Order Management</h3>
+                  <p className="text-on-surface-variant text-sm mt-1">Track and update orders from your catalog.</p>
                 </div>
+                <button
+                  type="button"
+                  onClick={fetchOrders}
+                  className="text-xs font-label-caps uppercase tracking-wider border border-outline-variant px-4 py-2 hover:border-primary transition-colors flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                  Refresh
+                </button>
+              </div>
+
+              <div className="bento-card border border-outline-variant/30 p-5 space-y-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-secondary text-xl">tune</span>
+                    <div>
+                      <p className="font-label-caps text-xs uppercase tracking-widest text-primary">Smart Filters</p>
+                      <p className="text-xs text-on-surface-variant">
+                        Showing {filteredOrders.length} of {orders.length} orders
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {orderFiltersActive && (
+                      <button
+                        type="button"
+                        onClick={clearOrderFilters}
+                        className="text-xs font-label-caps uppercase tracking-wider text-secondary hover:text-primary transition-colors"
+                      >
+                        Clear all
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowOrderFilters((prev) => !prev)}
+                      className="text-xs font-label-caps uppercase tracking-wider border border-outline-variant px-3 py-2 hover:border-primary transition-colors"
+                    >
+                      {showOrderFilters ? 'Hide' : 'Show'}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative">
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/30 focus:ring-1 focus:ring-primary py-3 px-10 text-sm rounded-full"
+                    placeholder="Smart search: #9842, paid, shipped, marble, >500..."
+                    value={orderSearch}
+                    onChange={(e) => setOrderSearch(e.target.value)}
+                  />
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                </div>
+
+                {showOrderFilters && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 pt-2 border-t border-outline-variant/20">
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Order status</label>
+                      <select
+                        value={orderStatusFilter}
+                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary capitalize"
+                      >
+                        <option value="all">All statuses</option>
+                        {ORDER_STATUSES.map((status) => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Payment</label>
+                      <select
+                        value={orderPaymentFilter}
+                        onChange={(e) => setOrderPaymentFilter(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary capitalize"
+                      >
+                        <option value="all">All payments</option>
+                        <option value="pending">Pending</option>
+                        <option value="paid">Paid</option>
+                        <option value="failed">Failed</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Min amount ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={orderMinAmount}
+                        onChange={(e) => setOrderMinAmount(e.target.value)}
+                        placeholder="0"
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Max amount ($)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={orderMaxAmount}
+                        onChange={(e) => setOrderMaxAmount(e.target.value)}
+                        placeholder="Any"
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant block mb-2">Sort by</label>
+                      <select
+                        value={orderSortBy}
+                        onChange={(e) => setOrderSortBy(e.target.value)}
+                        className="w-full bg-surface-container-low border border-outline-variant/30 py-2.5 px-3 text-sm focus:outline-none focus:border-primary"
+                      >
+                        <option value="newest">Newest first</option>
+                        <option value="oldest">Oldest first</option>
+                        <option value="amount_desc">Amount: high to low</option>
+                        <option value="amount_asc">Amount: low to high</option>
+                        <option value="customer_asc">Customer A to Z</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {ordersLoading ? (
+                <div className="text-center py-20 text-on-surface-variant font-light">Loading orders...</div>
+              ) : filteredOrders.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-outline-variant/60 text-on-surface-variant">
+                  {orders.length === 0 ? 'No orders yet.' : 'No orders match your search or filter.'}
+                </div>
+              ) : (
+                <section className="bento-card border border-outline-variant/30 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[900px]">
+                      <thead>
+                        <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Order</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Customer</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Items</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Amount</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Payment</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Status</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/20">
+                        {filteredOrders.map((order) => (
+                          <tr key={order._id} className="hover:bg-surface-container-lowest transition-colors">
+                            <td className="px-6 py-4">
+                              <p className="font-bold text-primary">#{order.orderCode}</p>
+                              <p className="text-xs text-on-surface-variant mt-1">
+                                {order.createdAt ? new Date(order.createdAt).toLocaleDateString('vi-VN') : '—'}
+                              </p>
+                            </td>
+                            <td className="px-6 py-4">
+                              <p className="font-medium">{order.customer?.fullName || 'Unknown'}</p>
+                              <p className="text-xs text-on-surface-variant">{order.customer?.email || '—'}</p>
+                            </td>
+                            <td className="px-6 py-4 text-sm text-on-surface-variant max-w-xs">
+                              {formatOrderItems(order) || '—'}
+                            </td>
+                            <td className="px-6 py-4 font-bold text-primary whitespace-nowrap">
+                              ${getStoreOrderTotal(order).toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className={`font-label-caps text-[10px] px-2.5 py-1 uppercase font-bold rounded-sm inline-block ${
+                                order.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+                                order.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
+                                'bg-amber-100 text-amber-700'
+                              }`}>
+                                {order.paymentStatus || 'pending'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <select
+                                value={order.status || 'pending'}
+                                onChange={(e) => handleOrderStatusChange(order._id, e.target.value)}
+                                className="bg-surface-container-low border border-outline-variant/30 py-2 px-2 text-xs focus:outline-none focus:border-primary capitalize"
+                              >
+                                {ORDER_STATUSES.map((status) => (
+                                  <option key={status} value={status}>{status}</option>
+                                ))}
+                              </select>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/orders/${order._id}`)}
+                                className="text-xs font-semibold uppercase tracking-wider text-secondary hover:text-primary transition-colors"
+                              >
+                                View
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+          )}
+
+          {/* VIEW: CUSTOMERS */}
+          {view === 'customers' && (
+            <div className="space-y-8 animate-fade-in">
+              <div className="flex flex-wrap justify-between items-end gap-4">
+                <div>
+                  <h3 className="font-display-lg text-3xl font-light text-primary">Customer Directory</h3>
+                  <p className="text-on-surface-variant text-sm mt-1">Customers who purchased from your store.</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={fetchCustomers}
+                  className="text-xs font-label-caps uppercase tracking-wider border border-outline-variant px-4 py-2 hover:border-primary transition-colors flex items-center gap-1"
+                >
+                  <span className="material-symbols-outlined text-sm">refresh</span>
+                  Refresh
+                </button>
+              </div>
+
+              <div className="bento-card border border-outline-variant/30 p-5">
+                <div className="relative">
+                  <input
+                    className="w-full bg-surface-container-low border border-outline-variant/30 focus:ring-1 focus:ring-primary py-3 px-10 text-sm rounded-full"
+                    placeholder="Search customer name or email..."
+                    value={customerSearch}
+                    onChange={(e) => setCustomerSearch(e.target.value)}
+                  />
+                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
+                </div>
+                <p className="text-xs text-on-surface-variant mt-3">
+                  Showing {filteredCustomers.length} of {customers.length} customers
+                </p>
+              </div>
+
+              {customersLoading ? (
+                <div className="text-center py-20 text-on-surface-variant font-light">Loading customers...</div>
+              ) : filteredCustomers.length === 0 ? (
+                <div className="text-center py-20 border border-dashed border-outline-variant/60 text-on-surface-variant">
+                  {customers.length === 0 ? 'No customers yet.' : 'No customers match your search.'}
+                </div>
+              ) : (
+                <section className="bento-card border border-outline-variant/30 overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[720px]">
+                      <thead>
+                        <tr className="bg-surface-container-low border-b border-outline-variant/30">
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Customer</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Email</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Orders</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Total spent</th>
+                          <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Last order</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-outline-variant/20">
+                        {filteredCustomers.map((entry) => (
+                          <tr key={entry.customer?._id} className="hover:bg-surface-container-lowest transition-colors">
+                            <td className="px-6 py-4 font-medium text-primary">
+                              {entry.customer?.fullName || 'Unknown'}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-on-surface-variant">
+                              {entry.customer?.email || '—'}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-label-caps text-[10px] px-2.5 py-1 uppercase font-bold rounded-sm bg-surface-container text-on-surface-variant inline-block">
+                                {entry.orderCount}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 font-bold text-primary">
+                              ${Number(entry.totalSpent || 0).toLocaleString()}
+                            </td>
+                            <td className="px-6 py-4 text-sm text-on-surface-variant">
+                              {entry.lastOrderAt ? new Date(entry.lastOrderAt).toLocaleDateString('vi-VN') : '—'}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
               )}
             </div>
           )}
@@ -1213,13 +1835,6 @@ const Dashboard = () => {
                 </div>
               </div>
 
-              {withdrawSuccess && (
-                <div className="p-4 bg-emerald-50 text-emerald-800 border border-emerald-200 text-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined text-emerald-600">check_circle</span>
-                  {withdrawSuccess}
-                </div>
-              )}
-
               {/* Balance Card + Withdraw Button */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter">
                 <div className="md:col-span-2 bento-card border border-outline-variant/30 p-8 flex flex-col justify-between" style={{background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)'}}>
@@ -1237,9 +1852,9 @@ const Dashboard = () => {
                   ) : (
                     <div className="mt-8">
                       <span className="font-display-lg text-5xl font-light text-white leading-none">
-                        {walletBalance.toLocaleString('vi-VN')} ₫
+                        {formatUSD(walletBalance)}
                       </span>
-                      <p className="text-white/40 text-xs mt-3 font-label-caps">VNĐ khả dụng để rút</p>
+                      <p className="text-white/40 text-xs mt-3 font-label-caps">USD available to withdraw</p>
                     </div>
                   )}
                 </div>
@@ -1248,19 +1863,19 @@ const Dashboard = () => {
                   <div>
                     <span className="font-label-caps text-label-caps text-on-surface-variant block mb-2">Quick Actions</span>
                     <p className="text-xs text-on-surface-variant leading-relaxed">
-                      Gửi yêu cầu rút tiền về tài khoản ngân hàng. Admin sẽ xét duyệt trong 1-3 ngày làm việc.
+                      Send a withdrawal request to your bank account. Admin will review within 1–3 business days.
                     </p>
                   </div>
                   <button
-                    onClick={() => { setWithdrawError(''); setWithdrawSuccess(''); setShowWithdrawModal(true); }}
+                    onClick={openWithdrawModal}
                     disabled={walletBalance <= 0}
                     className="w-full mt-6 bg-primary text-white font-label-caps text-xs uppercase tracking-widest py-4 hover:bg-secondary transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     <span className="material-symbols-outlined text-sm">download</span>
-                    Rút Tiền
+                    Withdraw
                   </button>
                   {walletBalance <= 0 && (
-                    <p className="text-[10px] text-on-surface-variant text-center mt-2">Số dư ví bằng 0, không thể rút tiền</p>
+                    <p className="text-[10px] text-on-surface-variant text-center mt-2">Wallet balance is zero. Withdrawals are unavailable.</p>
                   )}
                 </div>
               </div>
@@ -1268,35 +1883,35 @@ const Dashboard = () => {
               {/* Withdrawal History Table */}
               <section className="bento-card border border-outline-variant/30 overflow-hidden">
                 <div className="px-8 py-6 border-b border-outline-variant/30 flex justify-between items-center bg-white">
-                  <h4 className="font-headline-md text-headline-md">Lịch Sử Yêu Cầu Rút Tiền</h4>
+                  <h4 className="font-headline-md text-headline-md">Withdrawal History</h4>
                   <button onClick={fetchWallet} className="text-xs text-secondary hover:underline font-label-caps flex items-center gap-1">
-                    <span className="material-symbols-outlined text-sm">refresh</span> Làm mới
+                    <span className="material-symbols-outlined text-sm">refresh</span> Refresh
                   </button>
                 </div>
                 {walletLoading ? (
-                  <div className="text-center py-12 text-on-surface-variant text-sm">Đang tải...</div>
+                  <div className="text-center py-12 text-on-surface-variant text-sm">Loading...</div>
                 ) : withdrawals.length === 0 ? (
                   <div className="text-center py-12 text-on-surface-variant text-sm border border-dashed border-outline-variant/40 m-8">
                     <span className="material-symbols-outlined text-4xl mb-3 opacity-30 block">receipt_long</span>
-                    Chưa có yêu cầu rút tiền nào.
+                    No withdrawal requests yet.
                   </div>
                 ) : (
                   <div className="overflow-x-auto">
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="bg-surface-container-low">
-                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Ngày gửi</th>
-                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Số tiền</th>
-                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Ngân hàng</th>
-                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Số TK</th>
-                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-right">Trạng thái</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Submitted</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Amount</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Bank</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Account</th>
+                          <th className="px-8 py-4 font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest text-right">Status</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-outline-variant/20">
                         {withdrawals.map((w) => (
                           <tr key={w._id} className="hover:bg-surface-container-lowest transition-colors">
-                            <td className="px-8 py-5 text-sm text-on-surface-variant">{new Date(w.createdAt).toLocaleDateString('vi-VN')}</td>
-                            <td className="px-8 py-5 font-bold text-primary">{Number(w.amount).toLocaleString('vi-VN')} ₫</td>
+                            <td className="px-8 py-5 text-sm text-on-surface-variant">{new Date(w.createdAt).toLocaleDateString('en-US')}</td>
+                            <td className="px-8 py-5 font-bold text-primary">{formatUSD(w.amount)}</td>
                             <td className="px-8 py-5 text-sm">{w.bankName}</td>
                             <td className="px-8 py-5 text-sm font-mono">{w.accountNumber}</td>
                             <td className="px-8 py-5 text-right">
@@ -1305,10 +1920,10 @@ const Dashboard = () => {
                                 w.status === 'accepted' ? 'bg-emerald-100 text-emerald-700' :
                                 'bg-red-100 text-red-700'
                               }`}>
-                                {w.status === 'pending' ? 'Đang chờ' : w.status === 'accepted' ? 'Đã duyệt' : 'Từ chối'}
+                                {w.status === 'pending' ? 'Pending' : w.status === 'accepted' ? 'Approved' : 'Rejected'}
                               </span>
                               {w.status === 'rejected' && w.note && (
-                                <p className="text-[10px] text-red-500 mt-1 text-right">Lý do: {w.note}</p>
+                                <p className="text-[10px] text-red-500 mt-1 text-right">Reason: {w.note}</p>
                               )}
                             </td>
                           </tr>
@@ -1325,17 +1940,26 @@ const Dashboard = () => {
         {/* Withdraw Modal */}
         {showWithdrawModal && (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/40 backdrop-blur-sm">
+            {withdrawModalSuccess ? (
+              <div className="max-w-md w-full p-10 text-center border-2 border-emerald-600 bg-emerald-50">
+                <span className="material-symbols-outlined text-emerald-600 text-5xl mb-4 block">check_circle</span>
+                <h3 className="font-headline-md text-lg text-emerald-900 font-bold mb-2">Request Submitted</h3>
+                <p className="text-sm text-emerald-800 leading-relaxed">
+                  Your withdrawal request was sent successfully. Admin will review it shortly.
+                </p>
+              </div>
+            ) : (
             <form onSubmit={handleWithdrawSubmit} className="bg-white max-w-md w-full p-8 shadow-2xl border border-outline-variant/50">
               <div className="flex justify-between items-center mb-6">
-                <h3 className="font-headline-md text-lg text-primary font-bold">Yêu Cầu Rút Tiền</h3>
-                <button type="button" onClick={() => setShowWithdrawModal(false)} className="text-on-surface-variant hover:text-primary">
+                <h3 className="font-headline-md text-lg text-primary font-bold">Withdrawal Request</h3>
+                <button type="button" onClick={closeWithdrawModal} className="text-on-surface-variant hover:text-primary">
                   <span className="material-symbols-outlined">close</span>
                 </button>
               </div>
 
               <div className="mb-6 p-4 bg-surface-container-low border border-outline-variant/20">
-                <span className="font-label-caps text-[10px] text-on-surface-variant block">Số dư hiện tại</span>
-                <span className="font-display-lg text-2xl text-primary font-light">{walletBalance.toLocaleString('vi-VN')} ₫</span>
+                <span className="font-label-caps text-[10px] text-on-surface-variant block">Current balance</span>
+                <span className="font-display-lg text-2xl text-primary font-light">{formatUSD(walletBalance)}</span>
               </div>
 
               {withdrawError && (
@@ -1344,12 +1968,12 @@ const Dashboard = () => {
 
               <div className="space-y-6">
                 <div className="relative">
-                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Số tiền muốn rút (VNĐ)</label>
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Amount (USD)</label>
                   <input
                     type="number"
-                    min="1000"
+                    min="1"
                     max={walletBalance}
-                    step="1000"
+                    step="0.01"
                     required
                     value={withdrawAmount}
                     onChange={(e) => setWithdrawAmount(e.target.value)}
@@ -1358,20 +1982,20 @@ const Dashboard = () => {
                   />
                   {withdrawAmount && (
                     <span className="absolute right-0 bottom-4 text-xs text-on-surface-variant">
-                      = {Number(withdrawAmount).toLocaleString('vi-VN')} ₫
+                      = {formatUSD(withdrawAmount || 0)}
                     </span>
                   )}
                 </div>
 
                 <div className="relative">
-                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Ngân Hàng</label>
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Bank</label>
                   <select
                     required
                     value={withdrawBank}
                     onChange={(e) => setWithdrawBank(e.target.value)}
-                    className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary appearance-none cursor-pointer focus:outline-none focus:border-primary transition-colors"
+                    className="withdraw-bank-select w-full bg-transparent border-0 border-b border-outline-variant py-4 pr-8 text-sm text-primary cursor-pointer focus:outline-none focus:border-primary transition-colors"
                   >
-                    <option value="">-- Chọn ngân hàng --</option>
+                    <option value="">Select bank</option>
                     <option value="Vietcombank">Vietcombank (VCB)</option>
                     <option value="BIDV">BIDV</option>
                     <option value="Agribank">Agribank</option>
@@ -1395,29 +2019,33 @@ const Dashboard = () => {
                     <option value="Cake by VPBank">Cake by VPBank</option>
                     <option value="Timo by Ban Viet">Timo by Ban Viet</option>
                   </select>
-                  <span className="material-symbols-outlined absolute right-0 bottom-4 text-on-surface-variant text-[18px] pointer-events-none">expand_more</span>
+                  <span className="absolute right-0 bottom-4 pointer-events-none text-on-surface-variant" aria-hidden="true">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="m6 9 6 6 6-6" />
+                    </svg>
+                  </span>
                 </div>
 
                 <div className="relative">
-                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Số Tài Khoản</label>
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Account number</label>
                   <input
                     type="text"
                     required
                     value={withdrawAccount}
                     onChange={(e) => setWithdrawAccount(e.target.value)}
-                    placeholder="Nhập số tài khoản ngân hàng"
+                    placeholder="Enter bank account number"
                     className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary font-mono"
                   />
                 </div>
 
                 <div className="relative">
-                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Tên Chủ Tài Khoản</label>
+                  <label className="font-label-caps text-[10px] uppercase tracking-widest text-on-surface-variant absolute -top-3 left-0 bg-white px-1">Account holder name</label>
                   <input
                     type="text"
                     required
                     value={withdrawHolder}
                     onChange={(e) => setWithdrawHolder(e.target.value)}
-                    placeholder="Nhập tên chủ tài khoản (in hoa)"
+                    placeholder="Enter account holder name (uppercase)"
                     className="w-full bg-transparent border-0 border-b border-outline-variant py-4 text-sm text-primary uppercase"
                   />
                 </div>
@@ -1426,20 +2054,21 @@ const Dashboard = () => {
               <div className="mt-8 flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setShowWithdrawModal(false)}
+                  onClick={closeWithdrawModal}
                   className="flex-1 py-3 border border-outline-variant text-on-surface-variant font-label-caps text-xs uppercase hover:bg-surface transition-colors"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={withdrawSubmitting}
                   className="flex-1 py-3 bg-primary text-white font-label-caps text-xs uppercase hover:bg-secondary transition-colors shadow disabled:opacity-60"
                 >
-                  {withdrawSubmitting ? 'Đang gửi...' : 'Gửi Yêu Cầu'}
+                  {withdrawSubmitting ? 'Submitting...' : 'Submit Request'}
                 </button>
               </div>
             </form>
+            )}
           </div>
         )}
 

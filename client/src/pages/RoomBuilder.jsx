@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/api';
+import { formatUSD } from '../utils/currency';
 
 const RoomBuilder = () => {
   const navigate = useNavigate();
@@ -169,7 +170,7 @@ const RoomBuilder = () => {
                 {selectedProduct.category}
               </span>
               <h1 className="text-3xl font-light tracking-tight text-[#1a1c1a] mt-4">{selectedProduct.name}</h1>
-              <p className="text-2xl font-light text-[#707973] mt-2">{(selectedProduct.price || 0).toLocaleString()} đ</p>
+              <p className="text-2xl font-light text-[#707973] mt-2">{formatUSD(selectedProduct.price || 0)}</p>
             </div>
 
             <hr className="border-[#e5e5e1]" />

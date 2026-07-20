@@ -27,41 +27,76 @@ try {
   console.error('Error reading SSL certificates. Make sure key.pem and cert.pem exist in the project root.', error);
 }
 
-const seedAdminUser = async () => {
+const TEST_ACCOUNTS = [
+  {
+    email: 'admin@lumina.com',
+    password: 'adminpassword123',
+    fullName: 'Lumina Admin',
+    role: 'admin',
+    vendorStatus: 'none',
+  },
+  {
+    email: 'customer@test.com',
+    password: '123456',
+    fullName: 'Test Customer',
+    role: 'customer',
+    vendorStatus: 'none',
+  },
+  {
+    email: 'store@test.com',
+    password: '123456',
+    fullName: 'Test Store',
+    role: 'store',
+    vendorStatus: 'approved',
+    companyName: 'Test Atelier',
+  },
+];
+
+const seedTestAccounts = async () => {
   try {
-    const adminEmail = 'admin@lumina.com';
-    const adminUser = await User.findOne({ email: adminEmail });
-    if (!adminUser) {
+    for (const account of TEST_ACCOUNTS) {
+      const email = account.email.toLowerCase();
+      const existing = await User.findOne({ email });
       const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash('adminpassword123', salt);
-      
-      const newAdmin = new User({
-        fullName: 'Lumina Admin',
-        email: adminEmail,
-        password: hashedPassword,
-        isVerified: true,
-        role: 'admin',
-        vendorStatus: 'none',
-      });
-      
-      await newAdmin.save();
-      console.log('--------------------------------------------------');
-      console.log('TEST ADMIN ACCOUNT SEEDED SUCCESSFULLY!');
-      console.log('Email: admin@lumina.com');
-      console.log('Password: adminpassword123');
-      console.log('--------------------------------------------------');
-    } else {
-      console.log('Test Admin Account already exists.');
+      const hashedPassword = await bcrypt.hash(account.password, salt);
+
+      if (!existing) {
+        await new User({
+          fullName: account.fullName,
+          email,
+          password: hashedPassword,
+          isVerified: true,
+          role: account.role,
+          vendorStatus: account.vendorStatus,
+          companyName: account.companyName || '',
+        }).save();
+        console.log(`Test account created: ${email}`);
+      } else {
+        existing.password = hashedPassword;
+        existing.isVerified = true;
+        existing.role = account.role;
+        existing.vendorStatus = account.vendorStatus;
+        if (account.companyName) existing.companyName = account.companyName;
+        await existing.save();
+        console.log(`Test account ready: ${email}`);
+      }
     }
+
+    console.log('--------------------------------------------------');
+    console.log('TEST ACCOUNTS');
+    console.log('Admin:    admin@lumina.com / adminpassword123');
+    console.log('Customer: customer@test.com / 123456');
+    console.log('Store:    store@test.com / 123456');
+    console.log('--------------------------------------------------');
   } catch (err) {
-    console.error('Failed to seed admin user:', err.message);
+    console.error('Failed to seed test accounts:', err.message);
   }
 };
 
 mongoose.connect(process.env.MONGO_URI)
     .then(async () => {
         console.log("MongoDB Connected");
-        await seedAdminUser();
+        await seedTestAccounts();
 
         if (credentials.key && credentials.cert) {
             const httpsServer = https.createServer(credentials, app);

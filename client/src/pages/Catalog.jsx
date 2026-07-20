@@ -2,6 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/api';
 import gsap from 'gsap';
+import CartLink from '../components/CartLink';
+import FavoritesLink from '../components/FavoritesLink';
+import FavoriteButton from '../components/FavoriteButton';
+import { formatUSD } from '../utils/currency';
 
 const Catalog = () => {
   const navigate = useNavigate();
@@ -106,9 +110,8 @@ const Catalog = () => {
           <Link to="/" className="text-xs font-bold uppercase tracking-widest px-4 py-2 hover:opacity-70 transition-opacity">
             Trang Chủ
           </Link>
-          <Link to="/cart" className="text-xs font-bold uppercase tracking-widest px-4 py-2 hover:opacity-70 transition-opacity flex items-center gap-1">
-            Giỏ Hàng <span className="material-symbols-outlined text-sm">shopping_cart</span>
-          </Link>
+          <FavoritesLink variant="catalog" />
+          <CartLink variant="catalog" />
         </div>
       </header>
 
@@ -213,6 +216,9 @@ const Catalog = () => {
                       alt={product.name}
                       src={product.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'}
                     />
+                    <div className="absolute top-3 left-3">
+                      <FavoriteButton productId={product._id} size="sm" />
+                    </div>
                     <div className="absolute top-3 right-3 flex flex-col gap-1">
                       {product.model3d && (
                         <span className="bg-[#006a50] text-white text-[9px] font-bold px-2 py-0.5 uppercase tracking-wider flex items-center gap-1 shadow-sm">
@@ -233,7 +239,7 @@ const Catalog = () => {
                     </span>
                   </div>
                   <p className="text-xs text-[#707973] mb-2 uppercase tracking-widest">{product.category}</p>
-                  <p className="text-[#1a1c1a] font-bold text-sm">{product.price?.toLocaleString() || '0'} đ</p>
+                  <p className="text-[#1a1c1a] font-bold text-sm">{formatUSD(product.price || 0)}</p>
                 </Link>
               ))}
             </div>

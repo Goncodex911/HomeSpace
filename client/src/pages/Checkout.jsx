@@ -2,10 +2,13 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { AuthContext } from '../context/AuthContext';
+import { CartContext } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import { formatUSD } from '../utils/currency';
 
 const Checkout = () => {
-  const { user } = useContext(AuthContext);
+  const { user, syncUser } = useContext(AuthContext);
+  const { applyCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   const [cartItems, setCartItems] = useState([]);
@@ -25,44 +28,68 @@ const Checkout = () => {
   const email = user?.email || '';
 
   useEffect(() => {
+    const refreshProfile = async () => {
+      try {
+        const res = await api('/auth/profile');
+        if (res.user) syncUser(res.user);
+      } catch {
+        // keep cached user if refresh fails
+      }
+    };
+
+    refreshProfile();
+  }, [syncUser]);
+
+  useEffect(() => {
     const list = [];
-    if (user) {
-      // 1. Add default address if it exists
-      if (user.streetAddress) {
-        list.push({
-          streetAddress: user.streetAddress,
-          city: user.city || '',
-          state: user.state || '',
-          zipCode: user.zipCode || '',
-          isDefault: true,
-          fullName: user.fullName || 'Default Recipient',
-          phone: user.phone || ''
-        });
-      }
-      // 2. Add other addresses from user.addresses
-      if (user.addresses && user.addresses.length > 0) {
-        user.addresses.forEach(addr => {
-          list.push({
-            streetAddress: addr.address,
-            city: '',
-            state: '',
-            zipCode: '',
-            isDefault: addr.isDefault || false,
-            fullName: addr.fullName,
-            phone: addr.phone
-          });
-        });
-      }
+
+    if (user?.streetAddress) {
+      list.push({
+        streetAddress: user.streetAddress,
+        city: user.city || '',
+        state: user.state || '',
+        zipCode: user.zipCode || '',
+        isDefault: !user.addresses?.length,
+        fullName: user.fullName || 'Default Recipient',
+        phone: user.phone || '',
+      });
     }
+
+    if (user?.addresses?.length) {
+      user.addresses.forEach((addr) => {
+        list.push({
+          streetAddress: addr.address,
+          city: '',
+          state: '',
+          zipCode: '',
+          isDefault: addr.isDefault || false,
+          fullName: addr.fullName,
+          phone: addr.phone,
+        });
+      });
+    }
+
     setAvailableAddresses(list);
-    
-    // Set initial shipping address state to first item
+
     if (list.length > 0) {
+      const defaultIndex = Math.max(
+        list.findIndex((addr) => addr.isDefault),
+        0
+      );
+      setSelectedAddressIndex(defaultIndex);
       setShippingAddress({
-        streetAddress: list[0].streetAddress,
-        city: list[0].city,
-        state: list[0].state,
-        zipCode: list[0].zipCode
+        streetAddress: list[defaultIndex].streetAddress,
+        city: list[defaultIndex].city,
+        state: list[defaultIndex].state,
+        zipCode: list[defaultIndex].zipCode,
+      });
+    } else {
+      setSelectedAddressIndex(0);
+      setShippingAddress({
+        streetAddress: '',
+        city: '',
+        state: '',
+        zipCode: '',
       });
     }
   }, [user]);
@@ -118,14 +145,20 @@ const Checkout = () => {
         method: 'POST',
         body: {
           items: itemsToOrder,
-          shippingAddress
+          shippingAddress: {
+            streetAddress: shippingAddress.streetAddress,
+            city: shippingAddress.city || '',
+            state: shippingAddress.state || '',
+            zipCode: shippingAddress.zipCode || '',
+          },
         }
       });
 
       if (res.checkoutUrl) {
+        applyCart({ items: [] });
         window.location.href = res.checkoutUrl;
       } else {
-        // Navigate to orders history
+        applyCart({ items: [] });
         navigate('/settings', { state: { activeTab: 'orders' } });
       }
     } catch (err) {
@@ -235,7 +268,7 @@ const Checkout = () => {
                 </div>
               ) : (
                 <div className="bg-error-container text-on-error-container p-4 rounded border border-error/20 font-body-md">
-                  You do not have a saved shipping address. Please go to <Link to="/settings" className="underline font-bold">Settings</Link> to add your address before proceeding.
+                  You do not have a saved shipping address. Please go to <Link to="/settings" state={{ activeTab: 'addresses' }} className="underline font-bold">Settings → Saved Addresses</Link> to add one before proceeding.
                 </div>
               )}
             </section>
@@ -251,7 +284,7 @@ const Checkout = () => {
               <button
                 className="bg-primary text-on-primary px-10 py-5 font-label-caps text-label-caps uppercase tracking-[0.2em] hover:opacity-90 active:scale-95 transition-all disabled:opacity-50"
                 type="submit"
-                disabled={placingOrder || !user?.streetAddress}
+                disabled={placingOrder || availableAddresses.length === 0}
               >
                 {placingOrder ? 'PLACING ORDER...' : 'PLACE ORDER'}
               </button>
@@ -277,7 +310,7 @@ const Checkout = () => {
                       <p className="font-label-caps text-label-caps uppercase text-primary">{cartItem.item.name}</p>
                       <p className="text-[10px] text-on-surface-variant uppercase mt-1">Qty: {cartItem.quantity}</p>
                     </div>
-                    <p className="font-body-md text-primary">${cartItem.item.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                    <p className="font-body-md text-primary">{formatUSD(cartItem.item.price)}</p>
                   </div>
                 </div>
               ))}
@@ -287,21 +320,21 @@ const Checkout = () => {
             <div className="space-y-3 pt-6 border-t border-outline-variant/30">
               <div className="flex justify-between text-body-md text-on-surface-variant">
                 <span>Subtotal</span>
-                <span>${subtotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>{formatUSD(subtotal)}</span>
               </div>
               <div className="flex justify-between text-body-md text-on-surface-variant">
                 <span>Shipping</span>
-                <span>${shippingEstimate.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>{formatUSD(shippingEstimate)}</span>
               </div>
               <div className="flex justify-between text-body-md text-on-surface-variant">
                 <span>Estimated Tax</span>
-                <span>${tax.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                <span>{formatUSD(tax)}</span>
               </div>
               <div className="flex justify-between pt-4 mt-4 border-t border-primary/10">
                 <span className="font-headline-md text-headline-md uppercase">Total</span>
                 <div className="text-right">
                   <p className="text-[10px] text-on-surface-variant uppercase mb-1">USD</p>
-                  <p className="font-headline-md text-headline-md">${grandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+                  <p className="font-headline-md text-headline-md">{formatUSD(grandTotal)}</p>
                 </div>
               </div>
             </div>

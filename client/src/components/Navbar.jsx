@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
+import CartLink from './CartLink';
+import FavoritesLink from './FavoritesLink';
 
 const Navbar = ({ transparentOnScroll = false, showSearch = false, onSearchChange = null, searchValue = "", customActions = null }) => {
   const { user, logout, token } = useContext(AuthContext);
@@ -95,9 +97,8 @@ const Navbar = ({ transparentOnScroll = false, showSearch = false, onSearchChang
               <span className="text-sm hidden sm:inline text-on-surface-variant">
                 Hello, <strong>{user?.fullName}</strong>
               </span>
-              <Link to="/cart" className="flex items-center text-on-surface hover:text-primary hover:opacity-85 transition-all relative" title="Cart">
-                <span className="material-symbols-outlined text-2xl">shopping_cart</span>
-              </Link>
+              <FavoritesLink />
+              <CartLink />
               <Link to="/settings" className="flex items-center text-on-surface hover:text-primary hover:opacity-85 transition-all" title="Profile Settings">
                 <span className="material-symbols-outlined text-2xl">person</span>
               </Link>

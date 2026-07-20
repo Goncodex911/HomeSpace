@@ -1,16 +1,33 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { vietnamAddressData } from '../services/vietnamAddressData';
-import api from '../api/api';
+import api, { resolveImageUrl, uploadAvatar } from '../api/api';
+import FavoriteButton from '../components/FavoriteButton';
+import { FavoritesContext } from '../context/FavoritesContext';
+import { CartContext } from '../context/CartContext';
+import toast from 'react-hot-toast';
+import { formatUSD } from '../utils/currency';
 
 const Settings = () => {
-  const { user, logout, updateProfile, token } = useContext(AuthContext);
+  const { user, logout, updateProfile, syncUser, token } = useContext(AuthContext);
+  const { favoriteCount, refreshFavorites } = useContext(FavoritesContext);
+  const { applyCart } = useContext(CartContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const avatarInputRef = useRef(null);
+
+  const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   // Tab State
   const [activeTab, setActiveTab] = useState(location.state?.activeTab || 'profile');
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+    }
+  }, [location.state]);
 
   // Profile Form State
   const [formData, setFormData] = useState({
@@ -33,30 +50,16 @@ const Settings = () => {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+  const [rebuyingOrderId, setRebuyingOrderId] = useState(null);
+
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoritesError, setFavoritesError] = useState('');
 
   // 2. Saved Addresses State
-  const [savedAddresses, setSavedAddresses] = useState([
-    {
-      id: 1,
-      name: 'Alexander Vance',
-      phone: '+84 912 345 678',
-      streetAddress: '742 Nguyễn Huệ, Phường Bến Nghé',
-      city: 'Quận 1',
-      state: 'Hồ Chí Minh',
-      zipCode: '700000',
-      isDefault: true,
-    },
-    {
-      id: 2,
-      name: 'Alexander Vance (Studio Office)',
-      phone: '+84 903 888 999',
-      streetAddress: 'Căn hộ 402, Tòa nhà Artisan, Đường Cầu Giấy',
-      city: 'Quận Cầu Giấy',
-      state: 'Hà Nội',
-      zipCode: '100000',
-      isDefault: false,
-    }
-  ]);
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  const [addressesError, setAddressesError] = useState('');
 
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addressForm, setAddressForm] = useState({
@@ -99,6 +102,7 @@ const Settings = () => {
         state: user.state || '',
         zipCode: user.zipCode || '',
       });
+      setAvatarPreview(user.avatar || '');
     }
   }, [user]);
 
@@ -108,6 +112,63 @@ const Settings = () => {
     }
   }, [activeTab, token]);
 
+  useEffect(() => {
+    if (activeTab === 'favorites' && token) {
+      fetchFavorites();
+    }
+  }, [activeTab, token]);
+
+  useEffect(() => {
+    if (activeTab === 'addresses' && token) {
+      fetchAddresses();
+    }
+  }, [activeTab, token]);
+
+  const mapAddressFromApi = (addr) => ({
+    id: addr.id || addr._id,
+    name: addr.fullName,
+    phone: addr.phone,
+    streetAddress: addr.address,
+    city: '',
+    state: '',
+    zipCode: '',
+    isDefault: !!addr.isDefault,
+  });
+
+  const refreshUserProfile = async () => {
+    const res = await api('/auth/profile');
+    if (res.user) syncUser(res.user);
+    return res.user;
+  };
+
+  const fetchAddresses = async () => {
+    setAddressesLoading(true);
+    setAddressesError('');
+    try {
+      const res = await api('/auth/addresses');
+      setSavedAddresses((res.data || []).map(mapAddressFromApi));
+      await refreshUserProfile();
+    } catch (err) {
+      setAddressesError(err.message || 'Failed to load addresses');
+    } finally {
+      setAddressesLoading(false);
+    }
+  };
+
+  const fetchFavorites = async () => {
+    setFavoritesLoading(true);
+    setFavoritesError('');
+    try {
+      const res = await api('/favorites');
+      setFavorites(res.data || []);
+      refreshFavorites();
+    } catch (err) {
+      setFavoritesError(err.message || 'Failed to fetch favorites');
+    } finally {
+      setFavoritesLoading(false);
+    }
+  };
+
   const fetchOrders = async () => {
     setOrdersLoading(true);
     try {
@@ -116,13 +177,15 @@ const Settings = () => {
         id: o._id,
         date: new Date(o.createdAt).toLocaleDateString(),
         status: o.status,
-        statusColor: o.status === 'Pending' ? 'bg-yellow-500' : (o.status === 'Cancelled' ? 'bg-red-500' : 'bg-emerald-500'),
+        statusColor: o.status === 'pending' ? 'bg-yellow-500' : (o.status === 'cancelled' ? 'bg-red-500' : 'bg-emerald-500'),
         total: o.totalAmount,
+        returnRequest: o.returnRequest,
         items: o.items.map(i => ({
-          name: i.item.name || 'Unknown Item',
+          itemId: i.item?._id || i.item,
+          name: i.item?.name || 'Unknown Item',
           price: i.price,
           quantity: i.quantity,
-          image: i.item.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'
+          image: i.item?.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'
         }))
       }));
       setOrders(formattedOrders);
@@ -130,6 +193,93 @@ const Settings = () => {
       setOrdersError('Failed to fetch orders');
     } finally {
       setOrdersLoading(false);
+    }
+  };
+
+  const handleBuyAgain = async (order) => {
+    const reorderItems = (order.items || []).filter((item) => item.itemId);
+    if (reorderItems.length === 0) {
+      toast.error('No items available to reorder');
+      return;
+    }
+
+    setRebuyingOrderId(order.id);
+    try {
+      let cart = null;
+      for (const item of reorderItems) {
+        cart = await api('/cart', {
+          method: 'POST',
+          body: { itemId: item.itemId, quantity: item.quantity || 1 },
+        });
+      }
+      if (cart) applyCart(cart);
+      toast.success('Items added to cart');
+      navigate('/cart');
+    } catch (err) {
+      toast.error(err.message || 'Failed to add items to cart');
+    } finally {
+      setRebuyingOrderId(null);
+    }
+  };
+
+  const getAvatarSrc = () => {
+    const source = avatarPreview || user?.avatar || '';
+    return resolveImageUrl(source) || '';
+  };
+
+  const getInitials = () =>
+    (user?.fullName || 'U')
+      .split(' ')
+      .map((part) => part[0])
+      .join('')
+      .slice(0, 2)
+      .toUpperCase();
+
+  const handleAvatarSelect = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please choose a valid image file.');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image must be smaller than 5MB.');
+      return;
+    }
+
+    setAvatarUploading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await uploadAvatar(file);
+      setAvatarPreview(res.avatar || res.user?.avatar || '');
+      if (res.user) syncUser(res.user);
+      setSuccessMsg(res.message || 'Profile photo updated successfully.');
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to upload profile photo.');
+    } finally {
+      setAvatarUploading(false);
+      if (avatarInputRef.current) avatarInputRef.current.value = '';
+    }
+  };
+
+  const handleAvatarRemove = async () => {
+    setAvatarUploading(true);
+    setErrorMsg('');
+    setSuccessMsg('');
+
+    try {
+      const res = await api('/auth/profile/avatar', { method: 'DELETE' });
+      setAvatarPreview('');
+      if (res.user) syncUser(res.user);
+      setSuccessMsg(res.message || 'Profile photo removed.');
+    } catch (err) {
+      setErrorMsg(err.message || 'Failed to remove profile photo.');
+    } finally {
+      setAvatarUploading(false);
     }
   };
 
@@ -168,6 +318,7 @@ const Settings = () => {
         state: user.state || '',
         zipCode: user.zipCode || '',
       });
+      setAvatarPreview(user.avatar || '');
       setSuccessMsg('');
       setErrorMsg('');
     }
@@ -194,47 +345,68 @@ const Settings = () => {
   };
 
   // Saved Address management
-  const handleAddAddress = (e) => {
+  const handleAddAddress = async (e) => {
     e.preventDefault();
     if (!addressForm.name || !addressForm.phone || !addressForm.streetAddress || !addressForm.state || !addressForm.city) {
       return;
     }
-    const newAddress = {
-      id: Date.now(),
-      ...addressForm,
-    };
 
-    if (addressForm.isDefault) {
-      setSavedAddresses((prev) =>
-        prev.map((addr) => ({ ...addr, isDefault: false })).concat(newAddress)
-      );
-    } else {
-      setSavedAddresses((prev) => prev.concat(newAddress));
+    const formattedAddress = [
+      addressForm.streetAddress,
+      addressForm.city,
+      addressForm.state,
+      addressForm.zipCode,
+    ]
+      .filter(Boolean)
+      .join(', ');
+
+    try {
+      const res = await api('/auth/addresses', {
+        method: 'POST',
+        body: {
+          fullName: addressForm.name,
+          phone: addressForm.phone,
+          address: formattedAddress,
+          isDefault: addressForm.isDefault,
+        },
+      });
+
+      setSavedAddresses((res.addresses || []).map(mapAddressFromApi));
+      await refreshUserProfile();
+
+      setAddressForm({
+        name: '',
+        phone: '',
+        streetAddress: '',
+        city: '',
+        state: '',
+        zipCode: '',
+        isDefault: false,
+      });
+      setShowAddressForm(false);
+    } catch (err) {
+      setAddressesError(err.message || 'Failed to save address');
     }
-
-    setAddressForm({
-      name: '',
-      phone: '',
-      streetAddress: '',
-      city: '',
-      state: '',
-      zipCode: '',
-      isDefault: false,
-    });
-    setShowAddressForm(false);
   };
 
-  const handleDeleteAddress = (id) => {
-    setSavedAddresses((prev) => prev.filter((addr) => addr.id !== id));
+  const handleDeleteAddress = async (id) => {
+    try {
+      const res = await api(`/auth/addresses/${id}`, { method: 'DELETE' });
+      setSavedAddresses((res.addresses || []).map(mapAddressFromApi));
+      await refreshUserProfile();
+    } catch (err) {
+      setAddressesError(err.message || 'Failed to delete address');
+    }
   };
 
-  const handleSetDefaultAddress = (id) => {
-    setSavedAddresses((prev) =>
-      prev.map((addr) => ({
-        ...addr,
-        isDefault: addr.id === id,
-      }))
-    );
+  const handleSetDefaultAddress = async (id) => {
+    try {
+      const res = await api(`/auth/addresses/${id}/default`, { method: 'PUT' });
+      setSavedAddresses((res.addresses || []).map(mapAddressFromApi));
+      await refreshUserProfile();
+    } catch (err) {
+      setAddressesError(err.message || 'Failed to update default address');
+    }
   };
 
 
@@ -335,6 +507,20 @@ const Settings = () => {
                   <span className="font-label-caps text-label-caps">Order History</span>
                 </button>
                 <button
+                  onClick={() => setActiveTab('favorites')}
+                  className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'favorites' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
+                >
+                  <span className="material-symbols-outlined">favorite</span>
+                  <span className="font-label-caps text-label-caps flex items-center gap-2">
+                    Favorites
+                    {favoriteCount > 0 && (
+                      <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold rounded-full bg-primary text-on-primary">
+                        {favoriteCount > 99 ? '99+' : favoriteCount}
+                      </span>
+                    )}
+                  </span>
+                </button>
+                <button
                   onClick={() => setActiveTab('addresses')}
                   className={`flex items-center gap-4 py-3 text-left transition-all duration-200 group pl-4 border-l-4 ${activeTab === 'addresses' ? 'text-primary font-bold border-primary' : 'text-on-surface-variant border-transparent hover:text-primary'}`}
                 >
@@ -377,25 +563,57 @@ const Settings = () => {
             {activeTab === 'profile' && (
               <div className="space-y-12">
                 {/* Profile Header Block */}
-                <div className="flex flex-col md:flex-row items-center gap-8 bg-white p-8 rounded-lg shadow-[0px_10px_30px_rgba(0,0,0,0.04)] border border-surface-variant/20">
-                  <div className="relative group cursor-pointer">
-                    <div className="w-32 h-32 rounded-full bg-surface-container-high flex items-center justify-center overflow-hidden border border-surface-variant">
-                      <img
-                        alt="Profile Avatar"
-                        className="w-full h-full object-cover"
-                        src="https://lh3.googleusercontent.com/aida-public/AB6AXuDf8Y2YMjKNpq7_6wEW8rITB7ya93v-jWc_NSAp2zQkzdKcJxn3ZVucYxKSpmqaOzBqWNI-z4Qb-llBOxAjnqlvuu3J7V4kS8YPRdcphOxld2Duy_1QD6BSdpqBSK033x0YoYxiTLDCAm_VkHNC64XancrLlP-SqA8cfXw2VgpRGmSrp_M5GaUvwtimJJoOHie72PfTUAvZSVkj-5DgHp5D0GtasfHqa1DloP2keyPb8KgRl7Lc3UzoP6LmaAMaWAvNsbD_uABo8gsD"
-                      />
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-8 pb-8 border-b border-outline-variant/30">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={avatarUploading}
+                    className="relative group cursor-pointer disabled:opacity-60"
+                  >
+                    <div className="w-32 h-32 rounded-2xl bg-surface-container-high flex items-center justify-center overflow-hidden border border-surface-variant">
+                      {getAvatarSrc() ? (
+                        <img
+                          alt="Profile Avatar"
+                          className="w-full h-full object-cover"
+                          src={getAvatarSrc()}
+                        />
+                      ) : (
+                        <span className="font-display-lg text-3xl text-primary">{getInitials()}</span>
+                      )}
                       <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-[2px]">
                         <span className="material-symbols-outlined text-white text-3xl">photo_camera</span>
                       </div>
                     </div>
-                  </div>
+                  </button>
+                  <input
+                    ref={avatarInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarSelect}
+                  />
                   <div>
                     <h3 className="font-headline-md text-headline-md text-primary mb-2">Profile Photo</h3>
-                    <p className="font-body-md text-body-md text-on-surface-variant mb-4">Upload a high-resolution image. Recommended size 400x400px.</p>
-                    <div className="flex gap-4">
-                      <button className="px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-secondary transition-colors duration-300">Upload New</button>
-                      <button className="px-6 py-2 border border-outline-variant text-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-surface-container-low transition-colors duration-300">Remove</button>
+                    <p className="font-body-md text-body-md text-on-surface mb-4">
+                      Upload a high-resolution image. Recommended size 400×400px.
+                    </p>
+                    <div className="flex flex-wrap gap-4">
+                      <button
+                        type="button"
+                        disabled={avatarUploading}
+                        onClick={() => avatarInputRef.current?.click()}
+                        className="px-6 py-2 bg-primary text-on-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-secondary transition-colors duration-300 disabled:opacity-60"
+                      >
+                        {avatarUploading ? 'Uploading...' : 'Upload New'}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={avatarUploading || !getAvatarSrc()}
+                        onClick={handleAvatarRemove}
+                        className="px-6 py-2 border border-outline-variant text-primary font-label-caps text-label-caps uppercase tracking-wider hover:bg-surface-container-low transition-colors duration-300 disabled:opacity-40"
+                      >
+                        Remove
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -484,6 +702,59 @@ const Settings = () => {
               </div>
             )}
 
+            {activeTab === 'favorites' && (
+              <div className="space-y-10">
+                <div className="border-b border-surface-variant pb-6">
+                  <h2 className="font-headline-md text-headline-md text-primary mb-2">Favorites</h2>
+                  <p className="font-body-md text-on-surface">Products you've saved to revisit later.</p>
+                </div>
+
+                {favoritesLoading ? (
+                  <p className="text-on-surface-variant font-label-caps uppercase tracking-widest">Loading...</p>
+                ) : favoritesError ? (
+                  <p className="text-error">{favoritesError}</p>
+                ) : favorites.length === 0 ? (
+                  <div className="text-center py-10 border border-dashed border-outline-variant/50">
+                    <span className="material-symbols-outlined text-4xl text-on-surface-variant mb-3 block">favorite_border</span>
+                    <p className="font-headline-md mb-2">No favorites yet</p>
+                    <Link to="/catalog" className="text-primary font-label-caps uppercase tracking-widest hover:underline">
+                      Browse Collection
+                    </Link>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    {favorites.map((product) => (
+                      <div
+                        key={product._id}
+                        className="flex gap-4 border border-outline-variant/30 p-4 bg-white"
+                      >
+                        <Link to={`/product/${product._id}`} className="w-24 h-28 flex-shrink-0 overflow-hidden bg-surface-container-low">
+                          <img
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            src={resolveImageUrl(product.image) || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=200&q=80'}
+                          />
+                        </Link>
+                        <div className="flex-1 min-w-0">
+                          <Link to={`/product/${product._id}`} className="font-headline-md text-base text-primary hover:underline line-clamp-2">
+                            {product.name}
+                          </Link>
+                          <p className="text-xs text-on-surface-variant uppercase tracking-wider mt-1">{product.category}</p>
+                          <p className="font-bold text-primary mt-2">{formatUSD(product.price || 0)}</p>
+                        </div>
+                        <FavoriteButton
+                          productId={product._id}
+                          size="sm"
+                          className="self-start"
+                          onChange={fetchFavorites}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Tab 2: Order History */}
             {activeTab === 'orders' && (
               <div className="space-y-10">
@@ -568,8 +839,13 @@ const Settings = () => {
                             Đã yêu cầu hoàn trả
                           </span>
                         )}
-                        <button className="px-6 py-2.5 bg-primary text-on-primary font-label-caps text-xs uppercase hover:bg-secondary transition-colors tracking-wider">
-                          Mua lại
+                        <button
+                          type="button"
+                          onClick={() => handleBuyAgain(order)}
+                          disabled={rebuyingOrderId === order.id}
+                          className="px-6 py-2.5 bg-primary text-on-primary font-label-caps text-xs uppercase hover:bg-secondary transition-colors tracking-wider disabled:opacity-60"
+                        >
+                          {rebuyingOrderId === order.id ? 'Adding...' : 'Mua lại'}
                         </button>
                       </div>
                     </div>
@@ -595,6 +871,12 @@ const Settings = () => {
                     </button>
                   )}
                 </div>
+
+                {addressesError && (
+                  <div className="bg-error-container text-on-error-container p-4 rounded border border-error/20 font-body-md">
+                    {addressesError}
+                  </div>
+                )}
 
                 {/* Add Address Form Inline */}
                 {showAddressForm && (
@@ -708,7 +990,14 @@ const Settings = () => {
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {savedAddresses.map((addr) => (
+                  {addressesLoading ? (
+                    <p className="text-on-surface-variant font-label-caps uppercase tracking-widest">Loading addresses...</p>
+                  ) : savedAddresses.length === 0 ? (
+                    <div className="col-span-full text-center py-10 border border-dashed border-outline-variant/50">
+                      <p className="font-headline-md mb-2">No saved addresses yet</p>
+                      <p className="text-on-surface-variant text-sm">Add a delivery address here to use it at checkout.</p>
+                    </div>
+                  ) : savedAddresses.map((addr) => (
                     <div key={addr.id} className={`bg-white border rounded-lg p-6 shadow-[0px_10px_30px_rgba(0,0,0,0.02)] flex flex-col justify-between ${addr.isDefault ? 'border-primary' : 'border-surface-variant/20'}`}>
                       <div className="space-y-4">
                         <div className="flex justify-between items-start gap-4">
@@ -720,7 +1009,9 @@ const Settings = () => {
                         <div className="space-y-1 font-body-md text-on-surface-variant text-sm">
                           <p>SĐT: {addr.phone}</p>
                           <p>{addr.streetAddress}</p>
-                          <p>{addr.city}, {addr.state}</p>
+                          {(addr.city || addr.state) && (
+                            <p>{[addr.city, addr.state].filter(Boolean).join(', ')}</p>
+                          )}
                           {addr.zipCode && <p>Mã bưu điện: {addr.zipCode}</p>}
                         </div>
                         {/* Google Maps Visual Preview */}

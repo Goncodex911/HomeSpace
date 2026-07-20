@@ -5,6 +5,12 @@ import Cart from '../models/Cart.js';
 import User from '../models/User.js';
 import payOS from '../utils/payos.js';
 import { protect } from '../middlewares/auth.js';
+import {
+  buildChartSeries,
+  getStoreRevenueFromOrder,
+  resolveBucketKey,
+  startOfDay,
+} from '../utils/chartSeries.js';
 
 const router = express.Router();
 
@@ -19,9 +25,16 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: 'No order items' });
     }
 
-    if (!shippingAddress) {
+    if (!shippingAddress?.streetAddress) {
       return res.status(400).json({ message: 'Shipping address is required' });
     }
+
+    const normalizedShippingAddress = {
+      streetAddress: shippingAddress.streetAddress,
+      city: shippingAddress.city || '',
+      state: shippingAddress.state || '',
+      zipCode: shippingAddress.zipCode || '',
+    };
 
     let totalAmount = 0;
     const orderItems = [];
@@ -64,7 +77,7 @@ router.post('/', protect, async (req, res) => {
       customer: req.user._id,
       items: orderItems,
       totalAmount,
-      shippingAddress,
+      shippingAddress: normalizedShippingAddress,
       orderCode,
       paymentStatus: 'pending',
     });
@@ -145,6 +158,153 @@ router.get('/', protect, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error while fetching orders' });
+  }
+});
+
+// @route   GET /api/orders/store/stats
+// @desc    Store sales chart data (month=bar, quarter/year=line)
+router.get('/store/stats', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'store' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Store role required.' });
+    }
+
+    const period = ['month', 'quarter', 'year'].includes(req.query.period)
+      ? req.query.period
+      : 'month';
+
+    const storeId = req.user._id;
+    const series = buildChartSeries(period);
+    const bucketMap = new Map(series.buckets.map((bucket) => [bucket.key, { ...bucket }]));
+
+    const orders = await Order.find({
+      createdAt: { $gte: series.start },
+      'items.store': storeId,
+      paymentStatus: 'paid',
+    }).select('totalAmount createdAt paymentStatus items');
+
+    orders.forEach((order) => {
+      const revenue = getStoreRevenueFromOrder(order, storeId);
+      if (revenue <= 0) return;
+
+      const key = resolveBucketKey(order.createdAt, period);
+      const bucket = bucketMap.get(key);
+      if (!bucket) return;
+
+      bucket.revenue += revenue;
+      bucket.orders += 1;
+    });
+
+    const points = series.buckets.map((bucket) => bucketMap.get(bucket.key));
+    const totals = points.reduce(
+      (acc, point) => ({
+        revenue: acc.revenue + point.revenue,
+        orders: acc.orders + point.orders,
+      }),
+      { revenue: 0, orders: 0 }
+    );
+
+    const todayStart = startOfDay(new Date());
+    const yesterdayStart = new Date(todayStart);
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+
+    const recentOrders = await Order.find({
+      createdAt: { $gte: yesterdayStart },
+      'items.store': storeId,
+      paymentStatus: 'paid',
+    }).select('createdAt paymentStatus items');
+
+    let todayRevenue = 0;
+    let yesterdayRevenue = 0;
+
+    recentOrders.forEach((order) => {
+      const revenue = getStoreRevenueFromOrder(order, storeId);
+      if (revenue <= 0) return;
+      if (order.createdAt >= todayStart) todayRevenue += revenue;
+      else yesterdayRevenue += revenue;
+    });
+
+    const changePercent =
+      yesterdayRevenue > 0
+        ? Math.round(((todayRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
+        : todayRevenue > 0
+          ? 100
+          : 0;
+
+    res.json({
+      period,
+      chartType: series.chartType,
+      points,
+      totals,
+      today: { revenue: todayRevenue, changePercent },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while fetching store stats' });
+  }
+});
+
+// @route   GET /api/orders/customers
+// @desc    Get customers who ordered from this store (Store/Admin)
+router.get('/customers', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'store' && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Store or admin role required.' });
+    }
+
+    const orderQuery =
+      req.user.role === 'admin' ? {} : { 'items.store': req.user._id };
+
+    const orders = await Order.find(orderQuery)
+      .populate('customer', 'fullName email phone createdAt')
+      .sort({ createdAt: -1 });
+
+    const customerMap = new Map();
+
+    for (const order of orders) {
+      const customer = order.customer;
+      const customerId = customer?._id?.toString();
+      if (!customerId) continue;
+
+      const storeItems =
+        req.user.role === 'admin'
+          ? order.items
+          : order.items.filter(
+              (item) => item.store?.toString() === req.user._id.toString()
+            );
+
+      if (storeItems.length === 0) continue;
+
+      const storeTotal = storeItems.reduce(
+        (sum, item) => sum + (item.price || 0) * (item.quantity || 0),
+        0
+      );
+
+      if (!customerMap.has(customerId)) {
+        customerMap.set(customerId, {
+          customer,
+          orderCount: 0,
+          totalSpent: 0,
+          lastOrderAt: order.createdAt,
+        });
+      }
+
+      const entry = customerMap.get(customerId);
+      entry.orderCount += 1;
+      entry.totalSpent += storeTotal;
+      if (new Date(order.createdAt) > new Date(entry.lastOrderAt)) {
+        entry.lastOrderAt = order.createdAt;
+      }
+    }
+
+    const data = Array.from(customerMap.values()).sort(
+      (a, b) => new Date(b.lastOrderAt) - new Date(a.lastOrderAt)
+    );
+
+    res.json({ message: 'Customers retrieved successfully', data });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error while fetching customers' });
   }
 });
 

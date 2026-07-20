@@ -1,6 +1,8 @@
 import React, { useContext } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+import { FavoritesProvider } from './context/FavoritesContext';
 import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import VerifyOtp from './pages/VerifyOtp';
@@ -81,6 +83,8 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <FavoritesProvider>
+      <CartProvider>
       <Toaster position="top-center" toastOptions={{
         style: {
           borderRadius: '0',
@@ -228,6 +232,8 @@ function App() {
           </Routes>
         </div>
       </Router>
+      </CartProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }

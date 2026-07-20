@@ -93,6 +93,16 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    avatar: {
+      type: String,
+      default: '',
+    },
+    favorites: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Item',
+      },
+    ],
   },
   { timestamps: true }
 

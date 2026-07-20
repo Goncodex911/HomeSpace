@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api/api';
+import AdminStatsChart from '../components/AdminStatsChart';
 
 const adminStyles = `
   .material-symbols-outlined {
@@ -35,7 +36,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [activeTab, setActiveTab] = useState('vendors'); // 'vendors' | 'withdrawals'
+  const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard' | 'vendors' | 'withdrawals' | 'users'
   
   // Selection & Filters
   const [activeId, setActiveId] = useState(null);
@@ -54,6 +55,59 @@ const AdminDashboard = () => {
   const [rejectWithdrawModal, setRejectWithdrawModal] = useState(false);
   const [rejectWithdrawNote, setRejectWithdrawNote] = useState('');
   const [withdrawActionLoading, setWithdrawActionLoading] = useState(false);
+
+  const [users, setUsers] = useState([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [userRoleFilter, setUserRoleFilter] = useState('all');
+
+  const [dashboardData, setDashboardData] = useState(null);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState('');
+  const [chartPeriod, setChartPeriod] = useState('month');
+  const [chartData, setChartData] = useState(null);
+  const [chartLoading, setChartLoading] = useState(true);
+
+  const formatMoney = (value) => Number(value || 0).toLocaleString();
+  const chartPeriodLabels = { month: 'Month', quarter: 'Quarter', year: 'Year' };
+
+  const fetchDashboard = async () => {
+    try {
+      setDashboardLoading(true);
+      setDashboardError('');
+      const res = await api('/auth/admin/dashboard');
+      setDashboardData(res);
+    } catch (err) {
+      setDashboardError(err.message || 'Failed to load dashboard.');
+    } finally {
+      setDashboardLoading(false);
+    }
+  };
+
+  const fetchChartData = async (period = chartPeriod) => {
+    try {
+      setChartLoading(true);
+      const res = await api(`/auth/admin/dashboard/charts?period=${period}`);
+      setChartData(res);
+    } catch (err) {
+      console.error('Failed to load chart:', err.message);
+      setChartData(null);
+    } finally {
+      setChartLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      setUsersLoading(true);
+      const query = userRoleFilter !== 'all' ? `?role=${userRoleFilter}` : '';
+      const res = await api(`/auth/admin/users${query}`);
+      setUsers(res.data || []);
+    } catch (err) {
+      setError(err.message || 'Failed to fetch users.');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
 
   const fetchApplications = async () => {
     try {
@@ -114,8 +168,14 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
+    if (activeTab === 'dashboard') fetchDashboard();
     if (activeTab === 'withdrawals') fetchWithdrawals();
-  }, [activeTab]);
+    if (activeTab === 'users') fetchUsers();
+  }, [activeTab, userRoleFilter]);
+
+  useEffect(() => {
+    if (activeTab === 'dashboard') fetchChartData(chartPeriod);
+  }, [activeTab, chartPeriod]);
 
   const handleApprove = async (id) => {
     if (!window.confirm('Are you sure you want to approve this curator application?')) return;
@@ -168,8 +228,18 @@ const AdminDashboard = () => {
     withdrawFilter === 'all' ? true : w.status === withdrawFilter
   );
 
+  const filteredUsers = users.filter((entry) => {
+    const search = searchTerm.toLowerCase();
+    return (
+      entry.fullName?.toLowerCase().includes(search) ||
+      entry.email?.toLowerCase().includes(search) ||
+      entry.companyName?.toLowerCase().includes(search)
+    );
+  });
+
   const activeApp = applications.find(app => app._id === activeId);
   const pendingCount = applications.filter(app => app.vendorStatus === 'pending').length;
+  const stats = dashboardData?.stats;
 
   return (
     <div className="bg-surface-bright font-body-md text-on-surface min-h-screen flex flex-col md:flex-row relative">
@@ -184,6 +254,13 @@ const AdminDashboard = () => {
           <p className="font-label-caps text-[10px] tracking-widest text-on-surface-variant mt-1">Enterprise Suite</p>
         </div>
         <nav className="flex-grow space-y-1">
+          <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'dashboard' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
+          >
+            <span className="material-symbols-outlined mr-3">dashboard</span>
+            <span className="font-label-caps text-label-caps text-left">Dashboard</span>
+          </button>
           <button
             onClick={() => setActiveTab('vendors')}
             className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'vendors' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
@@ -203,10 +280,13 @@ const AdminDashboard = () => {
               </span>
             )}
           </button>
-          <a href="#" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`w-full flex items-center px-6 py-3 transition-all hover:bg-surface-container-low ${ activeTab === 'users' ? 'text-primary border-r-2 border-primary font-semibold' : 'text-on-surface-variant'}`}
+          >
             <span className="material-symbols-outlined mr-3">group</span>
-            <span className="font-label-caps text-label-caps">Users</span>
-          </a>
+            <span className="font-label-caps text-label-caps text-left">Users</span>
+          </button>
           <Link to="/" className="flex items-center px-6 py-3 text-on-surface-variant hover:text-primary transition-colors hover:bg-surface-container-low">
             <span className="material-symbols-outlined mr-3">home</span>
             <span className="font-label-caps text-label-caps">Marketplace Home</span>
@@ -227,16 +307,24 @@ const AdminDashboard = () => {
         {/* Top bar */}
         <header className="fixed top-0 right-0 w-[calc(100%-256px)] h-16 bg-white/70 border-b border-outline-variant/30 backdrop-blur-md z-40 flex justify-between items-center px-8">
           <div className="flex items-center flex-grow">
+            {activeTab !== 'dashboard' && (
             <div className="relative w-full max-w-md">
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">search</span>
               <input 
                 className="w-full pl-10 pr-4 py-2 bg-surface-container rounded-full border-none focus:ring-1 focus:ring-primary text-sm font-body-md" 
-                placeholder="Search applications..." 
+                placeholder={
+                  activeTab === 'users'
+                    ? 'Search users...'
+                    : activeTab === 'withdrawals'
+                      ? 'Search withdrawals...'
+                      : 'Search applications...'
+                }
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right hidden sm:block">
@@ -251,6 +339,130 @@ const AdminDashboard = () => {
 
         {/* Content Pane */}
         <div className="flex-grow p-8 max-w-7xl mx-auto w-full">
+
+          {/* ── DASHBOARD TAB ── */}
+          {activeTab === 'dashboard' && (
+            <div className="space-y-8">
+              {dashboardError && (
+                <div className="p-4 bg-error-container text-on-error-container border border-error/20 text-sm">
+                  {dashboardError}
+                  <p className="text-xs mt-2 opacity-80">If this says 502, restart backend: cd server && npm run dev</p>
+                </div>
+              )}
+              <div>
+                <nav className="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
+                  <span>Overview</span>
+                  <span>/</span>
+                  <span className="text-primary font-bold">Dashboard</span>
+                </nav>
+                <div className="flex flex-wrap items-end justify-between gap-4">
+                  <div>
+                    <h2 className="font-headline-md text-3xl text-primary font-light">Admin Dashboard</h2>
+                    <p className="text-on-surface-variant text-sm mt-1">Platform overview and items needing attention.</p>
+                  </div>
+                  <button
+                    onClick={fetchDashboard}
+                    className="px-4 py-2 font-label-caps text-[10px] uppercase tracking-wider border border-outline-variant hover:border-primary hover:text-primary transition-all flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">refresh</span>
+                    Refresh
+                  </button>
+                </div>
+              </div>
+
+              {dashboardLoading ? (
+                <div className="text-center py-16 text-sm text-outline">Loading dashboard...</div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+                    {[
+                      { label: 'Total Users', value: stats?.users?.total || 0, sub: `${stats?.users?.customers || 0} customers · ${stats?.users?.stores || 0} stores`, icon: 'group' },
+                      { label: 'Total Orders', value: stats?.orders?.total || 0, sub: `${stats?.orders?.paid || 0} paid`, icon: 'shopping_bag' },
+                      { label: 'Revenue', value: `$${formatMoney(stats?.orders?.revenue)}`, sub: 'Paid orders only', icon: 'payments' },
+                      { label: 'Products', value: stats?.products?.total || 0, sub: 'Listed in catalog', icon: 'inventory_2' },
+                    ].map((card) => (
+                      <div key={card.label} className="bg-white border border-outline-variant/30 p-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <span className="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">{card.label}</span>
+                          <span className="material-symbols-outlined text-primary/70">{card.icon}</span>
+                        </div>
+                        <p className="font-headline-md text-2xl text-primary font-light">{card.value}</p>
+                        <p className="text-xs text-on-surface-variant mt-2">{card.sub}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('vendors')}
+                      className="bg-white border border-outline-variant/30 p-6 text-left hover:border-primary transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Pending Vendors</p>
+                          <p className="font-headline-md text-3xl text-primary mt-2">{stats?.vendors?.pending || 0}</p>
+                        </div>
+                        <span className="material-symbols-outlined text-amber-600">storefront</span>
+                      </div>
+                      <p className="text-xs text-secondary mt-3">Review curator applications →</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('withdrawals')}
+                      className="bg-white border border-outline-variant/30 p-6 text-left hover:border-primary transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Pending Withdrawals</p>
+                          <p className="font-headline-md text-3xl text-primary mt-2">{stats?.withdrawals?.pending || 0}</p>
+                        </div>
+                        <span className="material-symbols-outlined text-emerald-700">account_balance</span>
+                      </div>
+                      <p className="text-xs text-on-surface-variant mt-1">${formatMoney(stats?.withdrawals?.pendingAmount)} awaiting approval</p>
+                      <p className="text-xs text-secondary mt-2">Open withdrawal queue →</p>
+                    </button>
+                  </div>
+
+                  <div className="bg-white border border-outline-variant/30 overflow-hidden">
+                    <div className="px-6 py-4 border-b border-outline-variant/20 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h3 className="font-headline-md text-lg text-primary">Revenue Statistics</h3>
+                        <p className="text-xs text-on-surface-variant mt-0.5">
+                          ${formatMoney(chartData?.totals?.revenue)} · {chartData?.totals?.orders || 0} paid orders
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        {['month', 'quarter', 'year'].map((period) => (
+                          <button
+                            key={period}
+                            type="button"
+                            onClick={() => setChartPeriod(period)}
+                            className={`px-3 py-1.5 font-label-caps text-[10px] uppercase tracking-wider border transition-all ${
+                              chartPeriod === period
+                                ? 'border-primary bg-primary text-white'
+                                : 'border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary'
+                            }`}
+                          >
+                            {chartPeriodLabels[period]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="pb-2">
+                      <AdminStatsChart
+                        data={chartData}
+                        chartType={chartData?.chartType || (chartPeriod === 'month' ? 'bar' : 'line')}
+                        loading={chartLoading}
+                        period={chartPeriod}
+                        wide
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
 
           {/* ── VENDORS TAB ── */}
           {activeTab === 'vendors' && (
@@ -627,6 +839,116 @@ const AdminDashboard = () => {
                   </div>
                 )}
               </section>
+            </div>
+          </div>
+        )}
+
+        {/* ── USERS TAB ── */}
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div>
+              <nav className="flex mb-2 space-x-2 text-on-surface-variant font-label-caps text-[10px] uppercase tracking-widest">
+                <span>Directory</span>
+                <span>/</span>
+                <span className="text-primary font-bold">All Users</span>
+              </nav>
+              <h2 className="font-headline-md text-3xl text-primary font-light">User Management</h2>
+            </div>
+
+            {error && (
+              <div className="p-4 bg-error-container text-on-error-container border border-error/20 text-sm">{error}</div>
+            )}
+
+            <div className="flex gap-2 flex-wrap items-center">
+              {['all', 'customer', 'store', 'admin'].map((role) => (
+                <button
+                  key={role}
+                  onClick={() => setUserRoleFilter(role)}
+                  className={`px-4 py-2 font-label-caps text-[10px] uppercase tracking-wider border transition-all ${
+                    userRoleFilter === role
+                      ? 'bg-primary text-white border-primary'
+                      : 'border-outline-variant text-on-surface-variant hover:border-primary hover:text-primary'
+                  }`}
+                >
+                  {role === 'all' ? 'All' : role}
+                  {role !== 'all' && (
+                    <span className="ml-1 opacity-60">
+                      ({users.filter((entry) => entry.role === role).length})
+                    </span>
+                  )}
+                </button>
+              ))}
+              <button
+                onClick={fetchUsers}
+                className="ml-auto px-3 py-2 font-label-caps text-[10px] text-secondary hover:underline flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-sm">refresh</span>
+                Refresh
+              </button>
+            </div>
+
+            <div className="bg-white border border-outline-variant/30 overflow-hidden">
+              {usersLoading ? (
+                <div className="text-center py-12 text-sm text-outline">Loading users...</div>
+              ) : filteredUsers.length === 0 ? (
+                <div className="text-center py-12 text-sm text-outline border border-dashed border-outline-variant m-6">
+                  No users found.
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left">
+                    <thead className="bg-surface-container-low border-b border-outline-variant/20">
+                      <tr>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Name</th>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Email</th>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Role</th>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Vendor</th>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Verified</th>
+                        <th className="px-6 py-4 font-label-caps text-[10px] text-on-surface-variant uppercase tracking-widest">Joined</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-outline-variant/10">
+                      {filteredUsers.map((entry) => (
+                        <tr key={entry.id} className="hover:bg-surface-container-lowest/60">
+                          <td className="px-6 py-4">
+                            <p className="font-medium text-primary">{entry.fullName}</p>
+                            {entry.companyName && (
+                              <p className="text-xs text-on-surface-variant mt-0.5">{entry.companyName}</p>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-on-surface-variant">{entry.email}</td>
+                          <td className="px-6 py-4">
+                            <span className="font-label-caps text-[10px] px-2 py-1 rounded uppercase bg-surface-container text-primary">
+                              {entry.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`font-label-caps text-[10px] px-2 py-1 rounded capitalize ${
+                              entry.vendorStatus === 'approved'
+                                ? 'bg-emerald-100 text-emerald-700'
+                                : entry.vendorStatus === 'pending'
+                                  ? 'bg-amber-100 text-amber-700'
+                                  : entry.vendorStatus === 'rejected'
+                                    ? 'bg-red-100 text-red-700'
+                                    : 'bg-surface-container text-on-surface-variant'
+                            }`}>
+                              {entry.vendorStatus || 'none'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`text-xs font-semibold ${entry.isVerified ? 'text-emerald-600' : 'text-amber-600'}`}>
+                              {entry.isVerified ? 'Yes' : 'No'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-on-surface-variant">
+                            {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString() : '—'}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           </div>
         )}

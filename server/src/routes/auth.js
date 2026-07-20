@@ -1,12 +1,82 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import multer from 'multer';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import User from '../models/User.js';
+import Order from '../models/Order.js';
+import Item from '../models/Item.js';
+import WithdrawalRequest from '../models/WithdrawalRequest.js';
 import sendEmail from '../utils/sendEmail.js';
 import { protect } from '../middlewares/auth.js';
 import { auth } from '../firebase/firebaseAdmin.js';
+import cloudinary from '../utils/cloudinary.js';
+import {
+  buildChartSeries,
+  resolveBucketKey,
+} from '../utils/chartSeries.js';
 
 const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const avatarDir = path.resolve(__dirname, '../../uploads/avatars');
+
+if (!fs.existsSync(avatarDir)) {
+  fs.mkdirSync(avatarDir, { recursive: true });
+}
+
+const avatarUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_, __, cb) => cb(null, avatarDir),
+    filename: (_, file, cb) => {
+      const ext = path.extname(file.originalname) || '.jpg';
+      cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`);
+    },
+  }),
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  },
+});
+
+const hasCloudinary = () =>
+  Boolean(
+    process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+  );
+
+const serializeUser = (user) => ({
+  id: user._id,
+  fullName: user.fullName,
+  email: user.email,
+  phone: user.phone || '',
+  occupation: user.occupation || '',
+  streetAddress: user.streetAddress || '',
+  city: user.city || '',
+  state: user.state || '',
+  zipCode: user.zipCode || '',
+  isVerified: user.isVerified,
+  role: user.role,
+  vendorStatus: user.vendorStatus,
+  companyName: user.companyName,
+  businessType: user.businessType,
+  taxId: user.taxId,
+  yearsInIndustry: user.yearsInIndustry,
+  philosophy: user.philosophy,
+  avatar: user.avatar || '',
+  addresses: (user.addresses || []).map((addr) => ({
+    id: addr._id.toString(),
+    fullName: addr.fullName,
+    phone: addr.phone,
+    address: addr.address,
+    isDefault: !!addr.isDefault,
+  })),
+});
 
 // Generate 6-digit OTP
 const generateOTP = () => {
@@ -199,7 +269,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Please enter all fields' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
@@ -255,19 +325,7 @@ router.post('/login', async (req, res) => {
     res.status(200).json({
       message: 'Login successful',
       token,
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        isVerified: user.isVerified,
-        role: user.role,
-        vendorStatus: user.vendorStatus,
-        companyName: user.companyName,
-        businessType: user.businessType,
-        taxId: user.taxId,
-        yearsInIndustry: user.yearsInIndustry,
-        philosophy: user.philosophy,
-      },
+      user: serializeUser(user),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -365,7 +423,10 @@ router.post('/reset-password', async (req, res) => {
 router.get('/profile', protect, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password');
-    res.status(200).json({ user });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    res.status(200).json({ user: serializeUser(user) });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -402,25 +463,7 @@ router.put('/profile', protect, async (req, res) => {
 
     res.status(200).json({
       message: 'Profile updated successfully',
-      user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        phone: user.phone,
-        occupation: user.occupation,
-        streetAddress: user.streetAddress,
-        city: user.city,
-        state: user.state,
-        zipCode: user.zipCode,
-        isVerified: user.isVerified,
-        role: user.role,
-        vendorStatus: user.vendorStatus,
-        companyName: user.companyName,
-        businessType: user.businessType,
-        taxId: user.taxId,
-        yearsInIndustry: user.yearsInIndustry,
-        philosophy: user.philosophy,
-      },
+      user: serializeUser(user),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -473,6 +516,144 @@ router.post('/apply-vendor', protect, async (req, res) => {
         yearsInIndustry: user.yearsInIndustry,
         philosophy: user.philosophy,
       },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// @route   GET /api/auth/admin/dashboard
+// @desc    Admin overview stats
+router.get('/admin/dashboard', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const [
+      totalUsers,
+      customerCount,
+      storeCount,
+      pendingVendors,
+      totalOrders,
+      paidOrders,
+      revenueResult,
+      pendingWithdrawals,
+      pendingWithdrawAmount,
+      totalProducts,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: 'customer' }),
+      User.countDocuments({ role: 'store' }),
+      User.countDocuments({ vendorStatus: 'pending' }),
+      Order.countDocuments(),
+      Order.countDocuments({ paymentStatus: 'paid' }),
+      Order.aggregate([
+        { $match: { paymentStatus: 'paid' } },
+        { $group: { _id: null, total: { $sum: '$totalAmount' } } },
+      ]),
+      WithdrawalRequest.countDocuments({ status: 'pending' }),
+      WithdrawalRequest.aggregate([
+        { $match: { status: 'pending' } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]),
+      Item.countDocuments(),
+    ]);
+
+    res.status(200).json({
+      stats: {
+        users: {
+          total: totalUsers,
+          customers: customerCount,
+          stores: storeCount,
+        },
+        vendors: { pending: pendingVendors },
+        orders: {
+          total: totalOrders,
+          paid: paidOrders,
+          revenue: revenueResult[0]?.total || 0,
+        },
+        withdrawals: {
+          pending: pendingWithdrawals,
+          pendingAmount: pendingWithdrawAmount[0]?.total || 0,
+        },
+        products: { total: totalProducts },
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to load dashboard stats' });
+  }
+});
+
+// @route   GET /api/auth/admin/dashboard/charts
+router.get('/admin/dashboard/charts', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const period = ['month', 'quarter', 'year'].includes(req.query.period)
+      ? req.query.period
+      : 'month';
+
+    const series = buildChartSeries(period);
+    const bucketMap = new Map(series.buckets.map((bucket) => [bucket.key, { ...bucket }]));
+
+    const orders = await Order.find({
+      createdAt: { $gte: series.start },
+      paymentStatus: 'paid',
+    }).select('totalAmount createdAt');
+
+    orders.forEach((order) => {
+      const key = resolveBucketKey(order.createdAt, period);
+      const bucket = bucketMap.get(key);
+      if (!bucket) return;
+      bucket.revenue += order.totalAmount;
+      bucket.orders += 1;
+    });
+
+    const points = series.buckets.map((bucket) => bucketMap.get(bucket.key));
+    const totals = points.reduce(
+      (acc, point) => ({
+        revenue: acc.revenue + point.revenue,
+        orders: acc.orders + point.orders,
+      }),
+      { revenue: 0, orders: 0 }
+    );
+
+    res.status(200).json({
+      period,
+      chartType: series.chartType,
+      points,
+      totals,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to load dashboard chart' });
+  }
+});
+
+// @route   GET /api/auth/admin/users
+// @desc    Get all users (Admin only)
+router.get('/admin/users', protect, async (req, res) => {
+  try {
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied. Admin role required.' });
+    }
+
+    const { role } = req.query;
+    const query = {};
+    if (role && role !== 'all') {
+      query.role = role;
+    }
+
+    const users = await User.find(query).select('-password -otp').sort({ createdAt: -1 });
+
+    res.status(200).json({
+      data: users.map((user) => ({
+        ...serializeUser(user),
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+      })),
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -832,6 +1013,10 @@ router.post('/social-login', async (req, res) => {
 // @access  Public
 router.post('/firebase-login', async (req, res) => {
   try {
+    if (!auth) {
+      return res.status(503).json({ message: 'Google login is not configured on this server' });
+    }
+
     const { idToken } = req.body;
     if (!idToken) {
       return res.status(400).json({ message: 'ID Token is required' });
@@ -893,6 +1078,69 @@ router.post('/firebase-login', async (req, res) => {
   } catch (error) {
     console.error('Firebase Verification Error:', error);
     res.status(401).json({ message: 'Invalid Firebase ID Token', error: error.message });
+  }
+});
+
+// @route   POST /api/auth/profile/avatar
+// @desc    Upload or update profile photo
+router.post('/profile/avatar', protect, avatarUpload.single('avatar'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image uploaded' });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    let avatarUrl = '';
+
+    if (hasCloudinary()) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        folder: 'homespace_avatars',
+      });
+      avatarUrl = result.secure_url;
+      fs.unlinkSync(req.file.path);
+    } else {
+      avatarUrl = `/uploads/avatars/${req.file.filename}`;
+    }
+
+    user.avatar = avatarUrl;
+    await user.save();
+
+    res.status(200).json({
+      message: 'Profile photo updated successfully',
+      avatar: user.avatar,
+      user: serializeUser(user),
+    });
+  } catch (error) {
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    console.error('Avatar upload error:', error);
+    res.status(500).json({ message: error.message || 'Failed to upload profile photo' });
+  }
+});
+
+// @route   DELETE /api/auth/profile/avatar
+// @desc    Remove profile photo
+router.delete('/profile/avatar', protect, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.avatar = '';
+    await user.save();
+
+    res.status(200).json({
+      message: 'Profile photo removed',
+      user: serializeUser(user),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message || 'Failed to remove profile photo' });
   }
 });
 

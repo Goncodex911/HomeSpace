@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api/api';
+import { formatUSD } from '../utils/currency';
 
 const profileStyles = `
   .profile-hero { background: linear-gradient(135deg, #1a1c1a 0%, #2f312e 50%, #1a1c1a 100%); position: relative; overflow: hidden; }
@@ -207,14 +208,14 @@ const StoreProfile = () => {
                   <div className="md:col-span-8 collection-item h-[500px] bg-surface-container group">
                     <img className="w-full h-full object-cover" src={placeholderImages[0]} alt={rawItems[0]?.name} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div className="absolute bottom-8 left-8 text-white"><h3 className="font-headline-md text-headline-md mb-1">{rawItems[0]?.name}</h3><p className="font-label-caps text-label-caps opacity-70">${rawItems[0]?.price?.toLocaleString()}</p></div>
+                    <div className="absolute bottom-8 left-8 text-white"><h3 className="font-headline-md text-headline-md mb-1">{rawItems[0]?.name}</h3><p className="font-label-caps text-label-caps opacity-70">{formatUSD(rawItems[0]?.price || 0)}</p></div>
                   </div>
                   <div className="md:col-span-4 grid grid-rows-2 gap-gutter">
                     {rawItems.slice(1, 3).map((item, i) => (
                       <div key={item._id} className="collection-item h-[238px] bg-surface-container group">
                         <img className="w-full h-full object-cover" src={placeholderImages[i + 1]} alt={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                        <div className="absolute bottom-6 left-6 text-white"><h4 className="font-headline-md text-[18px] mb-1">{item.name}</h4><p className="font-label-caps text-[10px] opacity-70">${item.price?.toLocaleString()}</p></div>
+                        <div className="absolute bottom-6 left-6 text-white"><h4 className="font-headline-md text-[18px] mb-1">{item.name}</h4><p className="font-label-caps text-[10px] opacity-70">{formatUSD(item.price || 0)}</p></div>
                       </div>
                     ))}
                   </div>
@@ -226,7 +227,7 @@ const StoreProfile = () => {
                       <div key={item._id} className="collection-item aspect-square bg-surface-container group">
                         <img className="w-full h-full object-cover" src={placeholderImages[(i + 3) % placeholderImages.length]} alt={item.name} />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
-                        <div className="absolute bottom-4 left-4 text-white"><h4 className="text-sm font-medium">{item.name}</h4><p className="text-[10px] opacity-70">${item.price?.toLocaleString()}</p></div>
+                        <div className="absolute bottom-4 left-4 text-white"><h4 className="text-sm font-medium">{item.name}</h4><p className="text-[10px] opacity-70">{formatUSD(item.price || 0)}</p></div>
                       </div>
                     ))}
                   </div>
@@ -317,7 +318,7 @@ const StoreProfile = () => {
                         <h4 className="font-headline-md text-[16px] text-primary mt-1 mb-2 truncate group-hover:text-secondary transition-colors">{item.name}</h4>
                         <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Premium artisan piece.'}</p>
                         <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
-                          <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
+                          <span className="font-bold text-primary">{formatUSD(item.price || 0)}</span>
                           <span className="text-[10px] text-on-surface-variant">Qty: {item.quantity}</span>
                         </div>
                       </div>
@@ -362,7 +363,7 @@ const StoreProfile = () => {
                                 <h4 className="font-headline-md text-[16px] text-primary mb-1 truncate group-hover:text-secondary transition-colors">{item.name}</h4>
                                 <p className="text-xs text-on-surface-variant line-clamp-2 mb-3">{baseDesc || 'Artisan crafted piece.'}</p>
                                 <div className="flex justify-between items-center pt-3 border-t border-outline-variant/20">
-                                  <span className="font-bold text-primary">${item.price?.toLocaleString() || '0'}</span>
+                                  <span className="font-bold text-primary">{formatUSD(item.price || 0)}</span>
                                   <span className={`text-[10px] font-bold uppercase ${item.quantity > 0 ? 'text-green-600' : 'text-error'}`}>{item.quantity > 0 ? 'Available' : 'Sold Out'}</span>
                                 </div>
                               </div>

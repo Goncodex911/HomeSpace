@@ -2,6 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import api from '../api/api';
+import CartLink from '../components/CartLink';
+import FavoritesLink from '../components/FavoritesLink';
+import FavoriteButton from '../components/FavoriteButton';
+import { formatUSD } from '../utils/currency';
 
 const Home = () => {
   const { user, logout, token } = useContext(AuthContext);
@@ -223,9 +227,8 @@ const Home = () => {
             {token ? (
               <div className="flex items-center gap-4">
                 <span className="text-sm hidden sm:inline text-on-surface-variant">Hello, <strong>{user?.fullName}</strong></span>
-                <Link to="/cart" className="flex items-center text-on-surface hover:opacity-70 transition-opacity" title="Cart">
-                  <span className="material-symbols-outlined text-2xl">shopping_cart</span>
-                </Link>
+                <FavoritesLink />
+                <CartLink />
                 <Link to="/settings" className="flex items-center text-on-surface hover:opacity-70 transition-opacity" title="Profile Settings">
                   <span className="material-symbols-outlined text-2xl">person</span>
                 </Link>
@@ -381,6 +384,9 @@ const Home = () => {
                     alt={product.name}
                     src={product.image || 'https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=800&q=80'}
                   />
+                  <div className="absolute top-4 right-4">
+                    <FavoriteButton productId={product._id} size="sm" />
+                  </div>
                   <div className="absolute bottom-4 left-4 right-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-500 ease-out flex gap-2">
                     <button className="flex-1 glass-card py-3 font-label-caps text-[10px] hover:bg-primary hover:text-white transition-all border border-outline-variant/35">
                       QUICK ADD
@@ -391,7 +397,7 @@ const Home = () => {
                   </div>
                 </div>
                 <h4 className="font-headline-md text-[18px] mb-1">{product.name}</h4>
-                <p className="text-on-surface-variant font-body-md">{product.price?.toLocaleString() || '0'} đ</p>
+                <p className="text-on-surface-variant font-body-md">{formatUSD(product.price || 0)}</p>
               </Link>
             ))}
           </div>

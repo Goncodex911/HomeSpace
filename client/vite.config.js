@@ -10,7 +10,19 @@ export default defineConfig({
     https: {
       key: fs.readFileSync(path.resolve(__dirname, '../key.pem')),
       cert: fs.readFileSync(path.resolve(__dirname, '../cert.pem')),
-    }
-  }
+    },
+    proxy: {
+      '/api': {
+        target: 'https://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'https://localhost:5000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })
 

@@ -2,7 +2,10 @@ import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { AuthContext } from '../context/AuthContext';
+import { CartContext } from '../context/CartContext';
+import CartLink from '../components/CartLink';
 import toast from 'react-hot-toast';
+import { formatUSD } from '../utils/currency';
 
 const Cart = () => {
   const [cartItems, setCartItems] = useState([]);
@@ -12,6 +15,7 @@ const Cart = () => {
   const [promoCode, setPromoCode] = useState('');
 
   const { user, token } = useContext(AuthContext);
+  const { applyCart } = useContext(CartContext);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -23,6 +27,7 @@ const Cart = () => {
       const res = await api('/cart');
       const validItems = (res.items || []).filter(item => item && item.item);
       setCartItems(validItems);
+      applyCart(res);
     } catch (err) {
       setError('Failed to fetch cart items.');
     } finally {
@@ -39,6 +44,7 @@ const Cart = () => {
       });
       const validItems = (res.items || []).filter(item => item && item.item);
       setCartItems(validItems);
+      applyCart(res);
     } catch (err) {
       toast.error('Failed to update quantity');
       fetchCart();
@@ -50,6 +56,7 @@ const Cart = () => {
       const res = await api(`/cart/${itemId}`, { method: 'DELETE' });
       const validItems = (res.items || []).filter(item => item && item.item);
       setCartItems(validItems);
+      applyCart(res);
     } catch (err) {
       toast.error('Failed to remove item');
     }
@@ -89,7 +96,7 @@ const Cart = () => {
             </nav>
           </div>
           <div className="flex items-center gap-6">
-            <Link to="/cart" className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:opacity-70 transition-opacity">shopping_cart</Link>
+            <CartLink className="text-on-surface-variant hover:opacity-70" />
             <Link to="/settings" className="material-symbols-outlined text-on-surface-variant cursor-pointer hover:opacity-70 transition-opacity">settings</Link>
             <div className="w-8 h-8 rounded-full bg-surface-container-high overflow-hidden border border-outline-variant flex items-center justify-center text-sm font-bold">
               {user ? user.fullName?.charAt(0).toUpperCase() : 'U'}
@@ -132,7 +139,7 @@ const Cart = () => {
                         <h3 className="font-headline-md text-headline-md mb-1 tracking-tight">{cartItem.item.name}</h3>
                         <p className="font-label-caps text-label-caps text-on-surface-variant uppercase">{cartItem.item.category || 'Product'}</p>
                       </div>
-                      <p className="font-headline-md text-headline-md">{cartItem.item.price.toLocaleString()} đ</p>
+                      <p className="font-headline-md text-headline-md">{formatUSD(cartItem.item.price)}</p>
                     </div>
                     <div className="flex justify-between items-center mt-6 sm:mt-0">
                       <div className="flex items-center border border-outline-variant px-4 py-2 gap-6 bg-surface-container-lowest">
@@ -172,22 +179,22 @@ const Cart = () => {
                 <div className="space-y-4">
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Subtotal</span>
-                    <span>{subtotal.toLocaleString()} đ</span>
+                    <span>{formatUSD(subtotal)}</span>
                   </div>
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Shipping Estimate</span>
-                    <span>{shippingEstimate.toLocaleString()} đ</span>
+                    <span>{formatUSD(shippingEstimate)}</span>
                   </div>
                   <div className="flex justify-between font-body-md text-body-md">
                     <span className="text-on-surface-variant">Tax</span>
-                    <span>{tax.toLocaleString()} đ</span>
+                    <span>{formatUSD(tax)}</span>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-outline-variant">
                   <div className="flex justify-between items-baseline mb-8">
                     <span className="font-label-caps text-label-caps text-on-surface">GRAND TOTAL</span>
-                    <span className="font-headline-lg text-headline-lg">{grandTotal.toLocaleString()} đ</span>
+                    <span className="font-headline-lg text-headline-lg">{formatUSD(grandTotal)}</span>
                   </div>
 
                   <div className="space-y-6">

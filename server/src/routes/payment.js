@@ -276,11 +276,11 @@ router.post('/withdraw', protect, async (req, res) => {
     const { amount, bankName, accountNumber, accountHolder } = req.body;
 
     if (!amount || !bankName || !accountNumber || !accountHolder) {
-      return res.status(400).json({ message: 'Vui lòng điền đầy đủ thông tin yêu cầu rút tiền.' });
+      return res.status(400).json({ message: 'Please fill in all withdrawal details.' });
     }
 
     if (Number(amount) <= 0) {
-      return res.status(400).json({ message: 'Số tiền rút phải lớn hơn 0.' });
+      return res.status(400).json({ message: 'Withdrawal amount must be greater than 0.' });
     }
 
     // Kiểm tra số dư
@@ -288,7 +288,7 @@ router.post('/withdraw', protect, async (req, res) => {
     const currentBalance = wallet ? wallet.balance : 0;
 
     if (currentBalance < Number(amount)) {
-      return res.status(400).json({ message: 'Số dư ví không đủ để thực hiện yêu cầu rút tiền này.' });
+      return res.status(400).json({ message: 'Insufficient wallet balance for this withdrawal.' });
     }
 
     // Kiểm tra xem có yêu cầu pending nào chưa
@@ -297,7 +297,7 @@ router.post('/withdraw', protect, async (req, res) => {
       status: 'pending',
     });
     if (existingPending) {
-      return res.status(400).json({ message: 'Bạn đang có một yêu cầu rút tiền đang chờ xử lý. Vui lòng chờ admin phê duyệt trước khi tạo yêu cầu mới.' });
+      return res.status(400).json({ message: 'You already have a pending withdrawal. Please wait for admin approval before submitting a new request.' });
     }
 
     const withdrawal = new WithdrawalRequest({
@@ -312,7 +312,7 @@ router.post('/withdraw', protect, async (req, res) => {
     await withdrawal.save();
 
     res.status(201).json({
-      message: 'Yêu cầu rút tiền đã được gửi thành công. Vui lòng chờ admin xét duyệt.',
+      message: 'Withdrawal request submitted successfully. Please wait for admin approval.',
       data: withdrawal,
     });
   } catch (error) {

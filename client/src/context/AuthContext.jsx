@@ -111,6 +111,12 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const syncUser = (userData) => {
+    if (!userData) return;
+    localStorage.setItem('user', JSON.stringify(userData));
+    setUser(userData);
+  };
+
   const applyVendor = async (vendorData) => {
     const res = await api('/auth/apply-vendor', {
       method: 'POST',
@@ -198,6 +204,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         updateProfile,
         applyVendor,
+        syncUser,
       }}
     >
       {children}

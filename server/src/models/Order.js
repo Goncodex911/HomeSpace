@@ -35,9 +35,9 @@ const orderSchema = new mongoose.Schema(
     },
     shippingAddress: {
       streetAddress: { type: String, required: true },
-      city: { type: String, required: true },
-      state: { type: String, required: true },
-      zipCode: { type: String, required: false, default: '' },
+      city: { type: String, default: '' },
+      state: { type: String, default: '' },
+      zipCode: { type: String, default: '' },
     },
     status: {
       type: String,

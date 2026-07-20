@@ -2,7 +2,12 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../api/api';
 import { AuthContext } from '../context/AuthContext';
+import { CartContext } from '../context/CartContext';
+import CartLink from '../components/CartLink';
+import FavoritesLink from '../components/FavoritesLink';
+import FavoriteButton from '../components/FavoriteButton';
 import toast from 'react-hot-toast';
+import { formatUSD } from '../utils/currency';
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -20,6 +25,7 @@ const ProductDetail = () => {
   const [submittingReview, setSubmittingReview] = useState(false);
 
   const { token, user } = useContext(AuthContext);
+  const { applyCart } = useContext(CartContext);
 
   const handleAddToCart = async () => {
     if (!token) {
@@ -29,10 +35,11 @@ const ProductDetail = () => {
     }
     setAdding(true);
     try {
-      await api('/cart', {
+      const cart = await api('/cart', {
         method: 'POST',
         body: { itemId: id, quantity: 1 }
       });
+      applyCart(cart);
       toast.success('Added to cart!');
     } catch (err) {
       toast.error(err.message || 'Failed to add to cart');
@@ -130,7 +137,8 @@ const ProductDetail = () => {
             <Link className="font-label-caps text-label-caps tracking-widest text-on-surface-variant hover:text-primary transition-colors" to="/">Home</Link>
             {token && (
               <>
-                <Link className="font-label-caps text-label-caps tracking-widest text-on-surface-variant hover:text-primary transition-colors" to="/cart">Cart</Link>
+                <FavoritesLink variant="text" />
+                <CartLink variant="text" />
               </>
             )}
           </div>
@@ -147,6 +155,9 @@ const ProductDetail = () => {
               className="w-full h-full object-cover object-center transition-transform duration-700 group-hover:scale-105"
               src={product.image || "https://lh3.googleusercontent.com/aida/AP1WRLtsYoBL8I3wlWpyJs7mzVkJF5uWuIogTZzMFwjPHN3p8eddEFRSQsVWacYL7xIGegczapJYU5PT4GzJGeZMOUR8TPi0A7cDRmo2GG2C2ICILZ-xogzEmkrR5eVL39T-cncCM9fILsX1JmYNy2Uzpz-I0Qz3DCWNxuOor6Ox9z7DcvY5JadAfdM64phEvKOwXqmwasL5E25Y7FbCF58c-_ZGT48imlkvXggXomTBK-sMVqUlI4wQC1q25QQX"}
             />
+            <div className="absolute top-6 right-6">
+              <FavoriteButton productId={product._id} size="lg" />
+            </div>
             <div className="absolute bottom-10 left-10 hidden lg:block">
               <span className="font-label-caps text-label-caps text-on-surface/40">FIG. 01 — {(product.category || '').toUpperCase()}</span>
             </div>
@@ -167,7 +178,7 @@ const ProductDetail = () => {
                 {product.averageRating ? `${product.averageRating} / 5.0 (${product.numReviews} đánh giá)` : 'Chưa có đánh giá'}
               </span>
             </div>
-            <p className="font-headline-md text-headline-md text-secondary mb-8">{product.price.toLocaleString()} đ</p>
+            <p className="font-headline-md text-headline-md text-secondary mb-8">{formatUSD(product.price)}</p>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-12 max-w-md leading-relaxed whitespace-pre-wrap">
               {product.description}
             </p>
@@ -191,6 +202,13 @@ const ProductDetail = () => {
               >
                 {adding ? 'Adding...' : 'Add to Cart'}
               </button>
+              <FavoriteButton
+                productId={product._id}
+                size="lg"
+                variant="outline"
+                showLabel
+                className="flex-1"
+              />
               {product.model3d && (
                 <Link to={`/room-builder?productId=${product._id}`} className="border border-outline py-4 px-12 font-label-caps text-label-caps uppercase tracking-widest hover:bg-surface-container transition-colors flex-1 text-center">
                   View Showroom
@@ -222,9 +240,9 @@ const ProductDetail = () => {
               </div>
               <div className="relative aspect-square">
                 <img alt="Texture detail" className="w-full h-full object-cover rounded-lg shadow-sm" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCs1cbb33YglIvt-i9PegcoeKA6GsCj3KhZM_7UoRhRuxwupAf8BIdd9Fl0sYYxnuEpKkfuQXfyiZNuGnKJupeqAlIgJBIRaCAm4NCEtj_f_gkG-E7KPi0uuAdQI1yrypQQ48Ez6jYnML0CSQvdtE1kMEmX6EntMnRvRmSOB2tYUXRVjY45RxJUnsu9hVkwrUBcqTF91ol_XlwBgYMUChvjIRNvCv87J0g2Eq5mZZtadpCjhfCgiK15spX6A0rj3BibWN9DKgMC9t2Q" />
-                <div className="absolute -bottom-8 -left-8 bg-surface-cream p-8 hidden md:block border border-outline-variant">
-                  <span className="font-display-lg text-headline-md block mb-2">94%</span>
-                  <span className="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Natural Fibers</span>
+                <div className="absolute bottom-4 left-4 md:-bottom-8 md:-left-8 bg-white/95 backdrop-blur-md p-6 md:p-8 shadow-xl border border-outline-variant/50">
+                  <span className="font-display-lg text-headline-md block mb-2 text-primary font-semibold">94%</span>
+                  <span className="font-label-caps text-label-caps text-primary uppercase tracking-widest font-bold">Natural Fibers</span>
                 </div>
               </div>
             </div>
